@@ -1,0 +1,23 @@
+[project]
+name = "dense-arrays"
+version = "0.1.0"
+description = "A library to create densely packed DNA arrays from motifs"
+authors = [
+    {name = "Virgile Andreani", email = "andreani@bu.edu"},
+]
+dependencies = [
+    "numpy>=1.25.2",
+    "ortools>=9.7.2996",
+]
+requires-python = ">=3.10"
+readme = "README.md"
+license = {text = "MIT"}
+[project.optional-dependencies]
+dev = [
+    "pre-commit>=3.4.0",
+    "pytest>=7.4.2",
+]
+
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
