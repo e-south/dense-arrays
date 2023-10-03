@@ -142,7 +142,7 @@ class DenseArray:
         lines_fwd = dispatch_labels(self.library, self.offsets_fwd, False)
         lines_rev = dispatch_labels(self.library, self.offsets_rev, True)
 
-        s_fwd = "--> " + "\n--> ".join(lines_fwd + [sequence])
+        s_fwd = "--> " + "\n--> ".join(lines_fwd[::-1] + [sequence])
         s_rev = "<-- " + "\n<-- ".join([seq_rev] + lines_rev)
 
         return s_fwd + "\n" + s_rev
