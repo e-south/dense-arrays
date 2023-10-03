@@ -43,13 +43,13 @@ def shift_metric(motifa: str, motifb: str) -> int:
     return len(motifa)
 
 
-def adjacency_matrix(motifs: [str]) -> [[int]]:
+def adjacency_matrix(motifs: list[str]) -> list[list[int]]:
     """
     Return the matrix A_ij such that A_ij = shift_metric(motifs[i], motifs[j]).
 
     Parameters
     ----------
-    motifs : [str]
+    motifs : list[str]
         List of motifs.
     """
     return [[shift_metric(motifa, motifb) for motifb in motifs] for motifa in motifs]
@@ -59,7 +59,9 @@ def reverse_complement(sequence: str) -> str:
     return "".join(TRANS[c] for c in sequence[::-1])
 
 
-def dispatch_labels(library: [str], offsets: [int | None], rev: bool) -> [str]:
+def dispatch_labels(
+    library: list[str], offsets: list[int | None], rev: bool
+) -> list[str]:
     lines = []
     order = sorted((o, i) for i, o in enumerate(offsets) if o is not None)
     for offset, i in order:
@@ -78,18 +80,18 @@ def dispatch_labels(library: [str], offsets: [int | None], rev: bool) -> [str]:
 class DenseArray:
     """Representation of a solution."""
 
-    library: [str]
+    library: list[str]
     sequence_size: int
     sequence: str
-    offsets_fwd: [int | None]
-    offsets_rev: [int | None]
+    offsets_fwd: list[int | None]
+    offsets_rev: list[int | None]
 
     def __init__(
         self,
-        library: [str],
+        library: list[str],
         sequence_size: int,
-        offsets_fwd: [int | None],
-        offsets_rev: [int | None],
+        offsets_fwd: list[int | None],
+        offsets_rev: list[int | None],
     ):
         self.library = library
         self.sequence_size = sequence_size
@@ -149,7 +151,7 @@ class DenseArray:
 class Optimizer:
     """Optimizer."""
 
-    def __init__(self, library: [str], sequence_size: int, strands: str = "double"):
+    def __init__(self, library: list[str], sequence_size: int, strands: str = "double"):
         if strands not in ["single", "double"]:
             return ValueError("strands must be single or double")
 
@@ -161,7 +163,7 @@ class Optimizer:
         self.adjacency_matrix = adjacency_matrix(library)
         self.model = None
 
-    def _build_model(self, solver: str = "CBC"):
+    def _build_model(self, solver: str = "CBC") -> None:
         nb_motifs = len(self.library)
         nb_nodes = nb_motifs if self.strands == "single" else 2 * nb_motifs
 
@@ -235,7 +237,7 @@ class Optimizer:
             sum(X[i, j] for i in range(-1, nb_nodes) for j in range(nb_nodes) if i != j)
         )
 
-    def _solve(self):
+    def _solve(self) -> DenseArray:
         if self.model is None:
             raise RuntimeError("Model not built: call _build_model(solver) first")
 
@@ -269,14 +271,16 @@ class Optimizer:
                 self.library, self.sequence_size, offsets_fwd, offsets_rev
             )
 
-    def forbid(self, solution: DenseArray):
+    def forbid(self, solution: DenseArray) -> None:
         """Add a constraint to the model to forbid a given solution."""
         sol = [-1, *(i for _, i in solution._offset_indices_in_order()), -1]
         self.model.Add(
             sum(self.model.X[i, j] for i, j in zip(sol, sol[1:])) <= solution.nb_motifs
         )
 
-    def optimize(self, n_best_sols: int | None = None, solver: str = "CBC"):
+    def optimize(
+        self, n_best_sols: int | None = None, solver: str = "CBC"
+    ) -> DenseArray | list[DenseArray]:
         """Return one or several solutions."""
         if n_best_sols == 0:
             return []
@@ -299,7 +303,7 @@ class Optimizer:
 
 
 ## TODO: put into Optimizer
-# def approximate(motifs: [str], sequence_size: int, double: bool = False) -> [int]:
+# def approximate(motifs: list[str], sequence_size: int, double: bool = False) -> list[int]:
 #    assert not double
 #
 #    old_motifs = list(motifs)
@@ -336,7 +340,7 @@ class Optimizer:
 #
 #
 # def optimize_basepairs(
-#    motifs: [str], sequence_size: int, double: bool = False, solver: str = "CBC"
+#    motifs: list[str], sequence_size: int, double: bool = False, solver: str = "CBC"
 # ):
 #    solver = pywraplp.Solver.CreateSolver(solver)
 #
