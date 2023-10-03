@@ -1,5 +1,6 @@
 """Optimization module."""
 
+from collections.abc import Iterator
 from dataclasses import dataclass
 
 from ortools.linear_solver import pywraplp
@@ -278,28 +279,19 @@ class Optimizer:
             sum(self.model.X[i, j] for i, j in zip(sol, sol[1:])) <= solution.nb_motifs
         )
 
-    def optimize(
-        self, n_best_sols: int | None = None, solver: str = "CBC"
-    ) -> DenseArray | list[DenseArray]:
-        """Return one or several solutions."""
-        if n_best_sols == 0:
-            return []
-
+    def solutions(self, solver: str = "CBC") -> Iterator[DenseArray]:
+        """Iterate over solutions in decreasing order of score."""
         self._build_model(solver)
 
-        if n_best_sols is None:
-            return self._solve()
-
-        sols = []
-        for _ in range(n_best_sols):
-            if sols:
-                self.forbid(sols[-1])
+        sol = self._solve()
+        while sol is not None:
+            yield sol
+            self.forbid(sol)
             sol = self._solve()
-            if sol is None:
-                break
-            sols.append(sol)
 
-        return sols
+    def optimal(self, solver: str = "CBC") -> DenseArray:
+        """Return the optimal solution."""
+        return next(self.solutions(solver))
 
 
 ## TODO: put into Optimizer
