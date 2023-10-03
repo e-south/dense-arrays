@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from ortools.linear_solver import pywraplp
 
-TRANS = {"A": "T", "T": "A", "C": "G", "G": "C", "-": "-"}
+COMPLEMENT = {"A": "T", "T": "A", "C": "G", "G": "C", "-": "-"}
 
 __all__ = ["DenseArray", "Optimizer"]
 
@@ -56,7 +56,7 @@ def adjacency_matrix(motifs: list[str]) -> list[list[int]]:
 
 
 def reverse_complement(sequence: str) -> str:
-    return "".join(TRANS[c] for c in sequence[::-1])
+    return "".join(COMPLEMENT[c] for c in sequence[::-1])
 
 
 def dispatch_labels(
@@ -138,7 +138,7 @@ class DenseArray:
     def __str__(self) -> str:
         """Str dunder."""
         sequence = self.sequence + "-" * (self.sequence_size - len(self.sequence))
-        seq_rev = "".join(TRANS[c] for c in sequence)
+        seq_rev = "".join(COMPLEMENT[c] for c in sequence)
         lines_fwd = dispatch_labels(self.library, self.offsets_fwd, False)
         lines_rev = dispatch_labels(self.library, self.offsets_rev, True)
 
