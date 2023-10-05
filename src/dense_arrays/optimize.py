@@ -289,6 +289,21 @@ class Optimizer:
             self.forbid(sol)
             sol = self._solve()
 
+    def set_motif_weight(self, imotif: int, weight: float):
+        """Set the weight of a particular motif in the score."""
+        objective = self.model.Objective()
+
+        nb_nodes = len(self.library)
+        if self.strands == "double":
+            nb_nodes *= 2
+
+        for i in range(-1, nb_nodes):
+            if i != imotif:
+                objective.SetCoefficient(self.model.X[i, imotif], weight)
+            imotif2 = imotif + len(self.library)
+            if self.strands == "double" and i != imotif2:
+                objective.SetCoefficient(self.model.X[i, imotif2], weight)
+
     def solutions_diverse(self, solver: str = "CBC") -> Iterator[DenseArray]:
         """Return an iterator of optimal solutions trying to minimize the bias in motifs."""
         self._build_model(solver)
@@ -297,12 +312,14 @@ class Optimizer:
         if self.strands == "double":
             nb_nodes *= 2
 
+        epsilon = 0.5 / len(self.library)
+
         motifs = [0] * len(self.library)
         # Define a dummy constraint, clear it and add it to the solver (I don't
         # know how to generate an empty constraint otherwise)
         constraint = self.model.Constraint()
         constraint.SetBounds(0, 0)
-        imax = 0
+        imins = []
         while True:
             print(motifs)
             sol = self._solve()
@@ -316,24 +333,12 @@ class Optimizer:
                 if fwd is not None or rev is not None:
                     motifs[i] += 1
             # Update the constraint to forbid the most common motif
-            for i in range(-1, nb_nodes):
-                if i != imax:
-                    constraint.SetCoefficient(self.model.X[i, imax], 0)
-                    constraint.SetCoefficient(self.model.X[imax, i], 0)
-                imax2 = imax + len(self.library)
-                if self.strands == "double" and i != imax2:
-                    constraint.SetCoefficient(self.model.X[i, imax2], 0)
-                    constraint.SetCoefficient(self.model.X[imax2, i], 0)
-
-            imax = motifs.index(max(motifs))
-            for i in range(-1, nb_nodes):
-                if i != imax:
-                    constraint.SetCoefficient(self.model.X[i, imax], 1)
-                    constraint.SetCoefficient(self.model.X[imax, i], 1)
-                imax2 = imax + len(self.library)
-                if self.strands == "double" and i != imax2:
-                    constraint.SetCoefficient(self.model.X[i, imax2], 1)
-                    constraint.SetCoefficient(self.model.X[imax2, i], 1)
+            for imin in imins:
+                self.set_motif_weight(imin, 1)
+            avg_abundance = sum(motifs) / len(motifs)
+            imins = [i for i, qty in enumerate(motifs) if qty < avg_abundance]
+            for imin in imins:
+                self.set_motif_weight(imin, 1 + epsilon)
 
     def optimal(self, solver: str = "CBC") -> DenseArray:
         """Return the optimal solution."""
