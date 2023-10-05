@@ -300,10 +300,11 @@ class Optimizer:
         motifs = [0] * len(self.library)
         # Define a dummy constraint, clear it and add it to the solver (I don't
         # know how to generate an empty constraint otherwise)
-        constraint = self.model.X[-1, -1] == 0
-        constraint.Clear()
-        self.model.Add(constraint)
+        constraint = self.model.Constraint()
+        constraint.SetBounds(0, 0)
+        imax = 0
         while True:
+            print(motifs)
             sol = self._solve()
             if sol is None:
                 break
@@ -315,11 +316,24 @@ class Optimizer:
                 if fwd is not None or rev is not None:
                     motifs[i] += 1
             # Update the constraint to forbid the most common motif
-            imax = motifs.index(max(motifs))
-            constraint.clear()
             for i in range(-1, nb_nodes):
-                constraint.SetCoefficient(self.model.X[i, imax], 1)
-                constraint.SetCoefficient(self.model.X[imax, i], 1)
+                if i != imax:
+                    constraint.SetCoefficient(self.model.X[i, imax], 0)
+                    constraint.SetCoefficient(self.model.X[imax, i], 0)
+                imax2 = imax + len(self.library)
+                if self.strands == "double" and i != imax2:
+                    constraint.SetCoefficient(self.model.X[i, imax2], 0)
+                    constraint.SetCoefficient(self.model.X[imax2, i], 0)
+
+            imax = motifs.index(max(motifs))
+            for i in range(-1, nb_nodes):
+                if i != imax:
+                    constraint.SetCoefficient(self.model.X[i, imax], 1)
+                    constraint.SetCoefficient(self.model.X[imax, i], 1)
+                imax2 = imax + len(self.library)
+                if self.strands == "double" and i != imax2:
+                    constraint.SetCoefficient(self.model.X[i, imax2], 1)
+                    constraint.SetCoefficient(self.model.X[imax2, i], 1)
 
     def optimal(self, solver: str = "CBC") -> DenseArray:
         """Return the optimal solution."""
