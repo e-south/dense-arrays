@@ -289,6 +289,38 @@ class Optimizer:
             self.forbid(sol)
             sol = self._solve()
 
+    def solutions_diverse(self, solver: str = "CBC") -> Iterator[DenseArray]:
+        """Return an iterator of optimal solutions trying to minimize the bias in motifs."""
+        self._build_model(solver)
+
+        nb_nodes = len(self.library)
+        if self.strands == "double":
+            nb_nodes *= 2
+
+        motifs = [0] * len(self.library)
+        # Define a dummy constraint, clear it and add it to the solver (I don't
+        # know how to generate an empty constraint otherwise)
+        constraint = self.model.X[-1, -1] == 0
+        constraint.Clear()
+        self.model.Add(constraint)
+        while True:
+            sol = self._solve()
+            if sol is None:
+                break
+            yield sol
+            # Forbid the solution
+            self.forbid(sol)
+            # Tally up the motifs
+            for i, (fwd, rev) in enumerate(zip(sol.offsets_fwd, sol.offsets_rev)):
+                if fwd is not None or rev is not None:
+                    motifs[i] += 1
+            # Update the constraint to forbid the most common motif
+            imax = motifs.index(max(motifs))
+            constraint.clear()
+            for i in range(-1, nb_nodes):
+                constraint.SetCoefficient(self.model.X[i, imax], 1)
+                constraint.SetCoefficient(self.model.X[imax, i], 1)
+
     def optimal(self, solver: str = "CBC") -> DenseArray:
         """Return the optimal solution."""
         return next(self.solutions(solver))
