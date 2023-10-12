@@ -389,6 +389,9 @@ class Optimizer:
                 else None
                 for motif in self.library
             ]
+            for i in range(len(self.library)):
+                if offsets_fwd[i] is not None and offsets_rev[i] is not None:
+                    offsets_rev[i] = None
         else:
             offsets_rev = [None] * len(self.library)
         return DenseArray(self.library, self.sequence_length, offsets_fwd, offsets_rev)
