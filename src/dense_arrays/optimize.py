@@ -346,44 +346,75 @@ class Optimizer:
         """Return the optimal solution."""
         return next(self.solutions(solver))
 
+    def approximate(self) -> DenseArray:
+        """Return a solution approximated with a greedy algorithm."""
+        library = list(self.library)
+        if self.strands == "double":
+            library += [reverse_complement(motif) for motif in library]
 
-## TODO: put into Optimizer
-# def approximate(motifs: list[str], sequence_size: int, double: bool = False) -> list[int]:
-#    assert not double
-#
-#    old_motifs = list(motifs)
-#    motifs = list(motifs)
-#
-#    while len(motifs) > 1:
-#        adj = adjacency_matrix(motifs)
-#        min_dist = max(len(motif) for motif in motifs)
-#        index_min_dist = None
-#        for i in range(len(motifs)):
-#            for j in range(len(motifs)):
-#                if i == j:
-#                    continue
-#                if adj[i][j] < min_dist:
-#                    min_dist = adj[i][j]
-#                    index_min_dist = (i, j)
-#        i, j = index_min_dist
-#        motifs[i] = motifs[i][: adj[i][j]] + motifs[j]
-#        del motifs[j]
-#    print(motifs)
-#    max_nb_motifs = 0
-#    offset_max_nb_motifs = None
-#    for offset in range(len(motifs[0]) - sequence_size + 1):
-#        subseq = motifs[0][offset : offset + sequence_size]
-#        nb_motifs = sum(motif in subseq for motif in old_motifs)
-#        if nb_motifs > max_nb_motifs:
-#            max_nb_motifs = nb_motifs
-#            offset_max_nb_motifs = offset
-#    subseq = motifs[0][offset_max_nb_motifs : offset_max_nb_motifs + sequence_size]
-#    present = [imotif for imotif, motif in enumerate(old_motifs) if motif in subseq]
-#    indices = [(subseq.index(old_motifs[imotif]), imotif) for imotif in present]
-#    indices.sort()
-#    return [imotif for _, imotif in indices]
-#
-#
+        while len(library) > {"single": 1, "double": 2}[self.strands]:
+            adj = adjacency_matrix(library)
+            min_dist = max(len(motif) for motif in library)
+            index_min_dist = None
+            for i in range(len(library)):
+                for j in range(len(library)):
+                    if i == j:
+                        continue
+                    if self.strands == "double" and abs(i - j) == len(library) // 2:
+                        continue
+                    if adj[i][j] < min_dist:
+                        min_dist = adj[i][j]
+                        index_min_dist = (i, j)
+            i, j = index_min_dist
+            library[i] = library[i][: adj[i][j]] + library[j]
+            if self.strands == "double":
+                library[(i + len(library) // 2) % len(library)] = reverse_complement(
+                    library[i]
+                )
+                del library[max(j, (j + len(library) // 2) % len(library))]
+                del library[min(j, (j + len(library) // 2) % len(library))]
+            else:
+                del library[j]
+        sequence = take_best_run(
+            library[0], self.sequence_length, self.library, self.strands
+        )
+        offsets_fwd = [
+            sequence.index(motif) if motif in sequence else None
+            for motif in self.library
+        ]
+        if self.strands == "double":
+            offsets_rev = [
+                sequence.index(reverse_complement(motif))
+                if reverse_complement(motif) in sequence
+                else None
+                for motif in self.library
+            ]
+        else:
+            offsets_rev = [None] * len(self.library)
+        return DenseArray(self.library, self.sequence_length, offsets_fwd, offsets_rev)
+
+
+def take_best_run(
+    sequence: str, sequence_length: int, library: list[int], strands: str
+) -> str:
+    max_nb_motifs = 0
+    offset_max_nb_motifs = None
+    for offset in range(len(sequence) - sequence_length + 1):
+        subseq = sequence[offset : offset + sequence_length]
+        if strands == "single":
+            nb_motifs = sum(motif in subseq for motif in library)
+        else:
+            nb_motifs = sum(
+                (motif in subseq) or (reverse_complement(motif) in subseq)
+                for motif in library
+            )
+        if nb_motifs > max_nb_motifs:
+            max_nb_motifs = nb_motifs
+            offset_max_nb_motifs = offset
+    subseq = sequence[offset_max_nb_motifs : offset_max_nb_motifs + sequence_length]
+    return subseq
+
+
 # def optimize_basepairs(
 #    motifs: list[str], sequence_length: int, double: bool = False, solver: str = "CBC"
 # ):
