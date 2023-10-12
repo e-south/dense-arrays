@@ -82,7 +82,7 @@ class DenseArray:
     """Representation of a solution."""
 
     library: list[str]
-    sequence_size: int
+    sequence_length: int
     sequence: str
     offsets_fwd: list[int | None]
     offsets_rev: list[int | None]
@@ -90,12 +90,12 @@ class DenseArray:
     def __init__(
         self,
         library: list[str],
-        sequence_size: int,
+        sequence_length: int,
         offsets_fwd: list[int | None],
         offsets_rev: list[int | None],
     ):
         self.library = library
-        self.sequence_size = sequence_size
+        self.sequence_length = sequence_length
         self.offsets_fwd = offsets_fwd
         self.offsets_rev = offsets_rev
         sequence = ""
@@ -134,11 +134,11 @@ class DenseArray:
             for motif, fwd, rev in zip(self.library, self.offsets_fwd, self.offsets_rev)
             if fwd is not None or rev is not None
         )
-        return total_length / self.sequence_size
+        return total_length / self.sequence_length
 
     def __str__(self) -> str:
         """Str dunder."""
-        sequence = self.sequence + "-" * (self.sequence_size - len(self.sequence))
+        sequence = self.sequence + "-" * (self.sequence_length - len(self.sequence))
         seq_rev = "".join(COMPLEMENT[c] for c in sequence)
         lines_fwd = dispatch_labels(self.library, self.offsets_fwd, False)
         lines_rev = dispatch_labels(self.library, self.offsets_rev, True)
@@ -152,12 +152,14 @@ class DenseArray:
 class Optimizer:
     """Optimizer."""
 
-    def __init__(self, library: list[str], sequence_size: int, strands: str = "double"):
+    def __init__(
+        self, library: list[str], sequence_length: int, strands: str = "double"
+    ):
         if strands not in ["single", "double"]:
             return ValueError("strands must be single or double")
 
         self.library = list(library)
-        self.sequence_size = sequence_size
+        self.sequence_length = sequence_length
         self.strands = strands
         if strands == "double":
             library = library + [reverse_complement(motif) for motif in library]
@@ -221,7 +223,7 @@ class Optimizer:
         size_terminal = sum(
             len(self.library[i % nb_motifs]) * X[i, -1] for i in range(nb_nodes)
         )
-        self.model.Add(size_inside + size_terminal <= self.sequence_size)
+        self.model.Add(size_inside + size_terminal <= self.sequence_length)
 
         # Continuity constraints
         cont = [self.model.IntVar(1, nb_nodes, f"u[{i}]") for i in range(nb_nodes)]
@@ -269,7 +271,7 @@ class Optimizer:
                         break
             sol = sol[1:-1]
             return DenseArray(
-                self.library, self.sequence_size, offsets_fwd, offsets_rev
+                self.library, self.sequence_length, offsets_fwd, offsets_rev
             )
 
     def forbid(self, solution: DenseArray) -> None:
@@ -383,20 +385,20 @@ class Optimizer:
 #
 #
 # def optimize_basepairs(
-#    motifs: list[str], sequence_size: int, double: bool = False, solver: str = "CBC"
+#    motifs: list[str], sequence_length: int, double: bool = False, solver: str = "CBC"
 # ):
 #    solver = pywraplp.Solver.CreateSolver(solver)
 #
 #    ATGC = list("ATGC")
 #
 #    sequence = [
-#        [solver.IntVar(0, 1, f"{c}[{i}]") for c in ATGC] for i in range(sequence_size)
+#        [solver.IntVar(0, 1, f"{c}[{i}]") for c in ATGC] for i in range(sequence_length)
 #    ]
 #
 #    motif_present = [
 #        [
 #            solver.IntVar(0, 1, f"d[{i},{j}]")
-#            for j in range(sequence_size - len(motifs[i]) + 1)
+#            for j in range(sequence_length - len(motifs[i]) + 1)
 #        ]
 #        for i in range(len(motifs))
 #    ]
@@ -408,7 +410,7 @@ class Optimizer:
 #        solver.Add(sum(basepair) == 1)
 #
 #    for imotif, motif in enumerate(motifs):
-#        for offset in range(sequence_size - len(motif) + 1):
+#        for offset in range(sequence_length - len(motif) + 1):
 #            solver.Add(
 #                len(motif) * motif_present[imotif][offset]
 #                <= sum(
