@@ -354,7 +354,7 @@ class Optimizer:
 
         while len(library) > {"single": 1, "double": 2}[self.strands]:
             adj = adjacency_matrix(library)
-            min_dist = max(len(motif) for motif in library)
+            min_dist = max(len(motif) for motif in library) + 1
             index_min_dist = None
             for i in range(len(library)):
                 for j in range(len(library)):
@@ -397,9 +397,9 @@ class Optimizer:
 def take_best_run(
     sequence: str, sequence_length: int, library: list[int], strands: str
 ) -> str:
-    max_nb_motifs = 0
+    max_nb_motifs = -1
     offset_max_nb_motifs = None
-    for offset in range(len(sequence) - sequence_length + 1):
+    for offset in range(max(1, len(sequence) - sequence_length + 1)):
         subseq = sequence[offset : offset + sequence_length]
         if strands == "single":
             nb_motifs = sum(motif in subseq for motif in library)
