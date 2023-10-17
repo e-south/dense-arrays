@@ -8,6 +8,7 @@ authors = [
 dependencies = [
     "numpy>=1.25.2",
     "ortools>=9.7.2996",
+    "scipy>=1.11.4",
 ]
 requires-python = ">=3.12"
 readme = "README.md"
@@ -42,6 +43,8 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/test_*.py" = ["ANN201", "D103", "S101", "PLR2004", "FBT001"]
+"benchmarks/main.py" = ["INP001", "T201", "PLR0914"]
+"figures/*.py" = ["INP001", "T201", "D200", "D205"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"

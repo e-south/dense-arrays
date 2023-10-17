@@ -9,6 +9,13 @@ Documentation available on [https://dunloplab.gitlab.io/dense-arrays](https://du
 1. (optional but recommended) Create an empty conda environment: `conda create -n dense-arrays python` and activate it `conda activate dense-arrays`
 2. Install the package with `pip install .`
 
+## Paper figures
+
+To regenerate the paper figures:
+
+1. Recreate the data by executing the `benchmarks/main.py` script (will take a long time, so the result files are already present for convenience).
+2. Plot the figures by executing the appropriate plotting script `figures/plot_*.py` as described in `figures/README.md`.
+
 ## Simple usage
 
 ``` python
