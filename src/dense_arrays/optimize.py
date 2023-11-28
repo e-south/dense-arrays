@@ -63,7 +63,7 @@ def reverse_complement(sequence: str) -> str:
 def dispatch_labels(
     library: list[str], offsets: list[int | None], rev: bool
 ) -> list[str]:
-    lines = []
+    lines: list[str] = []
     order = sorted((o, i) for i, o in enumerate(offsets) if o is not None)
     for offset, i in order:
         motif = library[i][::-1] if rev else library[i]
@@ -140,8 +140,8 @@ class DenseArray:
         """Str dunder."""
         sequence = self.sequence + "-" * (self.sequence_length - len(self.sequence))
         seq_rev = "".join(COMPLEMENT[c] for c in sequence)
-        lines_fwd = dispatch_labels(self.library, self.offsets_fwd, False)
-        lines_rev = dispatch_labels(self.library, self.offsets_rev, True)
+        lines_fwd = dispatch_labels(self.library, self.offsets_fwd, rev=False)
+        lines_rev = dispatch_labels(self.library, self.offsets_rev, rev=True)
 
         s_fwd = "--> " + "\n--> ".join(lines_fwd[::-1] + [sequence])
         s_rev = "<-- " + "\n<-- ".join([seq_rev] + lines_rev)
@@ -156,7 +156,7 @@ class Optimizer:
         self, library: list[str], sequence_length: int, strands: str = "double"
     ):
         if strands not in ["single", "double"]:
-            return ValueError("strands must be single or double")
+            raise ValueError("strands must be single or double")
 
         self.library = list(library)
         self.sequence_length = sequence_length
@@ -291,7 +291,7 @@ class Optimizer:
             self.forbid(sol)
             sol = self._solve()
 
-    def set_motif_weight(self, imotif: int, weight: float):
+    def set_motif_weight(self, imotif: int, weight: float) -> None:
         """Set the weight of a particular motif in the score."""
         objective = self.model.Objective()
 
@@ -321,7 +321,7 @@ class Optimizer:
         # know how to generate an empty constraint otherwise)
         constraint = self.model.Constraint()
         constraint.SetBounds(0, 0)
-        imins = []
+        imins: list[int] = []
         while True:
             print(motifs)
             sol = self._solve()
@@ -365,6 +365,7 @@ class Optimizer:
                     if adj[i][j] < min_dist:
                         min_dist = adj[i][j]
                         index_min_dist = (i, j)
+            assert index_min_dist is not None
             i, j = index_min_dist
             library[i] = library[i][: adj[i][j]] + library[j]
             if self.strands == "double":
@@ -398,7 +399,7 @@ class Optimizer:
 
 
 def take_best_run(
-    sequence: str, sequence_length: int, library: list[int], strands: str
+    sequence: str, sequence_length: int, library: list[str], strands: str
 ) -> str:
     max_nb_motifs = -1
     offset_max_nb_motifs = None
@@ -414,6 +415,7 @@ def take_best_run(
         if nb_motifs > max_nb_motifs:
             max_nb_motifs = nb_motifs
             offset_max_nb_motifs = offset
+    assert offset_max_nb_motifs is not None
     subseq = sequence[offset_max_nb_motifs : offset_max_nb_motifs + sequence_length]
     return subseq
 
