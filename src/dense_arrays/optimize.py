@@ -174,6 +174,12 @@ class Optimizer:
         library: list[str],
         sequence_length: int,
         strands: str = "double",
+        special_motif_a: str | None = None,
+        special_motif_b: str | None = None,
+        a_start_min: int | None = None,
+        a_start_max: int | None = None,
+        a_b_min_distance: int | None = None,
+        a_b_max_distance: int | None = None,
     ) -> None:
         if strands not in {"single", "double"}:
             msg = "strands must be single or double"
@@ -182,6 +188,12 @@ class Optimizer:
         self.library = list(library)
         self.sequence_length = sequence_length
         self.strands = strands
+        self.special_motif_a = special_motif_a
+        self.special_motif_b = special_motif_b
+        self.a_start_min = a_start_min
+        self.a_start_max = a_start_max
+        self.a_b_min_distance = a_b_min_distance
+        self.a_b_max_distance = a_b_max_distance
         if strands == "double":
             library = library + [reverse_complement(motif) for motif in library]
         self.adjacency_matrix = adjacency_matrix(library)
@@ -260,6 +272,11 @@ class Optimizer:
                     continue
                 self.model.Add(cont[i] - cont[j] + 1 <= nb_nodes * (1 - X[i, j]))
 
+        # Apply user-defined distance constraints if any
+        index_a, index_b = self._find_special_motif_indices()
+        if index_a is not None and index_b is not None:
+            self._add_special_motif_constraints(index_a, index_b)
+
         # Objective
         self.model.Maximize(
             sum(
@@ -267,7 +284,74 @@ class Optimizer:
             ),
         )
 
-    def _solve(self: Self) -> DenseArray | None:
+    def _add_special_motif_constraints(self: Self, index_a: int, index_b: int) -> None:
+        """Add special motif constraints to the problem."""
+        nb_motifs = len(self.library)
+        nb_nodes = nb_motifs if self.strands == "single" else 2 * nb_motifs
+
+        # Ensure special motifs a and b appear in the sequence
+        self.model.Add(
+            sum(self.model.X[i, index_a] for i in range(-1, nb_nodes) if i != index_a)
+            >= 1
+        )
+        self.model.Add(
+            sum(self.model.X[i, index_b] for i in range(-1, nb_nodes) if i != index_b)
+            >= 1
+        )
+
+        # Motif a should appear before motif b
+        self.model.Add(self.model.cont[index_b] - self.model.cont[index_a] >= 1)
+
+        # Initialize cumulative length variables
+        cumulative_length = [
+            self.model.IntVar(0, self.sequence_length - 1, f"cumulative_length[{i}]")
+            for i in range(nb_nodes)
+        ]
+        self.model.cumulative_length = cumulative_length
+
+        # Set cumulative length for the start point
+        self.model.Add(cumulative_length[-1] == 0)
+
+        # Define cumulative length for each node
+        for i in range(-1, nb_nodes):
+            for j in range(nb_nodes):
+                if i == j:
+                    continue
+                length_increase = 0 if i == -1 else self.adjacency_matrix[i][j]
+                # Using a big-M approach to enforce the constraint conditionally
+                big_m = self.sequence_length
+
+                self.model.Add(
+                    cumulative_length[j] - cumulative_length[i]
+                    >= length_increase * self.model.X[i, j]
+                    + (1 - big_m) * (1 - self.model.X[i, j])
+                )
+                self.model.Add(
+                    cumulative_length[j] - cumulative_length[i]
+                    <= length_increase * self.model.X[i, j]
+                    - (1 - big_m) * (1 - self.model.X[i, j])
+                )
+
+        # Positioning motif a after a_start_min
+        # but before a_start_max characters from the start
+        if self.a_start_min is not None:
+            self.model.Add(cumulative_length[index_a] >= self.a_start_min)
+        if self.a_start_max is not None:
+            self.model.Add(cumulative_length[index_a] <= self.a_start_max)
+
+        # Distance between special vertices a and b
+        if self.a_b_max_distance is not None:
+            self.model.Add(
+                cumulative_length[index_b] - cumulative_length[index_a]
+                <= self.a_b_max_distance
+            )
+        if self.a_b_min_distance is not None:
+            self.model.Add(
+                cumulative_length[index_b] - cumulative_length[index_a]
+                >= self.a_b_min_distance
+            )
+
+    def _solve(self: Self) -> DenseArray:
         if self.model is None:
             msg = "Model not built: call `_build_model(solver)` first"
             raise RuntimeError(msg)
@@ -278,34 +362,58 @@ class Optimizer:
         # Solve the problem
         status = self.model.Solve()
 
-        if status == pywraplp.Solver.OPTIMAL:
-            # Extract solution
-            sol = [-1]
-            offset = 0
-            offsets_fwd = [None] * nb_motifs
-            offsets_rev = [None] * nb_motifs
-            while sol[-1] >= 0 or len(sol) == 1:
-                for j in range(-1, nb_nodes):
-                    if sol[-1] >= 0 and j == sol[-1]:
-                        continue
-                    if round(self.model.X[sol[-1], j].solution_value()) == 1:
-                        if len(sol) > 1:
-                            offset += self.adjacency_matrix[sol[-1]][j]
-                        if j >= len(self.library):
-                            offsets_rev[j % nb_motifs] = offset
-                        elif j >= 0:
-                            offsets_fwd[j] = offset
-                        sol.append(j)
-                        break
-            sol = sol[1:-1]
-            return DenseArray(
-                self.library,
-                self.sequence_length,
-                offsets_fwd,
-                offsets_rev,
-            )
+        if status != pywraplp.Solver.OPTIMAL:
+            match status:
+                case pywraplp.Solver.FEASIBLE:
+                    msg = "A feasible solution was found, but not necessarily optimal."
+                case pywraplp.Solver.INFEASIBLE:
+                    msg = "No feasible solution was found."
+                case pywraplp.Solver.UNBOUNDED:
+                    msg = "The model is unbounded."
+                case pywraplp.Solver.ABNORMAL:
+                    msg = "The model is abnormal."
+                case _:
+                    msg = "Solver ended with unknown status."
+            raise ValueError(msg)
 
-        return None
+        # Extract solution
+        sol = [-1]
+        offset = 0
+        offsets_fwd = [None] * nb_motifs
+        offsets_rev = [None] * nb_motifs
+        while sol[-1] >= 0 or len(sol) == 1:
+            for j in range(-1, nb_nodes):
+                if sol[-1] >= 0 and j == sol[-1]:
+                    continue
+                if round(self.model.X[sol[-1], j].solution_value()) == 1:
+                    if len(sol) > 1:
+                        offset += self.adjacency_matrix[sol[-1]][j]
+                    if j >= len(self.library):
+                        offsets_rev[j % nb_motifs] = offset
+                    elif j >= 0:
+                        offsets_fwd[j] = offset
+                    sol.append(j)
+                    break
+        sol = sol[1:-1]
+        return DenseArray(
+            self.library,
+            self.sequence_length,
+            offsets_fwd,
+            offsets_rev,
+        )
+
+    def _find_special_motif_indices(self: Self) -> tuple[int | None, int | None]:
+        index_a = (
+            self.library.index(self.special_motif_a)
+            if self.special_motif_a in self.library
+            else None
+        )
+        index_b = (
+            self.library.index(self.special_motif_b)
+            if self.special_motif_b in self.library
+            else None
+        )
+        return index_a, index_b
 
     def forbid(self: Self, solution: DenseArray) -> None:
         """Add a constraint to the model to forbid a given solution."""
