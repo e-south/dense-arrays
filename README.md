@@ -3,7 +3,7 @@
 ``` python
 import dense_arrays as da
 
-opt = da.Optimizer(["ATGC", "CGT", "ATTA", "TTATTA"], sequence_size=8)
+opt = da.Optimizer(["ATGC", "CGT", "ATTA", "TTATTA"], sequence_length=8)
 
 best = opt.optimal()
 print(f"Optimal solution, score {best.nb_motifs}")
