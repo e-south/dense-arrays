@@ -22,3 +22,25 @@ dev = [
 [build-system]
 requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+select = ["ALL"]
+ignore = [
+    # Commas something
+    "COM812",
+    # Implicitly concatenated string literals on one line
+    # (does not work well with ruff format)
+    "ISC001",
+    # Unnecessary assignment to return
+    "RET504",
+    # Commented code
+    "ERA001",
+    # Copyright stuff
+    "CPY001",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint]
+preview = true

@@ -14,30 +14,15 @@ repos:
       - id: mixed-line-ending
       - id: name-tests-test
         args: [--pytest-test-first]
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.0
-    hooks:
-      - id: pyupgrade
-        args: [--py310-plus]
-  - repo: https://github.com/PyCQA/pydocstyle
-    rev: 6.3.0
-    hooks:
-      - id: pydocstyle
-        additional_dependencies: ["tomli"]
-        args:
-          - --convention=numpy
-          - --add-select=D417
   - repo: https://github.com/crate-ci/typos
-    rev: v1.16.23
+    rev: v1.16.25
     hooks:
       - id: typos
         args:
           - --config=.typos.toml
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.12.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.9
     hooks:
-      - id: isort
-  - repo: https://github.com/psf/black
-    rev: 23.11.0
-    hooks:
-      - id: black
+      - id: ruff-format
+      - id: ruff
+        args: [ --fix ]

@@ -1,5 +1,6 @@
 """Optimization module."""
 
+import itertools as it
 from collections.abc import Iterator
 from dataclasses import dataclass
 
@@ -11,10 +12,9 @@ __all__ = ["DenseArray", "Optimizer"]
 
 
 def shift_metric(motifa: str, motifb: str) -> int:
-    """
-    Compute how much we have to shift `motifb` to match the end of `motifa`.
+    """Compute how much we have to shift `motifb` to match the end of `motifa`.
 
-    Example
+    Example:
     -------
     shift_metric("ATGCATTA", "CATTATG") == 3 because
 
@@ -45,8 +45,7 @@ def shift_metric(motifa: str, motifb: str) -> int:
 
 
 def adjacency_matrix(motifs: list[str]) -> list[list[int]]:
-    """
-    Return the matrix A_ij such that A_ij = shift_metric(motifs[i], motifs[j]).
+    """Return the matrix A_ij such that A_ij = shift_metric(motifs[i], motifs[j]).
 
     Parameters
     ----------
@@ -61,7 +60,10 @@ def reverse_complement(sequence: str) -> str:
 
 
 def dispatch_labels(
-    library: list[str], offsets: list[int | None], rev: bool
+    library: list[str],
+    offsets: list[int | None],
+    *,
+    rev: bool,
 ) -> list[str]:
     lines: list[str] = []
     order = sorted((o, i) for i, o in enumerate(offsets) if o is not None)
@@ -88,25 +90,34 @@ class DenseArray:
     offsets_rev: list[int | None]
 
     def __init__(
-        self,
+        self: "DenseArray",
         library: list[str],
         sequence_length: int,
         offsets_fwd: list[int | None],
         offsets_rev: list[int | None],
-    ):
+    ) -> None:
         self.library = library
         self.sequence_length = sequence_length
         self.offsets_fwd = offsets_fwd
         self.offsets_rev = offsets_rev
         sequence = ""
-        for offset, i in self._offset_indices_in_order():
+        for offset, i in self.offset_indices_in_order():
             motif = library[i % len(library)]
             if i >= len(library):
                 motif = reverse_complement(motif)
             sequence = sequence[:offset] + motif
         self.sequence = sequence
 
-    def _offset_indices_in_order(self):
+    def offset_indices_in_order(self: "DenseArray") -> list[tuple[int, int]]:
+        """
+        List the motifs in the solution by ascending offset.
+
+        Returns
+        -------
+        offset_indices : list[tuple[int, int]]
+            Each element represents `(offset, index)` where `offset` is the offset
+            where the motif starts and `index` is its index in the motif library.
+        """
         order_fwd = [
             (offset, i)
             for i, offset in enumerate(self.offsets_fwd)
@@ -120,23 +131,28 @@ class DenseArray:
         return sorted(order_fwd + order_rev)
 
     @property
-    def nb_motifs(self):
+    def nb_motifs(self: "DenseArray") -> int:
         """Number of motifs that fit in this solution."""
         nb_fwd = sum(offset is not None for offset in self.offsets_fwd)
         nb_rev = sum(offset is not None for offset in self.offsets_rev)
         return nb_fwd + nb_rev
 
     @property
-    def compression_ratio(self):
+    def compression_ratio(self: "DenseArray") -> float:
         """Compression ratio, i.e. total length of motifs / solution size."""
         total_length = sum(
             len(motif)
-            for motif, fwd, rev in zip(self.library, self.offsets_fwd, self.offsets_rev)
+            for motif, fwd, rev in zip(
+                self.library,
+                self.offsets_fwd,
+                self.offsets_rev,
+                strict=False,
+            )
             if fwd is not None or rev is not None
         )
         return total_length / self.sequence_length
 
-    def __str__(self) -> str:
+    def __str__(self: "DenseArray") -> str:
         """Str dunder."""
         sequence = self.sequence + "-" * (self.sequence_length - len(self.sequence))
         seq_rev = "".join(COMPLEMENT[c] for c in sequence)
@@ -144,7 +160,7 @@ class DenseArray:
         lines_rev = dispatch_labels(self.library, self.offsets_rev, rev=True)
 
         s_fwd = "--> " + "\n--> ".join(lines_fwd[::-1] + [sequence])
-        s_rev = "<-- " + "\n<-- ".join([seq_rev] + lines_rev)
+        s_rev = "<-- " + "\n<-- ".join([seq_rev, *lines_rev])
 
         return s_fwd + "\n" + s_rev
 
@@ -153,10 +169,14 @@ class Optimizer:
     """Optimizer."""
 
     def __init__(
-        self, library: list[str], sequence_length: int, strands: str = "double"
-    ):
-        if strands not in ["single", "double"]:
-            raise ValueError("strands must be single or double")
+        self: "Optimizer",
+        library: list[str],
+        sequence_length: int,
+        strands: str = "double",
+    ) -> None:
+        if strands not in {"single", "double"}:
+            msg = "strands must be single or double"
+            raise ValueError(msg)
 
         self.library = list(library)
         self.sequence_length = sequence_length
@@ -166,11 +186,15 @@ class Optimizer:
         self.adjacency_matrix = adjacency_matrix(library)
         self.model = None
 
-    def _build_model(self, solver: str = "CBC") -> None:
+    def _build_model(self: "Optimizer", solver: str = "CBC") -> None:
         nb_motifs = len(self.library)
         nb_nodes = nb_motifs if self.strands == "single" else 2 * nb_motifs
 
         self.model = pywraplp.Solver.CreateSolver(solver)
+
+        if self.model is None:
+            msg = "Could not create model. There is a problem with the backend."
+            raise RuntimeError(msg)
 
         # X_ij are binary variables. X_ij == 1 means that motif #j directly follows
         # (and possibly overlaps) motif #i in the sequence.
@@ -182,7 +206,7 @@ class Optimizer:
             for j in range(nb_nodes)
             if i != j
         }
-        X = start | end | middle
+        X = start | end | middle  # noqa: N806
         self.model.X = X
 
         # Path starts at the start
@@ -195,7 +219,7 @@ class Optimizer:
         for k in range(nb_nodes):
             self.model.Add(
                 sum(X[i, k] for i in range(-1, nb_nodes) if i != k)
-                == sum(X[k, j] for j in range(-1, nb_nodes) if j != k)
+                == sum(X[k, j] for j in range(-1, nb_nodes) if j != k),
             )
 
         # Don't include any motif more than once
@@ -237,12 +261,15 @@ class Optimizer:
 
         # Objective
         self.model.Maximize(
-            sum(X[i, j] for i in range(-1, nb_nodes) for j in range(nb_nodes) if i != j)
+            sum(
+                X[i, j] for i in range(-1, nb_nodes) for j in range(nb_nodes) if i != j
+            ),
         )
 
-    def _solve(self) -> DenseArray:
+    def _solve(self: "Optimizer") -> DenseArray | None:
         if self.model is None:
-            raise RuntimeError("Model not built: call _build_model(solver) first")
+            msg = "Model not built: call `_build_model(solver)` first"
+            raise RuntimeError(msg)
 
         nb_motifs = len(self.library)
         nb_nodes = nb_motifs if self.strands == "single" else 2 * nb_motifs
@@ -271,17 +298,22 @@ class Optimizer:
                         break
             sol = sol[1:-1]
             return DenseArray(
-                self.library, self.sequence_length, offsets_fwd, offsets_rev
+                self.library,
+                self.sequence_length,
+                offsets_fwd,
+                offsets_rev,
             )
 
-    def forbid(self, solution: DenseArray) -> None:
+        return None
+
+    def forbid(self: "Optimizer", solution: DenseArray) -> None:
         """Add a constraint to the model to forbid a given solution."""
-        sol = [-1, *(i for _, i in solution._offset_indices_in_order()), -1]
+        sol = [-1, *(i for _, i in solution.offset_indices_in_order()), -1]
         self.model.Add(
-            sum(self.model.X[i, j] for i, j in zip(sol, sol[1:])) <= solution.nb_motifs
+            sum(self.model.X[i, j] for i, j in it.pairwise(sol)) <= solution.nb_motifs,
         )
 
-    def solutions(self, solver: str = "CBC") -> Iterator[DenseArray]:
+    def solutions(self: "Optimizer", solver: str = "CBC") -> Iterator[DenseArray]:
         """Iterate over solutions in decreasing order of score."""
         self._build_model(solver)
 
@@ -291,7 +323,7 @@ class Optimizer:
             self.forbid(sol)
             sol = self._solve()
 
-    def set_motif_weight(self, imotif: int, weight: float) -> None:
+    def set_motif_weight(self: "Optimizer", imotif: int, weight: float) -> None:
         """Set the weight of a particular motif in the score."""
         objective = self.model.Objective()
 
@@ -306,8 +338,17 @@ class Optimizer:
             if self.strands == "double" and i != imotif2:
                 objective.SetCoefficient(self.model.X[i, imotif2], weight)
 
-    def solutions_diverse(self, solver: str = "CBC") -> Iterator[DenseArray]:
-        """Return an iterator of optimal solutions trying to minimize the bias in motifs."""
+    def solutions_diverse(
+        self: "Optimizer", solver: str = "CBC"
+    ) -> Iterator[DenseArray]:
+        """
+        Return an iterator of optimal solutions trying to minimize the bias in motifs.
+
+        Parameters
+        ----------
+        solver : str
+            Solver name given to OrTools.
+        """
         self._build_model(solver)
 
         nb_nodes = len(self.library)
@@ -323,7 +364,6 @@ class Optimizer:
         constraint.SetBounds(0, 0)
         imins: list[int] = []
         while True:
-            print(motifs)
             sol = self._solve()
             if sol is None:
                 break
@@ -331,7 +371,9 @@ class Optimizer:
             # Forbid the solution
             self.forbid(sol)
             # Tally up the motifs
-            for i, (fwd, rev) in enumerate(zip(sol.offsets_fwd, sol.offsets_rev)):
+            for i, (fwd, rev) in enumerate(
+                zip(sol.offsets_fwd, sol.offsets_rev, strict=False),
+            ):
                 if fwd is not None or rev is not None:
                     motifs[i] += 1
             # Update the constraint to forbid the most common motif
@@ -342,11 +384,11 @@ class Optimizer:
             for imin in imins:
                 self.set_motif_weight(imin, 1 + epsilon)
 
-    def optimal(self, solver: str = "CBC") -> DenseArray:
+    def optimal(self: "Optimizer", solver: str = "CBC") -> DenseArray:
         """Return the optimal solution."""
         return next(self.solutions(solver))
 
-    def approximate(self) -> DenseArray:
+    def approximate(self: "Optimizer") -> DenseArray:  # noqa: C901 PLR0912
         """Return a solution approximated with a greedy algorithm."""
         library = list(self.library)
         if self.strands == "double":
@@ -365,19 +407,24 @@ class Optimizer:
                     if adj[i][j] < min_dist:
                         min_dist = adj[i][j]
                         index_min_dist = (i, j)
-            assert index_min_dist is not None
+            if index_min_dist is None:
+                msg = "This should not have happened."
+                raise RuntimeError(msg)
             i, j = index_min_dist
             library[i] = library[i][: adj[i][j]] + library[j]
             if self.strands == "double":
                 library[(i + len(library) // 2) % len(library)] = reverse_complement(
-                    library[i]
+                    library[i],
                 )
                 del library[max(j, (j + len(library) // 2) % len(library))]
                 del library[min(j, (j + len(library) // 2) % len(library))]
             else:
                 del library[j]
         sequence = take_best_run(
-            library[0], self.sequence_length, self.library, self.strands
+            library[0],
+            self.sequence_length,
+            self.library,
+            self.strands,
         )
         offsets_fwd = [
             sequence.index(motif) if motif in sequence else None
@@ -399,7 +446,10 @@ class Optimizer:
 
 
 def take_best_run(
-    sequence: str, sequence_length: int, library: list[str], strands: str
+    sequence: str,
+    sequence_length: int,
+    library: list[str],
+    strands: str,
 ) -> str:
     max_nb_motifs = -1
     offset_max_nb_motifs = None
@@ -415,7 +465,9 @@ def take_best_run(
         if nb_motifs > max_nb_motifs:
             max_nb_motifs = nb_motifs
             offset_max_nb_motifs = offset
-    assert offset_max_nb_motifs is not None
+    if offset_max_nb_motifs is None:
+        msg = "This should not have happened."
+        raise RuntimeError(msg)
     subseq = sequence[offset_max_nb_motifs : offset_max_nb_motifs + sequence_length]
     return subseq
 
@@ -428,7 +480,8 @@ def take_best_run(
 #    ATGC = list("ATGC")
 #
 #    sequence = [
-#        [solver.IntVar(0, 1, f"{c}[{i}]") for c in ATGC] for i in range(sequence_length)
+#        [solver.IntVar(0, 1, f"{c}[{i}]") for c in ATGC]
+#        for i in range(sequence_length)
 #    ]
 #
 #    motif_present = [
@@ -439,7 +492,8 @@ def take_best_run(
 #        for i in range(len(motifs))
 #    ]
 #
-#    motif_present_summary = [solver.IntVar(0, 1, f"d[{i}]") for i in range(len(motifs))]
+#    motif_present_summary = [solver.IntVar(0, 1, f"d[{i}]")
+#                             for i in range(len(motifs))]
 #
 #    # There needs to be one basepair selected on every position of the sequence
 #    for basepair in sequence:
