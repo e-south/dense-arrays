@@ -1,5 +1,14 @@
 # dense-arrays
 
+This library helps with the design of double-stranded nucleotide sequences made of many overlapping motifs.
+
+## Installation
+
+1. (optional but recommended) Create an empty conda environment: `conda create -n dense-arrays python` and activate it `conda activate dense-arrays`
+2. Install the package with `pip install .`
+
+## Simple usage
+
 ``` python
 import dense_arrays as da
 
@@ -13,3 +22,14 @@ print("List of all solutions")
 for solution in opt.solutions():
     print(solution)
 ```
+
+## Different solver backends
+
+The methods `Optimizer.optimal` and `Optimizer.solutions` take an optional argument for the solver backend. It takes what `ortools` accepts:
+
+* `"CBC"` (default)
+* `"SCIP"`
+* `"GUROBI"`
+* `"CPLEX"`
+* `"XPRESS"`
+* `"GLPK"`
