@@ -3,6 +3,7 @@
 import itertools as it
 from collections.abc import Iterator
 from dataclasses import dataclass
+from typing import Self
 
 from ortools.linear_solver import pywraplp
 
@@ -90,7 +91,7 @@ class DenseArray:
     offsets_rev: list[int | None]
 
     def __init__(
-        self: "DenseArray",
+        self: Self,
         library: list[str],
         sequence_length: int,
         offsets_fwd: list[int | None],
@@ -108,7 +109,7 @@ class DenseArray:
             sequence = sequence[:offset] + motif
         self.sequence = sequence
 
-    def offset_indices_in_order(self: "DenseArray") -> list[tuple[int, int]]:
+    def offset_indices_in_order(self: Self) -> list[tuple[int, int]]:
         """
         List the motifs in the solution by ascending offset.
 
@@ -131,14 +132,14 @@ class DenseArray:
         return sorted(order_fwd + order_rev)
 
     @property
-    def nb_motifs(self: "DenseArray") -> int:
+    def nb_motifs(self: Self) -> int:
         """Number of motifs that fit in this solution."""
         nb_fwd = sum(offset is not None for offset in self.offsets_fwd)
         nb_rev = sum(offset is not None for offset in self.offsets_rev)
         return nb_fwd + nb_rev
 
     @property
-    def compression_ratio(self: "DenseArray") -> float:
+    def compression_ratio(self: Self) -> float:
         """Compression ratio, i.e. total length of motifs / solution size."""
         total_length = sum(
             len(motif)
@@ -152,7 +153,7 @@ class DenseArray:
         )
         return total_length / self.sequence_length
 
-    def __str__(self: "DenseArray") -> str:
+    def __str__(self: Self) -> str:
         """Str dunder."""
         sequence = self.sequence + "-" * (self.sequence_length - len(self.sequence))
         seq_rev = "".join(COMPLEMENT[c] for c in sequence)
@@ -169,7 +170,7 @@ class Optimizer:
     """Optimizer."""
 
     def __init__(
-        self: "Optimizer",
+        self: Self,
         library: list[str],
         sequence_length: int,
         strands: str = "double",
@@ -186,7 +187,7 @@ class Optimizer:
         self.adjacency_matrix = adjacency_matrix(library)
         self.model = None
 
-    def _build_model(self: "Optimizer", solver: str = "CBC") -> None:
+    def _build_model(self: Self, solver: str = "CBC") -> None:
         nb_motifs = len(self.library)
         nb_nodes = nb_motifs if self.strands == "single" else 2 * nb_motifs
 
@@ -266,7 +267,7 @@ class Optimizer:
             ),
         )
 
-    def _solve(self: "Optimizer") -> DenseArray | None:
+    def _solve(self: Self) -> DenseArray | None:
         if self.model is None:
             msg = "Model not built: call `_build_model(solver)` first"
             raise RuntimeError(msg)
@@ -306,14 +307,14 @@ class Optimizer:
 
         return None
 
-    def forbid(self: "Optimizer", solution: DenseArray) -> None:
+    def forbid(self: Self, solution: DenseArray) -> None:
         """Add a constraint to the model to forbid a given solution."""
         sol = [-1, *(i for _, i in solution.offset_indices_in_order()), -1]
         self.model.Add(
             sum(self.model.X[i, j] for i, j in it.pairwise(sol)) <= solution.nb_motifs,
         )
 
-    def solutions(self: "Optimizer", solver: str = "CBC") -> Iterator[DenseArray]:
+    def solutions(self: Self, solver: str = "CBC") -> Iterator[DenseArray]:
         """Iterate over solutions in decreasing order of score."""
         self._build_model(solver)
 
@@ -323,7 +324,7 @@ class Optimizer:
             self.forbid(sol)
             sol = self._solve()
 
-    def set_motif_weight(self: "Optimizer", imotif: int, weight: float) -> None:
+    def set_motif_weight(self: Self, imotif: int, weight: float) -> None:
         """Set the weight of a particular motif in the score."""
         objective = self.model.Objective()
 
@@ -338,9 +339,7 @@ class Optimizer:
             if self.strands == "double" and i != imotif2:
                 objective.SetCoefficient(self.model.X[i, imotif2], weight)
 
-    def solutions_diverse(
-        self: "Optimizer", solver: str = "CBC"
-    ) -> Iterator[DenseArray]:
+    def solutions_diverse(self: Self, solver: str = "CBC") -> Iterator[DenseArray]:
         """
         Return an iterator of optimal solutions trying to minimize the bias in motifs.
 
@@ -384,11 +383,11 @@ class Optimizer:
             for imin in imins:
                 self.set_motif_weight(imin, 1 + epsilon)
 
-    def optimal(self: "Optimizer", solver: str = "CBC") -> DenseArray:
+    def optimal(self: Self, solver: str = "CBC") -> DenseArray:
         """Return the optimal solution."""
         return next(self.solutions(solver))
 
-    def approximate(self: "Optimizer") -> DenseArray:  # noqa: C901 PLR0912
+    def approximate(self: Self) -> DenseArray:  # noqa: C901 PLR0912
         """Return a solution approximated with a greedy algorithm."""
         library = list(self.library)
         if self.strands == "double":
