@@ -387,7 +387,7 @@ class Optimizer:
         """Return the optimal solution."""
         return next(self.solutions(solver))
 
-    def approximate(self: Self) -> DenseArray:  # noqa: C901 PLR0912
+    def approximate(self: Self) -> DenseArray:
         """Return a solution approximated with a greedy algorithm."""
         library = list(self.library)
         if self.strands == "double":
@@ -395,21 +395,13 @@ class Optimizer:
 
         while len(library) > {"single": 1, "double": 2}[self.strands]:
             adj = adjacency_matrix(library)
-            min_dist = max(len(motif) for motif in library) + 1
-            index_min_dist = None
-            for i in range(len(library)):
-                for j in range(len(library)):
-                    if i == j:
-                        continue
-                    if self.strands == "double" and abs(i - j) == len(library) // 2:
-                        continue
-                    if adj[i][j] < min_dist:
-                        min_dist = adj[i][j]
-                        index_min_dist = (i, j)
-            if index_min_dist is None:
-                msg = "This should not have happened."
-                raise RuntimeError(msg)
-            i, j = index_min_dist
+            _min_dist, i, j = min(
+                (adj[i][j], i, j)
+                for i in range(len(library))
+                for j in range(len(library))
+                if i != j
+                and not (self.strands == "double" and abs(i - j) == len(library) // 2)
+            )
             library[i] = library[i][: adj[i][j]] + library[j]
             if self.strands == "double":
                 library[(i + len(library) // 2) % len(library)] = reverse_complement(
@@ -466,7 +458,7 @@ def take_best_run(
             offset_max_nb_motifs = offset
     if offset_max_nb_motifs is None:
         msg = "This should not have happened."
-        raise RuntimeError(msg)
+        raise AssertionError(msg)
     subseq = sequence[offset_max_nb_motifs : offset_max_nb_motifs + sequence_length]
     return subseq
 
