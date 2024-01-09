@@ -266,16 +266,16 @@ class Optimizer:
 
         # Don't include any motif more than once
         if self.strands == "single":
-            for k in range(self.nb_nodes):
+            for k in range(self.nb_motifs):
                 self.model.Add(
-                    sum(X[i, k] for i in range(-1, self.nb_nodes) if i != k) <= 1
+                    sum(X[i, k] for i in range(-1, self.nb_motifs) if i != k) <= 1
                 )
                 self.model.Add(
-                    sum(X[k, j] for j in range(-1, self.nb_nodes) if j != k) <= 1
+                    sum(X[k, j] for j in range(-1, self.nb_motifs) if j != k) <= 1
                 )
         else:
-            for k in range(self.nb_nodes // 2):
-                krev = k + self.nb_nodes // 2
+            for k in range(self.nb_motifs):
+                krev = k + self.nb_motifs
                 enter_direct = sum(X[i, k] for i in range(-1, self.nb_nodes) if i != k)
                 enter_rev = sum(
                     X[i, krev] for i in range(-1, self.nb_nodes) if i != krev
