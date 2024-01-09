@@ -183,12 +183,22 @@ class Optimizer:
         if strands not in {"single", "double"}:
             msg = "strands must be single or double"
             raise ValueError(msg)
+        if isinstance(special_motif_a, str) and special_motif_a not in library:
+            msg = "special_motif_a must be included in the library"
+            raise ValueError(msg)
+        if isinstance(special_motif_b, str) and special_motif_b not in library:
+            msg = "special_motif_b must be included in the library"
+            raise ValueError(msg)
 
         self.library = list(library)
         self.sequence_length = sequence_length
         self.strands = strands
-        self.special_motif_a = special_motif_a
-        self.special_motif_b = special_motif_b
+        self.index_motif_a = (
+            None if special_motif_a is None else self.library.index(special_motif_a)
+        )
+        self.index_motif_b = (
+            None if special_motif_b is None else self.library.index(special_motif_b)
+        )
         if isinstance(a_start_pos, tuple):
             self.a_start_pos = a_start_pos
         else:
@@ -303,9 +313,8 @@ class Optimizer:
                 self.model.Add(cont[i] - cont[j] + 1 <= self.nb_nodes * (1 - X[i, j]))
 
         # Apply user-defined distance constraints if any
-        index_a, index_b = self._find_special_motif_indices()
-        if index_a is not None and index_b is not None:
-            self._add_special_motif_constraints(index_a, index_b)
+        if self.index_motif_a is not None and self.index_motif_b is not None:
+            self._add_special_motif_constraints()
 
         # Objective
         self.model.Maximize(
@@ -317,7 +326,7 @@ class Optimizer:
             ),
         )
 
-    def _add_special_motif_constraints(self: Self, index_a: int, index_b: int) -> None:
+    def _add_special_motif_constraints(self: Self) -> None:
         """Add special motif constraints to the problem."""
         if self.model is None:
             msg = "Could not create model. There is a problem with the backend."
@@ -326,23 +335,26 @@ class Optimizer:
         # Ensure special motifs a and b appear in the sequence
         self.model.Add(
             sum(
-                self.model.X[i, index_a]
+                self.model.X[i, self.index_motif_a]
                 for i in range(-1, self.nb_nodes)
-                if i != index_a
+                if i != self.index_motif_a
             )
             >= 1
         )
         self.model.Add(
             sum(
-                self.model.X[i, index_b]
+                self.model.X[i, self.index_motif_b]
                 for i in range(-1, self.nb_nodes)
-                if i != index_b
+                if i != self.index_motif_b
             )
             >= 1
         )
 
         # Motif a should appear before motif b
-        self.model.Add(self.model.cont[index_b] - self.model.cont[index_a] >= 1)
+        self.model.Add(
+            self.model.cont[self.index_motif_b] - self.model.cont[self.index_motif_a]
+            >= 1
+        )
 
         # Initialize cumulative length variables
         cumulative_length = [
@@ -377,19 +389,21 @@ class Optimizer:
         # Positioning motif a after a_start_min
         # but before a_start_max characters from the start
         if self.a_start_pos[0] is not None:
-            self.model.Add(cumulative_length[index_a] >= self.a_start_pos[0])
+            self.model.Add(cumulative_length[self.index_motif_a] >= self.a_start_pos[0])
         if self.a_start_pos[1] is not None:
-            self.model.Add(cumulative_length[index_a] <= self.a_start_pos[1])
+            self.model.Add(cumulative_length[self.index_motif_a] <= self.a_start_pos[1])
 
         # Distance between special vertices a and b
         if self.a_b_distance[1] is not None:
             self.model.Add(
-                cumulative_length[index_b] - cumulative_length[index_a]
+                cumulative_length[self.index_motif_b]
+                - cumulative_length[self.index_motif_a]
                 <= self.a_b_distance[1]
             )
         if self.a_b_distance[0] is not None:
             self.model.Add(
-                cumulative_length[index_b] - cumulative_length[index_a]
+                cumulative_length[self.index_motif_b]
+                - cumulative_length[self.index_motif_a]
                 >= self.a_b_distance[0]
             )
 
@@ -440,19 +454,6 @@ class Optimizer:
             offsets_fwd,
             offsets_rev,
         )
-
-    def _find_special_motif_indices(self: Self) -> tuple[int | None, int | None]:
-        index_a = (
-            self.library.index(self.special_motif_a)
-            if self.special_motif_a in self.library
-            else None
-        )
-        index_b = (
-            self.library.index(self.special_motif_b)
-            if self.special_motif_b in self.library
-            else None
-        )
-        return index_a, index_b
 
     def forbid(self: Self, solution: DenseArray) -> None:
         """Add a constraint to the model to forbid a given solution."""
