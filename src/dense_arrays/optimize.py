@@ -125,7 +125,7 @@ class DenseArray:
             if offset is not None
         ]
         order_rev = [
-            (offset, i + len(self.library))
+            (offset, i + self.nb_motifs)
             for i, offset in enumerate(self.offsets_rev)
             if offset is not None
         ]
@@ -199,10 +199,22 @@ class Optimizer:
         self.adjacency_matrix = adjacency_matrix(library)
         self.model = None
 
-    def _build_model(self: Self, solver: str = "CBC") -> None:
-        nb_motifs = len(self.library)
-        nb_nodes = nb_motifs if self.strands == "single" else 2 * nb_motifs
+    @property
+    def nb_motifs(self: Self) -> int:
+        """The number of motifs in the library (not counting reverse duplicates)."""
+        return len(self.library)
 
+    @property
+    def nb_nodes(self: Self) -> int:
+        """
+        The number of nodes in the library.
+
+        It is equal to nb_motifs for single-stranded optimization
+        and 2 * nb_motifs for double-stranded optimization.
+        """
+        return self.nb_motifs * {"single": 1, "double": 2}[self.strands]
+
+    def _build_model(self: Self, solver: str = "CBC") -> None:
         self.model = pywraplp.Solver.CreateSolver(solver)
 
         if self.model is None:
@@ -211,66 +223,81 @@ class Optimizer:
 
         # X_ij are binary variables. X_ij == 1 means that motif #j directly follows
         # (and possibly overlaps) motif #i in the sequence.
-        start = {(-1, j): self.model.BoolVar(f"X[-1,{j}]") for j in range(nb_nodes)}
-        end = {(i, -1): self.model.BoolVar(f"X[{i},-1]") for i in range(-1, nb_nodes)}
+        start = {
+            (-1, j): self.model.BoolVar(f"X[-1,{j}]") for j in range(self.nb_nodes)
+        }
+        end = {
+            (i, -1): self.model.BoolVar(f"X[{i},-1]") for i in range(-1, self.nb_nodes)
+        }
         middle = {
             (i, j): self.model.BoolVar(f"X[{i},{j}]")
-            for i in range(nb_nodes)
-            for j in range(nb_nodes)
+            for i in range(self.nb_nodes)
+            for j in range(self.nb_nodes)
             if i != j
         }
         X = start | end | middle  # noqa: N806
         self.model.X = X
 
         # Path starts at the start
-        self.model.Add(sum(X[-1, j] for j in range(-1, nb_nodes)) == 1)
+        self.model.Add(sum(X[-1, j] for j in range(-1, self.nb_nodes)) == 1)
 
         # Path ends at the end
-        self.model.Add(sum(X[i, -1] for i in range(-1, nb_nodes)) == 1)
+        self.model.Add(sum(X[i, -1] for i in range(-1, self.nb_nodes)) == 1)
 
         # Conservation of flow
-        for k in range(nb_nodes):
+        for k in range(self.nb_nodes):
             self.model.Add(
-                sum(X[i, k] for i in range(-1, nb_nodes) if i != k)
-                == sum(X[k, j] for j in range(-1, nb_nodes) if j != k),
+                sum(X[i, k] for i in range(-1, self.nb_nodes) if i != k)
+                == sum(X[k, j] for j in range(-1, self.nb_nodes) if j != k),
             )
 
         # Don't include any motif more than once
         if self.strands == "single":
-            for k in range(nb_nodes):
-                self.model.Add(sum(X[i, k] for i in range(-1, nb_nodes) if i != k) <= 1)
-                self.model.Add(sum(X[k, j] for j in range(-1, nb_nodes) if j != k) <= 1)
+            for k in range(self.nb_nodes):
+                self.model.Add(
+                    sum(X[i, k] for i in range(-1, self.nb_nodes) if i != k) <= 1
+                )
+                self.model.Add(
+                    sum(X[k, j] for j in range(-1, self.nb_nodes) if j != k) <= 1
+                )
         else:
-            for k in range(nb_nodes // 2):
-                krev = k + nb_nodes // 2
-                enter_direct = sum(X[i, k] for i in range(-1, nb_nodes) if i != k)
-                enter_rev = sum(X[i, krev] for i in range(-1, nb_nodes) if i != krev)
+            for k in range(self.nb_nodes // 2):
+                krev = k + self.nb_nodes // 2
+                enter_direct = sum(X[i, k] for i in range(-1, self.nb_nodes) if i != k)
+                enter_rev = sum(
+                    X[i, krev] for i in range(-1, self.nb_nodes) if i != krev
+                )
                 self.model.Add(enter_direct + enter_rev <= 1)
-                exit_direct = sum(X[k, j] for j in range(-1, nb_nodes) if k != j)
-                exit_rev = sum(X[krev, j] for j in range(-1, nb_nodes) if krev != j)
+                exit_direct = sum(X[k, j] for j in range(-1, self.nb_nodes) if k != j)
+                exit_rev = sum(
+                    X[krev, j] for j in range(-1, self.nb_nodes) if krev != j
+                )
                 self.model.Add(exit_direct + exit_rev <= 1)
 
         # Global length constraint
         size_inside = sum(
             self.adjacency_matrix[i][j] * X[i, j]
-            for i in range(nb_nodes)
-            for j in range(nb_nodes)
+            for i in range(self.nb_nodes)
+            for j in range(self.nb_nodes)
             if i != j
         )
         size_terminal = sum(
-            len(self.library[i % nb_motifs]) * X[i, -1] for i in range(nb_nodes)
+            len(self.library[i % self.nb_motifs]) * X[i, -1]
+            for i in range(self.nb_nodes)
         )
         self.model.Add(size_inside + size_terminal <= self.sequence_length)
 
         # Continuity constraints
-        cont = [self.model.IntVar(1, nb_nodes, f"u[{i}]") for i in range(nb_nodes)]
+        cont = [
+            self.model.IntVar(1, self.nb_nodes, f"u[{i}]") for i in range(self.nb_nodes)
+        ]
         self.model.cont = cont
 
-        for i in range(nb_nodes):
-            for j in range(nb_nodes):
+        for i in range(self.nb_nodes):
+            for j in range(self.nb_nodes):
                 if i == j:
                     continue
-                self.model.Add(cont[i] - cont[j] + 1 <= nb_nodes * (1 - X[i, j]))
+                self.model.Add(cont[i] - cont[j] + 1 <= self.nb_nodes * (1 - X[i, j]))
 
         # Apply user-defined distance constraints if any
         index_a, index_b = self._find_special_motif_indices()
@@ -280,22 +307,34 @@ class Optimizer:
         # Objective
         self.model.Maximize(
             sum(
-                X[i, j] for i in range(-1, nb_nodes) for j in range(nb_nodes) if i != j
+                X[i, j]
+                for i in range(-1, self.nb_nodes)
+                for j in range(self.nb_nodes)
+                if i != j
             ),
         )
 
     def _add_special_motif_constraints(self: Self, index_a: int, index_b: int) -> None:
         """Add special motif constraints to the problem."""
-        nb_motifs = len(self.library)
-        nb_nodes = nb_motifs if self.strands == "single" else 2 * nb_motifs
+        if self.model is None:
+            msg = "Could not create model. There is a problem with the backend."
+            raise RuntimeError(msg)
 
         # Ensure special motifs a and b appear in the sequence
         self.model.Add(
-            sum(self.model.X[i, index_a] for i in range(-1, nb_nodes) if i != index_a)
+            sum(
+                self.model.X[i, index_a]
+                for i in range(-1, self.nb_nodes)
+                if i != index_a
+            )
             >= 1
         )
         self.model.Add(
-            sum(self.model.X[i, index_b] for i in range(-1, nb_nodes) if i != index_b)
+            sum(
+                self.model.X[i, index_b]
+                for i in range(-1, self.nb_nodes)
+                if i != index_b
+            )
             >= 1
         )
 
@@ -305,7 +344,7 @@ class Optimizer:
         # Initialize cumulative length variables
         cumulative_length = [
             self.model.IntVar(0, self.sequence_length - 1, f"cumulative_length[{i}]")
-            for i in range(nb_nodes)
+            for i in range(self.nb_nodes)
         ]
         self.model.cumulative_length = cumulative_length
 
@@ -313,8 +352,8 @@ class Optimizer:
         self.model.Add(cumulative_length[-1] == 0)
 
         # Define cumulative length for each node
-        for i in range(-1, nb_nodes):
-            for j in range(nb_nodes):
+        for i in range(-1, self.nb_nodes):
+            for j in range(self.nb_nodes):
                 if i == j:
                     continue
                 length_increase = 0 if i == -1 else self.adjacency_matrix[i][j]
@@ -356,9 +395,6 @@ class Optimizer:
             msg = "Model not built: call `_build_model(solver)` first"
             raise RuntimeError(msg)
 
-        nb_motifs = len(self.library)
-        nb_nodes = nb_motifs if self.strands == "single" else 2 * nb_motifs
-
         # Solve the problem
         status = self.model.Solve()
 
@@ -379,17 +415,17 @@ class Optimizer:
         # Extract solution
         sol = [-1]
         offset = 0
-        offsets_fwd = [None] * nb_motifs
-        offsets_rev = [None] * nb_motifs
+        offsets_fwd = [None] * self.nb_motifs
+        offsets_rev = [None] * self.nb_motifs
         while sol[-1] >= 0 or len(sol) == 1:
-            for j in range(-1, nb_nodes):
+            for j in range(-1, self.nb_nodes):
                 if sol[-1] >= 0 and j == sol[-1]:
                     continue
                 if round(self.model.X[sol[-1], j].solution_value()) == 1:
                     if len(sol) > 1:
                         offset += self.adjacency_matrix[sol[-1]][j]
-                    if j >= len(self.library):
-                        offsets_rev[j % nb_motifs] = offset
+                    if j >= self.nb_motifs:
+                        offsets_rev[j % self.nb_motifs] = offset
                     elif j >= 0:
                         offsets_fwd[j] = offset
                     sol.append(j)
@@ -436,14 +472,10 @@ class Optimizer:
         """Set the weight of a particular motif in the score."""
         objective = self.model.Objective()
 
-        nb_nodes = len(self.library)
-        if self.strands == "double":
-            nb_nodes *= 2
-
-        for i in range(-1, nb_nodes):
+        for i in range(-1, self.nb_nodes):
             if i != imotif:
                 objective.SetCoefficient(self.model.X[i, imotif], weight)
-            imotif2 = imotif + len(self.library)
+            imotif2 = imotif + self.nb_motifs
             if self.strands == "double" and i != imotif2:
                 objective.SetCoefficient(self.model.X[i, imotif2], weight)
 
@@ -458,13 +490,9 @@ class Optimizer:
         """
         self._build_model(solver)
 
-        nb_nodes = len(self.library)
-        if self.strands == "double":
-            nb_nodes *= 2
+        epsilon = 0.5 / self.nb_motifs
 
-        epsilon = 0.5 / len(self.library)
-
-        motifs = [0] * len(self.library)
+        motifs = [0] * self.nb_motifs
         # Define a dummy constraint, clear it and add it to the solver (I don't
         # know how to generate an empty constraint otherwise)
         constraint = self.model.Constraint()
@@ -536,11 +564,11 @@ class Optimizer:
                 else None
                 for motif in self.library
             ]
-            for i in range(len(self.library)):
+            for i in range(self.nb_motifs):
                 if offsets_fwd[i] is not None and offsets_rev[i] is not None:
                     offsets_rev[i] = None
         else:
-            offsets_rev = [None] * len(self.library)
+            offsets_rev = [None] * self.nb_motifs
         return DenseArray(self.library, self.sequence_length, offsets_fwd, offsets_rev)
 
 
