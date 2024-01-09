@@ -11,6 +11,7 @@ repos:
       - id: check-toml
       - id: end-of-file-fixer
       - id: trailing-whitespace
+        exclude: ^.*\.svg
       - id: mixed-line-ending
       - id: name-tests-test
         args: [--pytest-test-first]
@@ -20,6 +21,7 @@ repos:
       - id: typos
         args:
           - --config=.typos.toml
+        exclude: ^.*\.svg
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.1.11
     hooks:
