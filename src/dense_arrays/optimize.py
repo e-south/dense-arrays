@@ -169,7 +169,7 @@ class DenseArray:
 class Optimizer:
     """Optimizer."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self: Self,
         library: list[str],
         sequence_length: int,
@@ -265,27 +265,19 @@ class Optimizer:
             )
 
         # Don't include any motif more than once
-        if self.strands == "single":
-            for k in range(self.nb_motifs):
-                self.model.Add(
-                    sum(X[i, k] for i in range(-1, self.nb_motifs) if i != k) <= 1
-                )
-                self.model.Add(
-                    sum(X[k, j] for j in range(-1, self.nb_motifs) if j != k) <= 1
-                )
-        else:
-            for k in range(self.nb_motifs):
-                krev = k + self.nb_motifs
-                enter_direct = sum(X[i, k] for i in range(-1, self.nb_nodes) if i != k)
-                enter_rev = sum(
-                    X[i, krev] for i in range(-1, self.nb_nodes) if i != krev
-                )
-                self.model.Add(enter_direct + enter_rev <= 1)
-                exit_direct = sum(X[k, j] for j in range(-1, self.nb_nodes) if k != j)
-                exit_rev = sum(
-                    X[krev, j] for j in range(-1, self.nb_nodes) if krev != j
-                )
-                self.model.Add(exit_direct + exit_rev <= 1)
+        for k in range(self.nb_motifs):
+            enter_direct = sum(X[i, k] for i in range(-1, self.nb_nodes) if i != k)
+            exit_direct = sum(X[k, j] for j in range(-1, self.nb_nodes) if k != j)
+            if self.strands == "single":
+                self.model.Add(enter_direct <= 1)
+                self.model.Add(exit_direct <= 1)
+                continue
+            # krev is the index of the reverse complement of motif k
+            krev = k + self.nb_motifs
+            enter_rev = sum(X[i, krev] for i in range(-1, self.nb_nodes) if i != krev)
+            exit_rev = sum(X[krev, j] for j in range(-1, self.nb_nodes) if krev != j)
+            self.model.Add(enter_direct + enter_rev <= 1)
+            self.model.Add(exit_direct + exit_rev <= 1)
 
         # Global length constraint
         size_inside = sum(
@@ -333,22 +325,10 @@ class Optimizer:
             raise RuntimeError(msg)
 
         # Ensure special motifs a and b appear in the sequence
-        self.model.Add(
-            sum(
-                self.model.X[i, self.index_motif_a]
-                for i in range(-1, self.nb_nodes)
-                if i != self.index_motif_a
+        for k in [self.index_motif_a, self.index_motif_b]:
+            self.model.Add(
+                sum(self.model.X[i, k] for i in range(-1, self.nb_nodes) if i != k) >= 1
             )
-            >= 1
-        )
-        self.model.Add(
-            sum(
-                self.model.X[i, self.index_motif_b]
-                for i in range(-1, self.nb_nodes)
-                if i != self.index_motif_b
-            )
-            >= 1
-        )
 
         # Motif a should appear before motif b
         self.model.Add(
@@ -357,57 +337,41 @@ class Optimizer:
         )
 
         # Initialize cumulative length variables
-        cumulative_length = [
-            self.model.IntVar(0, self.sequence_length - 1, f"cumulative_length[{i}]")
+        position = [
+            self.model.IntVar(0, self.sequence_length - 1, f"position[{i}]")
             for i in range(self.nb_nodes)
         ]
-        self.model.cumulative_length = cumulative_length
+        self.model.position = position
 
         # Set cumulative length for the start point
-        self.model.Add(cumulative_length[-1] == 0)
+        self.model.Add(position[-1] == 0)
 
         # Define cumulative length for each node
         for i in range(-1, self.nb_nodes):
             for j in range(self.nb_nodes):
                 if i == j:
                     continue
-                length_increase = 0 if i == -1 else self.adjacency_matrix[i][j]
-                # Using a big-M approach to enforce the constraint conditionally
-                big_m = self.sequence_length
-
-                self.model.Add(
-                    cumulative_length[j] - cumulative_length[i]
-                    >= length_increase * self.model.X[i, j]
-                    + (1 - big_m) * (1 - self.model.X[i, j])
-                )
-                self.model.Add(
-                    cumulative_length[j] - cumulative_length[i]
-                    <= length_increase * self.model.X[i, j]
-                    - (1 - big_m) * (1 - self.model.X[i, j])
-                )
+                shift = 0 if i == -1 else self.adjacency_matrix[i][j]
+                distance_i_j = position[j] - position[i]
+                slack = (1 - self.sequence_length) * (1 - self.model.X[i, j])
+                self.model.Add(distance_i_j >= shift * self.model.X[i, j] + slack)
+                self.model.Add(distance_i_j <= shift * self.model.X[i, j] - slack)
 
         # Positioning motif a after a_start_min
         # but before a_start_max characters from the start
         if self.a_start_pos[0] is not None:
-            self.model.Add(cumulative_length[self.index_motif_a] >= self.a_start_pos[0])
+            self.model.Add(position[self.index_motif_a] >= self.a_start_pos[0])
         if self.a_start_pos[1] is not None:
-            self.model.Add(cumulative_length[self.index_motif_a] <= self.a_start_pos[1])
+            self.model.Add(position[self.index_motif_a] <= self.a_start_pos[1])
 
         # Distance between special vertices a and b
+        a_b_distance = position[self.index_motif_b] - position[self.index_motif_a]
         if self.a_b_distance[1] is not None:
-            self.model.Add(
-                cumulative_length[self.index_motif_b]
-                - cumulative_length[self.index_motif_a]
-                <= self.a_b_distance[1]
-            )
+            self.model.Add(a_b_distance <= self.a_b_distance[1])
         if self.a_b_distance[0] is not None:
-            self.model.Add(
-                cumulative_length[self.index_motif_b]
-                - cumulative_length[self.index_motif_a]
-                >= self.a_b_distance[0]
-            )
+            self.model.Add(a_b_distance >= self.a_b_distance[0])
 
-    def _solve(self: Self) -> DenseArray:
+    def _solve(self: Self) -> DenseArray:  # noqa: C901
         if self.model is None:
             msg = "Model not built: call `_build_model(solver)` first"
             raise RuntimeError(msg)
@@ -425,11 +389,13 @@ class Optimizer:
                     msg = "The model is unbounded."
                 case pywraplp.Solver.ABNORMAL:
                     msg = "The model is abnormal."
+                case pywraplp.Solver.NOT_SOLVED:
+                    msg = "The model has not been solved."
                 case _:
-                    msg = "Solver ended with unknown status."
+                    msg = f"Solver ended with unknown status: {status}."
             raise ValueError(msg)
 
-        # Extract solution
+        # Extract the solution
         sol = [-1]
         offset = 0
         offsets_fwd = [None] * self.nb_motifs
@@ -448,6 +414,7 @@ class Optimizer:
                     sol.append(j)
                     break
         sol = sol[1:-1]
+
         return DenseArray(
             self.library,
             self.sequence_length,
@@ -458,9 +425,8 @@ class Optimizer:
     def forbid(self: Self, solution: DenseArray) -> None:
         """Add a constraint to the model to forbid a given solution."""
         sol = [-1, *(i for _, i in solution.offset_indices_in_order()), -1]
-        self.model.Add(
-            sum(self.model.X[i, j] for i, j in it.pairwise(sol)) <= solution.nb_motifs,
-        )
+        sum_on_path = sum(self.model.X[i, j] for i, j in it.pairwise(sol))
+        self.model.Add(sum_on_path <= solution.nb_motifs)
 
     def solutions(self: Self, solver: str = "CBC") -> Iterator[DenseArray]:
         """Iterate over solutions in decreasing order of score."""
