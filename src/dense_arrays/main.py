@@ -27,10 +27,8 @@ opt = da.Optimizer(
     strands="double",
     special_motif_a="CCCCGCC",
     special_motif_b="GGGGGGG",
-    a_start_min=5,
-    a_start_max=10,
-    a_b_min_distance=10,
-    a_b_max_distance=20,
+    a_start_pos=(5, 10),
+    a_b_distance=(10, 20),
 )
 
 

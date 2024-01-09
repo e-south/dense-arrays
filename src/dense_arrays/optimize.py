@@ -174,12 +174,11 @@ class Optimizer:
         library: list[str],
         sequence_length: int,
         strands: str = "double",
+        *,
         special_motif_a: str | None = None,
         special_motif_b: str | None = None,
-        a_start_min: int | None = None,
-        a_start_max: int | None = None,
-        a_b_min_distance: int | None = None,
-        a_b_max_distance: int | None = None,
+        a_start_pos: int | tuple[int | None, int | None] | None = None,
+        a_b_distance: int | tuple[int | None, int | None] | None = None,
     ) -> None:
         if strands not in {"single", "double"}:
             msg = "strands must be single or double"
@@ -190,10 +189,14 @@ class Optimizer:
         self.strands = strands
         self.special_motif_a = special_motif_a
         self.special_motif_b = special_motif_b
-        self.a_start_min = a_start_min
-        self.a_start_max = a_start_max
-        self.a_b_min_distance = a_b_min_distance
-        self.a_b_max_distance = a_b_max_distance
+        if isinstance(a_start_pos, tuple):
+            self.a_start_pos = a_start_pos
+        else:
+            self.a_start_pos = (a_start_pos, a_start_pos)
+        if isinstance(a_b_distance, tuple):
+            self.a_b_distance = a_b_distance
+        else:
+            self.a_b_distance = (a_b_distance, a_b_distance)
         if strands == "double":
             library = library + [reverse_complement(motif) for motif in library]
         self.adjacency_matrix = adjacency_matrix(library)
@@ -373,21 +376,21 @@ class Optimizer:
 
         # Positioning motif a after a_start_min
         # but before a_start_max characters from the start
-        if self.a_start_min is not None:
-            self.model.Add(cumulative_length[index_a] >= self.a_start_min)
-        if self.a_start_max is not None:
-            self.model.Add(cumulative_length[index_a] <= self.a_start_max)
+        if self.a_start_pos[0] is not None:
+            self.model.Add(cumulative_length[index_a] >= self.a_start_pos[0])
+        if self.a_start_pos[1] is not None:
+            self.model.Add(cumulative_length[index_a] <= self.a_start_pos[1])
 
         # Distance between special vertices a and b
-        if self.a_b_max_distance is not None:
+        if self.a_b_distance[1] is not None:
             self.model.Add(
                 cumulative_length[index_b] - cumulative_length[index_a]
-                <= self.a_b_max_distance
+                <= self.a_b_distance[1]
             )
-        if self.a_b_min_distance is not None:
+        if self.a_b_distance[0] is not None:
             self.model.Add(
                 cumulative_length[index_b] - cumulative_length[index_a]
-                >= self.a_b_min_distance
+                >= self.a_b_distance[0]
             )
 
     def _solve(self: Self) -> DenseArray:
