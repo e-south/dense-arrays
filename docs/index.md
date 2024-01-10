@@ -1,6 +1,6 @@
 # Dense Arrays
 
-This library facilitates the design of dense promoter sequences.
+This library facilitates the design of double-stranded nucleotid sequences made of many overlapping motifs.
 
 ## Installation
 
