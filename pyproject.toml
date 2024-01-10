@@ -39,8 +39,14 @@ ignore = [
     "CPY001",
 ]
 
+[tool.ruff.lint.per-file-ignores]
+"tests/test_*.py" = ["ANN201", "D103", "S101"]
+
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.ruff.lint.flake8-pytest-style]
+parametrize-names-type = "csv"
 
 [tool.ruff.lint]
 preview = true

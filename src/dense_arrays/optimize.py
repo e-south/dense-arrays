@@ -9,7 +9,7 @@ from ortools.linear_solver import pywraplp
 
 COMPLEMENT = {"A": "T", "T": "A", "C": "G", "G": "C", "-": "-"}
 
-__all__ = ["DenseArray", "Optimizer"]
+__all__ = ["shift_metric", "DenseArray", "Optimizer"]
 
 
 def shift_metric(motifa: str, motifb: str) -> int:
@@ -23,11 +23,11 @@ def shift_metric(motifa: str, motifb: str) -> int:
         motifb:    CATTATG
         shift : 0123
 
-    and shift_metric("ATGCATTA", "TATGA") == 8 because
+    and shift_metric("ATGCATTA", "TATGA") == 6 because
 
         motifa: ATGCATTA
-        motifb:         TATGA
-        shift : 012345678
+        motifb:       TATGA
+        shift : 0123456
 
     Note: we only consider shifts such that the shifted `motifb` overhangs from
     `motifa`.  If `motifb` is contained inside `motifa`, it will not be counted:
