@@ -278,7 +278,7 @@ class Optimizer:
     @property
     def nb_nodes(self: Self) -> int:
         """
-        The number of nodes in the library.
+        The number of nodes in the library (ignoring the starting and end nodes).
 
         It is equal to `nb_motifs` for single-stranded optimization
         and `2 * nb_motifs` for double-stranded optimization.
