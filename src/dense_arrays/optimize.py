@@ -129,7 +129,12 @@ class DenseArray:
             for i, offset in enumerate(self.offsets_rev)
             if offset is not None
         ]
-        return sorted(order_fwd + order_rev)
+        # We sort by offset first and then by motif length:
+        # If two motifs have the same index, we want the shortest first
+        return sorted(
+            order_fwd + order_rev,
+            key=lambda o_i: (o_i[0], len(self.library[o_i[1] % len(self.library)])),
+        )
 
     @property
     def nb_motifs(self: Self) -> int:
