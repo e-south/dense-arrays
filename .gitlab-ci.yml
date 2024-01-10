@@ -2,6 +2,7 @@ image: python:latest
 
 before_script:
   - pip install mkdocs mkdocstrings[python] mkdocs-material
+  - pip install .
 pages:
   script:
     - mkdocs build -d public
