@@ -1,8 +1,13 @@
 image: python:latest
 
 before_script:
-  - pip install mkdocs mkdocstrings[python] mkdocs-material
+  - pip install pytest mkdocs mkdocstrings[python] mkdocs-material
   - pip install .
+
+test:
+  stage: test
+  script:
+    - pytest -v
 
 pages:
   stage: deploy
