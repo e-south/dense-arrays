@@ -25,10 +25,13 @@ opt = da.Optimizer(
     library=motifs,
     sequence_length=30,
     strands="double",
-    special_motif_a="CCCCGCC",
-    special_motif_b="GGGGGGG",
-    a_start_pos=(5, 10),
-    a_b_distance=(10, 20),
+)
+
+opt.add_promoter_constraints(
+    upstream="CCCCGCC",
+    downstream="GGGGGGG",
+    upstream_pos=(5, 10),
+    spacer_length=(3, 13),
 )
 
 

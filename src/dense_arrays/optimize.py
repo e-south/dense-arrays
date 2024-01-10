@@ -166,51 +166,104 @@ class DenseArray:
         return s_fwd + "\n" + s_rev
 
 
+@dataclass(init=False)
+class PromoterConstraint:
+    upstream_index: int
+    downstream_index: int
+    upstream_pos: tuple[int | None, int | None]
+    downstream_pos: tuple[int | None, int | None]
+    spacer_length: tuple[int | None, int | None]
+
+    def __init__(  # noqa: PLR0913
+        self: Self,
+        *,
+        upstream_index: int,
+        downstream_index: int,
+        upstream_pos: int | tuple[int | None, int | None] | None = None,
+        downstream_pos: int | tuple[int | None, int | None] | None = None,
+        spacer_length: int | tuple[int | None, int | None] | None = None,
+    ) -> None:
+        self.upstream_index = upstream_index
+        self.downstream_index = downstream_index
+        self.upstream_pos = (
+            upstream_pos
+            if isinstance(upstream_pos, tuple)
+            else (upstream_pos, upstream_pos)
+        )
+        self.downstream_pos = (
+            downstream_pos
+            if isinstance(downstream_pos, tuple)
+            else (downstream_pos, downstream_pos)
+        )
+        self.spacer_length = (
+            spacer_length
+            if isinstance(spacer_length, tuple)
+            else (spacer_length, spacer_length)
+        )
+
+
 class Optimizer:
     """Optimizer."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self: Self,
         library: list[str],
         sequence_length: int,
         strands: str = "double",
-        *,
-        special_motif_a: str | None = None,
-        special_motif_b: str | None = None,
-        a_start_pos: int | tuple[int | None, int | None] | None = None,
-        a_b_distance: int | tuple[int | None, int | None] | None = None,
     ) -> None:
         if strands not in {"single", "double"}:
             msg = "strands must be single or double"
-            raise ValueError(msg)
-        if isinstance(special_motif_a, str) and special_motif_a not in library:
-            msg = "special_motif_a must be included in the library"
-            raise ValueError(msg)
-        if isinstance(special_motif_b, str) and special_motif_b not in library:
-            msg = "special_motif_b must be included in the library"
             raise ValueError(msg)
 
         self.library = list(library)
         self.sequence_length = sequence_length
         self.strands = strands
-        self.index_motif_a = (
-            None if special_motif_a is None else self.library.index(special_motif_a)
-        )
-        self.index_motif_b = (
-            None if special_motif_b is None else self.library.index(special_motif_b)
-        )
-        if isinstance(a_start_pos, tuple):
-            self.a_start_pos = a_start_pos
-        else:
-            self.a_start_pos = (a_start_pos, a_start_pos)
-        if isinstance(a_b_distance, tuple):
-            self.a_b_distance = a_b_distance
-        else:
-            self.a_b_distance = (a_b_distance, a_b_distance)
+        self.promoters: list[PromoterConstraint] = []
         if strands == "double":
             library = library + [reverse_complement(motif) for motif in library]
         self.adjacency_matrix = adjacency_matrix(library)
         self.model = None
+
+    def add_promoter_constraints(  # noqa: PLR0913
+        self: Self,
+        *,
+        upstream: str,
+        downstream: str,
+        upstream_pos: int | tuple[int | None, int | None] | None = None,
+        downstream_pos: int | tuple[int | None, int | None] | None = None,
+        spacer_length: int | tuple[int | None, int | None] | None = None,
+    ) -> None:
+        """
+        Add a promoter constraint to the optimization problem.
+
+        Parameters
+        ----------
+        upstream : str
+            The upstream element (typically -35). Must appear in the library.
+        downstream : str
+            The downstream element (typically -10). Must appear in the library.
+        upstream_pos : int | tuple[int | None, int | None] | None
+            Position for the upstream element, or tuple (min, max).
+        downstream_pos : int | tuple[int | None, int | None] | None
+            Position for the downstream element, or tuple (min, max).
+        spacer_length : int | tuple[int | None, int | None] | None
+            Length of the spacer between both elements, or tuple (min, max).
+        """
+        try:
+            upstream_index = self.library.index(upstream)
+            downstream_index = self.library.index(downstream)
+        except ValueError as err:
+            msg = "Both promoter elements must be present in the library."
+            raise ValueError(msg) from err
+
+        constraint = PromoterConstraint(
+            upstream_index=upstream_index,
+            downstream_index=downstream_index,
+            upstream_pos=upstream_pos,
+            downstream_pos=downstream_pos,
+            spacer_length=spacer_length,
+        )
+        self.promoters.append(constraint)
 
     @property
     def nb_motifs(self: Self) -> int:
@@ -305,8 +358,8 @@ class Optimizer:
                 self.model.Add(cont[i] - cont[j] + 1 <= self.nb_nodes * (1 - X[i, j]))
 
         # Apply user-defined distance constraints if any
-        if self.index_motif_a is not None and self.index_motif_b is not None:
-            self._add_special_motif_constraints()
+        if self.promoters:
+            self._add_promoter_constraints()
 
         # Objective
         self.model.Maximize(
@@ -318,23 +371,11 @@ class Optimizer:
             ),
         )
 
-    def _add_special_motif_constraints(self: Self) -> None:
-        """Add special motif constraints to the problem."""
+    def _add_promoter_constraints(self: Self) -> None:
+        """Add promoter constraints to the problem."""
         if self.model is None:
-            msg = "Could not create model. There is a problem with the backend."
-            raise RuntimeError(msg)
-
-        # Ensure special motifs a and b appear in the sequence
-        for k in [self.index_motif_a, self.index_motif_b]:
-            self.model.Add(
-                sum(self.model.X[i, k] for i in range(-1, self.nb_nodes) if i != k) >= 1
-            )
-
-        # Motif a should appear before motif b
-        self.model.Add(
-            self.model.cont[self.index_motif_b] - self.model.cont[self.index_motif_a]
-            >= 1
-        )
+            msg = "The model must exist first (call _build_model)."
+            raise AssertionError(msg)
 
         # Initialize cumulative length variables
         position = [
@@ -353,23 +394,33 @@ class Optimizer:
                     continue
                 shift = 0 if i == -1 else self.adjacency_matrix[i][j]
                 distance_i_j = position[j] - position[i]
-                slack = (1 - self.sequence_length) * (1 - self.model.X[i, j])
-                self.model.Add(distance_i_j >= shift * self.model.X[i, j] + slack)
-                self.model.Add(distance_i_j <= shift * self.model.X[i, j] - slack)
+                slack = (self.sequence_length - 1) * (1 - self.model.X[i, j])
+                self.model.Add(shift * self.model.X[i, j] - slack <= distance_i_j)
+                self.model.Add(distance_i_j <= shift * self.model.X[i, j] + slack)
 
-        # Positioning motif a after a_start_min
-        # but before a_start_max characters from the start
-        if self.a_start_pos[0] is not None:
-            self.model.Add(position[self.index_motif_a] >= self.a_start_pos[0])
-        if self.a_start_pos[1] is not None:
-            self.model.Add(position[self.index_motif_a] <= self.a_start_pos[1])
+        for constraint in self.promoters:
+            # Both upstream and downstream elements must appear in the sequence
+            for k in [constraint.upstream_index, constraint.downstream_index]:
+                self.model.Add(
+                    sum(self.model.X[i, k] for i in range(-1, self.nb_nodes) if i != k)
+                    >= 1
+                )
 
-        # Distance between special vertices a and b
-        a_b_distance = position[self.index_motif_b] - position[self.index_motif_a]
-        if self.a_b_distance[1] is not None:
-            self.model.Add(a_b_distance <= self.a_b_distance[1])
-        if self.a_b_distance[0] is not None:
-            self.model.Add(a_b_distance >= self.a_b_distance[0])
+            # Position both upstream and downstream elements
+            spacer_length = (
+                position[constraint.downstream_index]
+                - position[constraint.upstream_index]
+                - len(self.library[constraint.upstream_index])
+            )
+            for pos_or_len, (min_val, max_val) in [
+                (position[constraint.upstream_index], constraint.upstream_pos),
+                (position[constraint.downstream_index], constraint.downstream_pos),
+                (spacer_length, constraint.spacer_length),
+            ]:
+                if min_val is not None:
+                    self.model.Add(min_val <= pos_or_len)
+                if max_val is not None:
+                    self.model.Add(pos_or_len <= max_val)
 
     def _solve(self: Self) -> DenseArray:  # noqa: C901
         if self.model is None:
