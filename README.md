@@ -2,6 +2,8 @@
 
 This library helps with the design of double-stranded nucleotide sequences made of many overlapping motifs.
 
+Documentation available on [https://dunloplab.gitlab.io/dense-arrays](https://dunloplab.gitlab.io/dense-arrays)
+
 ## Installation
 
 1. (optional but recommended) Create an empty conda environment: `conda create -n dense-arrays python` and activate it `conda activate dense-arrays`
