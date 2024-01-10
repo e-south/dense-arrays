@@ -1,4 +1,6 @@
 site_name: My Docs
+site_url: https://dunloplab.gitlab.io/dense-arrays
+site_dir: public
 
 theme:
   name: material

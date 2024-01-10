@@ -3,9 +3,11 @@ image: python:latest
 before_script:
   - pip install mkdocs mkdocstrings[python] mkdocs-material
   - pip install .
+
 pages:
+  stage: deploy
   script:
-    - mkdocs build -d public
+    - mkdocs build --strict --verbose
   artifacts:
     paths:
       - public
