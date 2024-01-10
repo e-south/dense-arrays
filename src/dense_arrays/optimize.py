@@ -125,7 +125,7 @@ class DenseArray:
             if offset is not None
         ]
         order_rev = [
-            (offset, i + self.nb_motifs)
+            (offset, i + len(self.library))
             for i, offset in enumerate(self.offsets_rev)
             if offset is not None
         ]
