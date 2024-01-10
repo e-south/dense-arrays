@@ -317,10 +317,9 @@ class Optimizer:
 
         # Conservation of flow
         for k in range(self.nb_nodes):
-            self.model.Add(
-                sum(X[i, k] for i in range(-1, self.nb_nodes) if i != k)
-                == sum(X[k, j] for j in range(-1, self.nb_nodes) if j != k),
-            )
+            enter_direct = sum(X[i, k] for i in range(-1, self.nb_nodes) if i != k)
+            exit_direct = sum(X[k, j] for j in range(-1, self.nb_nodes) if k != j)
+            self.model.Add(enter_direct == exit_direct)
 
         # Don't include any motif more than once
         for k in range(self.nb_motifs):
