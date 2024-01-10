@@ -15,7 +15,7 @@ __all__ = ["DenseArray", "Optimizer"]
 def shift_metric(motifa: str, motifb: str) -> int:
     """Compute how much we have to shift `motifb` to match the end of `motifa`.
 
-    Example:
+    Example
     -------
     shift_metric("ATGCATTA", "CATTATG") == 3 because
 
@@ -50,7 +50,7 @@ def adjacency_matrix(motifs: list[str]) -> list[list[int]]:
 
     Parameters
     ----------
-    motifs : list[str]
+    motifs
         List of motifs.
     """
     return [[shift_metric(motifa, motifb) for motifb in motifs] for motifa in motifs]
@@ -115,9 +115,9 @@ class DenseArray:
 
         Returns
         -------
-        offset_indices : list[tuple[int, int]]
-            Each element represents `(offset, index)` where `offset` is the offset
-            where the motif starts and `index` is its index in the motif library.
+        offset_indices :
+            Each element represents `(offset, index)` where `offset` is the
+            offset where the motif starts and `index` is its index in the motif library.
         """
         order_fwd = [
             (offset, i)
@@ -140,7 +140,7 @@ class DenseArray:
 
     @property
     def compression_ratio(self: Self) -> float:
-        """Compression ratio, i.e. total length of motifs / solution size."""
+        """Compression ratio, i.e. `length of motifs in solution / sequence length`."""
         total_length = sum(
             len(motif)
             for motif, fwd, rev in zip(
@@ -154,7 +154,7 @@ class DenseArray:
         return total_length / self.sequence_length
 
     def __str__(self: Self) -> str:
-        """Str dunder."""
+        """Build a string that visually represents the solution."""
         sequence = self.sequence + "-" * (self.sequence_length - len(self.sequence))
         seq_rev = "".join(COMPLEMENT[c] for c in sequence)
         lines_fwd = dispatch_labels(self.library, self.offsets_fwd, rev=False)
@@ -238,15 +238,15 @@ class Optimizer:
 
         Parameters
         ----------
-        upstream : str
+        upstream
             The upstream element (typically -35). Must appear in the library.
-        downstream : str
+        downstream
             The downstream element (typically -10). Must appear in the library.
-        upstream_pos : int | tuple[int | None, int | None] | None
+        upstream_pos
             Position for the upstream element, or tuple (min, max).
-        downstream_pos : int | tuple[int | None, int | None] | None
+        downstream_pos
             Position for the downstream element, or tuple (min, max).
-        spacer_length : int | tuple[int | None, int | None] | None
+        spacer_length
             Length of the spacer between both elements, or tuple (min, max).
         """
         try:
@@ -275,8 +275,8 @@ class Optimizer:
         """
         The number of nodes in the library.
 
-        It is equal to nb_motifs for single-stranded optimization
-        and 2 * nb_motifs for double-stranded optimization.
+        It is equal to `nb_motifs` for single-stranded optimization
+        and `2 * nb_motifs` for double-stranded optimization.
         """
         return self.nb_motifs * {"single": 1, "double": 2}[self.strands]
 
@@ -474,13 +474,32 @@ class Optimizer:
         )
 
     def forbid(self: Self, solution: DenseArray) -> None:
-        """Add a constraint to the model to forbid a given solution."""
+        """
+        Add a constraint to the model to forbid a given solution.
+
+        Parameters
+        ----------
+        solution
+            The solution to forbid.
+        """
         sol = [-1, *(i for _, i in solution.offset_indices_in_order()), -1]
         sum_on_path = sum(self.model.X[i, j] for i, j in it.pairwise(sol))
         self.model.Add(sum_on_path <= solution.nb_motifs)
 
     def solutions(self: Self, solver: str = "CBC") -> Iterator[DenseArray]:
-        """Iterate over solutions in decreasing order of score."""
+        """
+        Iterate over solutions in decreasing order of score.
+
+        Parameters
+        ----------
+        solver
+            Solver name given to OrTools.
+
+        Yields
+        ------
+        solution :
+            Solutions in decreasing order of score.
+        """
         self._build_model(solver)
 
         sol = self._solve()
@@ -490,7 +509,16 @@ class Optimizer:
             sol = self._solve()
 
     def set_motif_weight(self: Self, imotif: int, weight: float) -> None:
-        """Set the weight of a particular motif in the score."""
+        """
+        Set the weight of a particular motif in the score.
+
+        Parameters
+        ----------
+        imotif
+            Index of the motif.
+        weight
+            Weight of the motif.
+        """
         objective = self.model.Objective()
 
         for i in range(-1, self.nb_nodes):
@@ -506,8 +534,13 @@ class Optimizer:
 
         Parameters
         ----------
-        solver : str
+        solver
             Solver name given to OrTools.
+
+        Yields
+        ------
+        solution :
+            Solutions in decreasing order of score.
         """
         self._build_model(solver)
 
@@ -541,11 +574,25 @@ class Optimizer:
                 self.set_motif_weight(imin, 1 + epsilon)
 
     def optimal(self: Self, solver: str = "CBC") -> DenseArray:
-        """Return the optimal solution."""
+        """
+        Return the optimal solution.
+
+        Returns
+        -------
+        solution :
+            Optimal solution.
+        """
         return next(self.solutions(solver))
 
     def approximate(self: Self) -> DenseArray:
-        """Return a solution approximated with a greedy algorithm."""
+        """
+        Return a solution approximated with a greedy algorithm.
+
+        Returns
+        -------
+        solution :
+            Approximate solution.
+        """
         library = list(self.library)
         if self.strands == "double":
             library += [reverse_complement(motif) for motif in library]
