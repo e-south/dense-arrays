@@ -22,6 +22,7 @@ print(best)
 
 print("List of all solutions")
 for solution in opt.solutions():
+    print(f"Solution with score {solution.nb_motifs}:")
     print(solution)
 ```
 
