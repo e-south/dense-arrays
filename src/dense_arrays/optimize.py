@@ -506,11 +506,13 @@ class Optimizer:
         """
         self._build_model(solver)
 
-        sol = self._solve()
-        while sol is not None:
+        while True:
+            try:
+                sol = self._solve()
+            except ValueError:
+                break
             yield sol
             self.forbid(sol)
-            sol = self._solve()
 
     def set_motif_weight(self: Self, imotif: int, weight: float) -> None:
         """
