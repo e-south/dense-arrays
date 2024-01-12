@@ -152,7 +152,7 @@ class DenseArray:
                 self.library,
                 self.offsets_fwd,
                 self.offsets_rev,
-                strict=False,
+                strict=True,
             )
             if fwd is not None or rev is not None
         )
@@ -553,25 +553,22 @@ class Optimizer:
         epsilon = 0.5 / self.nb_motifs
 
         motifs = [0] * self.nb_motifs
-        # Define a dummy constraint, clear it and add it to the solver (I don't
-        # know how to generate an empty constraint otherwise)
-        constraint = self.model.Constraint()
-        constraint.SetBounds(0, 0)
         imins: list[int] = []
         while True:
-            sol = self._solve()
-            if sol is None:
+            try:
+                sol = self._solve()
+            except ValueError:
                 break
             yield sol
             # Forbid the solution
             self.forbid(sol)
             # Tally up the motifs
             for i, (fwd, rev) in enumerate(
-                zip(sol.offsets_fwd, sol.offsets_rev, strict=False),
+                zip(sol.offsets_fwd, sol.offsets_rev, strict=True),
             ):
                 if fwd is not None or rev is not None:
                     motifs[i] += 1
-            # Update the constraint to forbid the most common motif
+            # Update motif weights
             for imin in imins:
                 self.set_motif_weight(imin, 1)
             avg_abundance = sum(motifs) / len(motifs)
