@@ -349,17 +349,8 @@ class Optimizer:
         )
         self.model.Add(size_inside + size_terminal <= self.sequence_length)
 
-        # Continuity constraints
-        cont = [
-            self.model.IntVar(1, self.nb_nodes, f"u[{i}]") for i in range(self.nb_nodes)
-        ]
-        self.model.cont = cont
-
-        for i in range(self.nb_nodes):
-            for j in range(self.nb_nodes):
-                if i == j:
-                    continue
-                self.model.Add(cont[i] - cont[j] + 1 <= self.nb_nodes * (1 - X[i, j]))
+        # Subtour elimination variables
+        self._add_continuity_variables()
 
         # Apply user-defined distance constraints if any
         if self.promoters:
@@ -375,32 +366,61 @@ class Optimizer:
             ),
         )
 
-    def _add_promoter_constraints(self: Self) -> None:
-        """Add promoter constraints to the problem."""
-        if self.model is None:
-            msg = "The model must exist first (call _build_model)."
-            raise AssertionError(msg)
+    def _add_continuity_variables(self: Self) -> None:
+        """Add subtour elimination variables and constraints to the problem."""
+        try:
+            self.model.cont  # noqa: B018
+        except AttributeError:
+            pass
+        else:
+            # Continuity variables already exist
+            return
 
-        # Initialize cumulative length variables
-        position = [
+        self.model.cont = [
+            self.model.IntVar(1, self.nb_nodes, f"u[{i}]") for i in range(self.nb_nodes)
+        ]
+
+        for i in range(self.nb_nodes):
+            for j in range(self.nb_nodes):
+                if i == j:
+                    continue
+                distance_i_j = self.model.cont[j] - self.model.cont[i]
+                slack = self.nb_nodes * (1 - self.model.X[i, j])
+                self.model.Add(-distance_i_j + 1 <= slack)
+
+    def _add_position_variables(self: Self) -> None:
+        """Add position variables and constraints to the problem."""
+        try:
+            self.model.position  # noqa: B018
+        except AttributeError:
+            pass
+        else:
+            # Position variables already exist
+            return
+
+        # Initialize position variables
+        self.model.position = [
             self.model.IntVar(0, self.sequence_length - 1, f"position[{i}]")
             for i in range(self.nb_nodes)
         ]
-        self.model.position = position
 
-        # Set cumulative length for the start point
-        self.model.Add(position[-1] == 0)
+        # Set position for the start point
+        self.model.Add(self.model.position[-1] == 0)
 
-        # Define cumulative length for each node
+        # Define position for each node
         for i in range(-1, self.nb_nodes):
             for j in range(self.nb_nodes):
                 if i == j:
                     continue
                 shift = 0 if i == -1 else self.adjacency_matrix[i][j]
-                distance_i_j = position[j] - position[i]
+                distance_i_j = self.model.position[j] - self.model.position[i]
                 slack = (self.sequence_length - 1) * (1 - self.model.X[i, j])
                 self.model.Add(shift * self.model.X[i, j] - slack <= distance_i_j)
                 self.model.Add(distance_i_j <= shift * self.model.X[i, j] + slack)
+
+    def _add_promoter_constraints(self: Self) -> None:
+        """Add promoter constraints to the problem."""
+        self._add_position_variables()
 
         for constraint in self.promoters:
             # Both upstream and downstream elements must appear in the sequence
@@ -412,13 +432,19 @@ class Optimizer:
 
             # Position both upstream and downstream elements
             spacer_length = (
-                position[constraint.downstream_index]
-                - position[constraint.upstream_index]
+                self.model.position[constraint.downstream_index]
+                - self.model.position[constraint.upstream_index]
                 - len(self.library[constraint.upstream_index])
             )
             for pos_or_len, (min_val, max_val) in [
-                (position[constraint.upstream_index], constraint.upstream_pos),
-                (position[constraint.downstream_index], constraint.downstream_pos),
+                (
+                    self.model.position[constraint.upstream_index],
+                    constraint.upstream_pos,
+                ),
+                (
+                    self.model.position[constraint.downstream_index],
+                    constraint.downstream_pos,
+                ),
                 (spacer_length, constraint.spacer_length),
             ]:
                 if min_val is not None:
