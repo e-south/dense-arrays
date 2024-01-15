@@ -366,6 +366,8 @@ class Optimizer:
             ),
         )
 
+        self._add_side_biases()
+
     def _add_continuity_variables(self: Self) -> None:
         """Add subtour elimination variables and constraints to the problem."""
         try:
@@ -451,6 +453,40 @@ class Optimizer:
                     self.model.Add(min_val <= pos_or_len)
                 if max_val is not None:
                     self.model.Add(pos_or_len <= max_val)
+
+    def add_side_biases(self: Self, left: list[str], right: list[str]) -> None:
+        """
+        Add side biases for motifs.
+
+        Everything else being equal, the motifs specified in `left` will
+        prefer being as much on the left as possible, and likewise for
+        those specified in `right`.
+
+        Parameters
+        ----------
+        left
+            List of motifs that should preferentially appear on the left.
+        right
+            List of motifs that should preferentially appear on the right.
+        """
+        try:
+            self.ilefts = [self.library.index(motif) for motif in left]
+            self.irights = [self.library.index(motif) for motif in right]
+        except ValueError as err:
+            msg = "All motifs must belong to the initial library."
+            raise ValueError(msg) from err
+
+    def _add_side_biases(self: Self) -> None:
+        self._add_position_variables()
+
+        objective = self.model.Objective()
+
+        weight = 0.5 / (self.nb_motifs * self.sequence_length)
+
+        for i in self.ilefts:
+            objective.SetCoefficient(self.model.position[i], -weight)
+        for i in self.irights:
+            objective.SetCoefficient(self.model.position[i], weight)
 
     def _solve(self: Self) -> DenseArray:  # noqa: C901
         if self.model is None:
