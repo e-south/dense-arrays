@@ -52,11 +52,29 @@ def adjacency_matrix(motifs: list[str]) -> list[list[int]]:
     ----------
     motifs
         List of motifs.
+
+    Returns
+    -------
+    adj :
+        Adjacency matrix.
     """
     return [[shift_metric(motifa, motifb) for motifb in motifs] for motifa in motifs]
 
 
 def reverse_complement(sequence: str) -> str:
+    """
+    Return the reverse complement of the sequence.
+
+    Parameters
+    ----------
+    sequence
+        String composed of ATGC characters.
+
+    Returns
+    -------
+    rev_comp :
+        Reverse complement of the sequence.
+    """
     return "".join(COMPLEMENT[c] for c in sequence[::-1])
 
 
@@ -171,8 +189,10 @@ class DenseArray:
         return s_fwd + "\n" + s_rev
 
 
-@dataclass(init=False)
+@dataclass
 class PromoterConstraint:
+    """Promoter constraint (up/downstream elements, positions and spacing)."""
+
     upstream_index: int
     downstream_index: int
     upstream_pos: tuple[int | None, int | None]
@@ -272,6 +292,32 @@ class Optimizer:
         )
         self.promoters.append(constraint)
 
+    def add_side_biases(
+        self: Self, *, left: list[str] | None = None, right: list[str] | None = None
+    ) -> None:
+        """
+        Add side biases for motifs.
+
+        Everything else being equal, the motifs specified in `left` will
+        prefer being as much on the left as possible, and likewise for
+        those specified in `right`.
+
+        Parameters
+        ----------
+        left
+            List of motifs that should preferentially appear on the left.
+        right
+            List of motifs that should preferentially appear on the right.
+        """
+        try:
+            self.ilefts = [self.library.index(motif) for motif in left] if left else []
+            self.irights = (
+                [self.library.index(motif) for motif in right] if right else []
+            )
+        except ValueError as err:
+            msg = "All motifs must belong to the initial library."
+            raise ValueError(msg) from err
+
     @property
     def nb_motifs(self: Self) -> int:
         """The number of motifs in the library (not counting reverse duplicates)."""
@@ -287,7 +333,14 @@ class Optimizer:
         """
         return self.nb_motifs * {"single": 1, "double": 2}[self.strands]
 
-    def _build_model(self: Self, solver: str = "CBC") -> None:
+    def build_model(self: Self, solver: str = "CBC") -> None:
+        """
+        Create the solver instance and build the linear model.
+
+        This method belongs to the advanced API: most users should not build the model
+        themselves, but rather use functions which build it automatically, such as
+        `optimal`, `solutions` or `solutions_diverse`.
+        """
         self.model = pywraplp.Solver.CreateSolver(solver)
 
         if self.model is None:
@@ -460,32 +513,6 @@ class Optimizer:
                 if max_val is not None:
                     self.model.Add(pos_or_len <= max_val)
 
-    def add_side_biases(
-        self: Self, *, left: list[str] | None = None, right: list[str] | None = None
-    ) -> None:
-        """
-        Add side biases for motifs.
-
-        Everything else being equal, the motifs specified in `left` will
-        prefer being as much on the left as possible, and likewise for
-        those specified in `right`.
-
-        Parameters
-        ----------
-        left
-            List of motifs that should preferentially appear on the left.
-        right
-            List of motifs that should preferentially appear on the right.
-        """
-        try:
-            self.ilefts = [self.library.index(motif) for motif in left] if left else []
-            self.irights = (
-                [self.library.index(motif) for motif in right] if right else []
-            )
-        except ValueError as err:
-            msg = "All motifs must belong to the initial library."
-            raise ValueError(msg) from err
-
     def _add_side_biases(self: Self) -> None:
         """Implement the side biases into the model."""
         if not self.ilefts and not self.irights:
@@ -502,9 +529,15 @@ class Optimizer:
         for i in self.irights:
             objective.SetCoefficient(self.model.position[i], weight)
 
-    def _solve(self: Self) -> DenseArray:  # noqa: C901
+    def solve(self: Self) -> DenseArray:  # noqa: C901
+        """
+        Solve the currently built model and return its optimal solution.
+
+        This belongs to the advanced API: most users should rather use `optimal()`
+        instead, which builds the model automatically.
+        """
         if self.model is None:
-            msg = "Model not built: call `_build_model(solver)` first"
+            msg = "Model not built: call `build_model(solver)` first"
             raise RuntimeError(msg)
 
         # Solve the problem
@@ -562,33 +595,13 @@ class Optimizer:
         solution
             The solution to forbid.
         """
+        if self.model is None:
+            msg = "Model not built: call `build_model(solver)` first"
+            raise RuntimeError(msg)
+
         sol = [-1, *(i for _, i in solution.offset_indices_in_order()), -1]
         sum_on_path = sum(self.model.X[i, j] for i, j in it.pairwise(sol))
         self.model.Add(sum_on_path <= solution.nb_motifs)
-
-    def solutions(self: Self, solver: str = "CBC") -> Iterator[DenseArray]:
-        """
-        Iterate over solutions in decreasing order of score.
-
-        Parameters
-        ----------
-        solver
-            Solver name given to OrTools.
-
-        Yields
-        ------
-        solution :
-            Solutions in decreasing order of score.
-        """
-        self._build_model(solver)
-
-        while True:
-            try:
-                sol = self._solve()
-            except ValueError:
-                break
-            yield sol
-            self.forbid(sol)
 
     def set_motif_weight(self: Self, imotif: int, weight: float) -> None:
         """
@@ -601,6 +614,10 @@ class Optimizer:
         weight
             Weight of the motif.
         """
+        if self.model is None:
+            msg = "Model not built: call `build_model(solver)` first"
+            raise RuntimeError(msg)
+
         objective = self.model.Objective()
 
         for i in range(-1, self.nb_nodes):
@@ -610,9 +627,11 @@ class Optimizer:
             if self.strands == "double" and i != imotif2:
                 objective.SetCoefficient(self.model.X[i, imotif2], weight)
 
-    def solutions_diverse(self: Self, solver: str = "CBC") -> Iterator[DenseArray]:
+    def solutions(self: Self, solver: str = "CBC") -> Iterator[DenseArray]:
         """
-        Return an iterator of optimal solutions trying to minimize the bias in motifs.
+        Iterate over solutions in decreasing order of score.
+
+        Note that this function (re)builds the model automatically.
 
         Parameters
         ----------
@@ -624,7 +643,33 @@ class Optimizer:
         solution :
             Solutions in decreasing order of score.
         """
-        self._build_model(solver)
+        self.build_model(solver)
+
+        while True:
+            try:
+                sol = self.solve()
+            except ValueError:
+                break
+            yield sol
+            self.forbid(sol)
+
+    def solutions_diverse(self: Self, solver: str = "CBC") -> Iterator[DenseArray]:
+        """
+        Return an iterator of optimal solutions trying to minimize the bias in motifs.
+
+        Note that this function (re)builds the model automatically.
+
+        Parameters
+        ----------
+        solver
+            Solver name given to OrTools.
+
+        Yields
+        ------
+        solution :
+            Solutions in decreasing order of score.
+        """
+        self.build_model(solver)
 
         epsilon = 0.5 / self.nb_motifs
 
@@ -632,7 +677,7 @@ class Optimizer:
         imins: list[int] = []
         while True:
             try:
-                sol = self._solve()
+                sol = self.solve()
             except ValueError:
                 break
             yield sol
@@ -655,6 +700,8 @@ class Optimizer:
     def optimal(self: Self, solver: str = "CBC") -> DenseArray:
         """
         Return the optimal solution.
+
+        Note that this function (re)builds the model automatically.
 
         Returns
         -------
