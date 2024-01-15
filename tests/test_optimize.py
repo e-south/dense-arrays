@@ -57,3 +57,25 @@ def test_simple_solutions(strands: str, diverse: bool, ns: list[int]):
     # Solutions are ordered by score
     for sola, solb in it.pairwise(solutions):
         assert sola.nb_motifs >= solb.nb_motifs
+
+
+@pytest.mark.parametrize(
+    "strands, sequence_length, noprom, prom",
+    [
+        ("single", 10, 4, 3),
+        ("double", 8, 4, 3),
+    ],
+)
+def test_promoter_constraints(
+    strands: str, sequence_length: int, noprom: int, prom: int
+):
+    opt = da.Optimizer(
+        ["GCA", "CCC", "ATGC", "CATT"], sequence_length=sequence_length, strands=strands
+    )
+    sol_noprom = opt.optimal()
+    assert sol_noprom.nb_motifs == noprom
+    opt.add_promoter_constraints(
+        upstream="ATGC", downstream="CCC", upstream_pos=(0, 2), spacer_length=(0, 3)
+    )
+    sol_prom = opt.optimal()
+    assert sol_prom.nb_motifs == prom
