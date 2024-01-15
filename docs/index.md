@@ -24,7 +24,7 @@ In the simplest use case, the user can provide a list of motifs (e.g., transcrip
 ``` python
 import dense_arrays as da
 
-motifs = [
+library = [
     "ATAATATTCTGAATT",
     "TCCCTATAAGAAAATTA",
     "TAATTGATTGATT",
@@ -33,16 +33,26 @@ motifs = [
     "AATATGTAACCAAAAGTAA",
     "ACTGAATTTTTATGCAAA",
     "CGGGGATGAG",
+    "TTGACA",
+    "TATAAT",
 ]
 
-opt = da.Optimizer(library=motifs, sequence_length=75)
+opt = da.Optimizer(library=library, sequence_length=75)
 
 best = opt.optimal()
-print(f"Optimal solution, score {best.nb_motifs}")
+print(f"Optimal solution, containing {best.nb_motifs} motifs")
 print(best)
+
+# Optimal solution, containing 7 motifs
+# -->                                         TTGACA
+# -->          GCTTAAAAAATGAAC   ATAATATTCTGAATT    TGCACTAAAATGGTGCAA
+# --> CTCATCCCCGCTTAAAAAATGAACATTATAATATTCTGAATTGACATGCACTAAAATGGTGCAATCAATCAATTA
+# <-- GAGTAGGGGCGAATTTTTTACTTGTAATATTATAAGACTTAACTGTACGTGATTTTACCACGTTAGTTAGTTAAT
+# <-- GAGTAGGGGC              TAATAT                                TTAGTTAGTTAAT
 
 print("List of all solutions")
 for solution in opt.solutions():
+    print(f"Solution containing {solution.nb_motifs} motifs")
     print(solution)
 ```
 
@@ -63,25 +73,7 @@ for solution in opt.solutions_diverse():
 You can designate certain binding sites within the provided library as special, and thereby stipulate added constraints to the solver, such as these sites appearing at specific or rough positions within the final dense array sequence. While overly stringent constraints risk yielding no feasible solution, you can generate sequences with pairs of fixed binding sites, such as sigma factor recognition elements appearing at the -35 and -10 relative to the transcription start site (i.e., the terminus of L). Sigma factor recognition sites are crucial elements in bacterial promoters.
 
 ``` python
-motifs = [
-    "ATAATATTCTGAATT",
-    "TCCCTATAAGAAAATTA",
-    "TAATTGATTGATT",
-    "GCTTAAAAAATGAAC",
-    "TGCACTAAAATGGTGCAA",
-    "AATATGTAACCAAAAGTAA",
-    "ACTGAATTTTTATGCAAA",
-    "CGGGGATGAG",
-    "TTGACA",
-    "TATAAT",
-]
-
-opt = da.Optimizer(
-    library=motifs,
-    sequence_length=75,
-    strands="double",
-)
-
+# Adding another constraint to the previous optimizer
 opt.add_promoter_constraints(
     upstream="TTGACA",
     downstream="TATAAT",
@@ -90,6 +82,15 @@ opt.add_promoter_constraints(
 )
 
 best = opt.optimal()
+print(best)
+
+#     position 10  spacer length: 10
+#               v    |<-------->|
+# -->           TTGACA          |                                 GCTTAAAAAATGAAC
+# --> CGGGGATGAG                TATAAT           TCCCTATAAGAAAATTA
+# --> CGGGGATGAGTTGACAATCAATCAATTATAATTCAGAATATTATCCCTATAAGAAAATTAGCTTAAAAAATGAAC
+# <-- GCCCCTACTCAACTGTTAGTTAGTTAATATTAAGTCTTATAATAGGGATATTCTTTTAATCGAATTTTTTACTTG
+# <--                TTAGTTAGTTAAT TTAAGTCTTATAATA
 ```
 
 In some cases, motifs may come with labels, such as being associated with transcription factor activators or repressors. In such cases, these labels typically suggest a motif's natural placement within specific subregions of a gene's cis-regulatory region. For instance, activator binding sites are typically found upstream of the -35 sigma factor recognition element in bacterial promoters. Their effectiveness in gene regulation tends to decrease when positioned downstream of this element. The solver can be adapted to reflect these biological realities. By adjusting the initial edge weights in the SPP graph, the solver can be configured to preferentially select activator motifs for upstream positions. This adaptive weighting approach enhances the ability to create sequences that more accurately represent the complex organization of natural, multi-factor promoters, with site-specific enrichment of different types of binding motifs.
