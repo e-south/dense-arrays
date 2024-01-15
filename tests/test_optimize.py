@@ -34,13 +34,20 @@ def test_simple_optimal(strands: str):
 
 
 @pytest.mark.parametrize(
-    "strands, ns", [("single", [1, 4, 9, 1]), ("double", [1, 8, 34, 8])]
+    "strands, diverse, ns",
+    [
+        ("single", False, [1, 4, 9, 1]),
+        ("single", True, [1, 4, 9, 1]),
+        ("double", False, [1, 8, 34, 8]),
+        ("double", True, [1, 8, 34, 8]),
+    ],
 )
-def test_simple_solutions(strands: str, ns: list[int]):
+def test_simple_solutions(strands: str, diverse: bool, ns: list[int]):
     opt = da.Optimizer(
         ["ATGC", "CGT", "ATTA", "TTATTA"], sequence_length=8, strands=strands
     )
-    solutions = list(it.islice(opt.solutions(), sum(ns) + 1))
+    iterator = opt.solutions_diverse() if diverse else opt.solutions()
+    solutions = list(it.islice(iterator, sum(ns) + 1))
     # There is the correct number of solutions
     assert len(solutions) == sum(ns)
     # There is the correct number of solution of each score
