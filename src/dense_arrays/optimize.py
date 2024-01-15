@@ -228,6 +228,8 @@ class Optimizer:
             library = library + [reverse_complement(motif) for motif in library]
         self.adjacency_matrix = adjacency_matrix(library)
         self.model = None
+        self.ilefts: list[int] = []
+        self.irights: list[int] = []
 
     def add_promoter_constraints(  # noqa: PLR0913
         self: Self,
