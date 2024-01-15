@@ -352,9 +352,8 @@ class Optimizer:
         # Subtour elimination variables
         self._add_continuity_variables()
 
-        # Apply user-defined distance constraints if any
-        if self.promoters:
-            self._add_promoter_constraints()
+        # Apply user-defined distance constraints
+        self._add_promoter_constraints()
 
         # Objective
         self.model.Maximize(
@@ -366,10 +365,12 @@ class Optimizer:
             ),
         )
 
+        # Apply user-defined side biases
+        # (needs to be after the objective definition because it modifies it)
         self._add_side_biases()
 
     def _add_continuity_variables(self: Self) -> None:
-        """Add subtour elimination variables and constraints to the problem."""
+        """Implement subtour elimination variables and constraints into the model."""
         try:
             self.model.cont  # noqa: B018
         except AttributeError:
@@ -391,7 +392,7 @@ class Optimizer:
                 self.model.Add(-distance_i_j + 1 <= slack)
 
     def _add_position_variables(self: Self) -> None:
-        """Add position variables and constraints to the problem."""
+        """Implement position variables and constraints into the model."""
         try:
             self.model.position  # noqa: B018
         except AttributeError:
@@ -421,7 +422,10 @@ class Optimizer:
                 self.model.Add(distance_i_j <= shift * self.model.X[i, j] + slack)
 
     def _add_promoter_constraints(self: Self) -> None:
-        """Add promoter constraints to the problem."""
+        """Implement promoter constraints into the model."""
+        if not self.promoters:
+            return
+
         self._add_position_variables()
 
         for constraint in self.promoters:
@@ -454,7 +458,9 @@ class Optimizer:
                 if max_val is not None:
                     self.model.Add(pos_or_len <= max_val)
 
-    def add_side_biases(self: Self, left: list[str], right: list[str]) -> None:
+    def add_side_biases(
+        self: Self, *, left: list[str] | None = None, right: list[str] | None = None
+    ) -> None:
         """
         Add side biases for motifs.
 
@@ -470,13 +476,19 @@ class Optimizer:
             List of motifs that should preferentially appear on the right.
         """
         try:
-            self.ilefts = [self.library.index(motif) for motif in left]
-            self.irights = [self.library.index(motif) for motif in right]
+            self.ilefts = [self.library.index(motif) for motif in left] if left else []
+            self.irights = (
+                [self.library.index(motif) for motif in right] if right else []
+            )
         except ValueError as err:
             msg = "All motifs must belong to the initial library."
             raise ValueError(msg) from err
 
     def _add_side_biases(self: Self) -> None:
+        """Implement the side biases into the model."""
+        if not self.ilefts and not self.irights:
+            return
+
         self._add_position_variables()
 
         objective = self.model.Objective()
