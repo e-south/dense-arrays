@@ -128,9 +128,81 @@ def size_bias() -> None:
                 )
 
 
-benchmarks(double=True)
+def side_bias() -> None:
+    """
+    Create the "side_nobias.csv" and "side_bias.csv" files.
 
-topsols(control=False)
-topsols(control=True)
+    Each is a csv with motifs in columns and solutions in rows.
+    """
+    rng = npr.default_rng(seed=42)
+    library_size = 20
+    motif_min_size = 5
+    motif_max_size = 15
+    sequence_length = 100
+    spacer_length = (16, 18)
+    downstream_pos = (89, 91)
+    solver = "Gurobi"
+    with Path("side_bias_both.csv").open("w") as out:
+        for replicate in range(10000):
+            motifs = [
+                "".join(
+                    rng.choice(
+                        ATGC,
+                        rng.integers(motif_min_size, motif_max_size, endpoint=True),
+                    )
+                )
+                for _ in range(library_size)
+            ]
+            upstream = "".join(rng.choice(ATGC, 6))
+            downstream = "".join(rng.choice(ATGC, 6))
+            motifs += [upstream, downstream]
+            optimizer = da.Optimizer(
+                motifs, sequence_length=sequence_length, strands="double"
+            )
+            optimizer.add_promoter_constraints(
+                upstream=upstream,
+                downstream=downstream,
+                spacer_length=spacer_length,
+                downstream_pos=downstream_pos,
+            )
+            try:
+                sol_nobias = optimizer.optimal(
+                    solver=solver, solver_options=["TimeLimit=300"]
+                )
+            except StopIteration:
+                print("no sol or timeout")
+                continue
+            optimizer.add_side_biases(left=motifs[:-2:2], right=motifs[1:-2:2])
+            try:
+                sol_bias = optimizer.optimal(
+                    solver=solver, solver_options=["TimeLimit=300"]
+                )
+            except StopIteration:
+                print("no sol or timeout")
+                continue
+            print(
+                replicate,
+                "nobias",
+                *sol_nobias.offsets_fwd,
+                *sol_nobias.offsets_rev,
+                sep=",",
+                file=out,
+                # flush=True,
+            )
+            print(
+                replicate,
+                "bias",
+                *sol_bias.offsets_fwd,
+                *sol_bias.offsets_rev,
+                sep=",",
+                file=out,
+                flush=True,
+            )
 
-size_bias()
+
+# benchmarks(double=True)
+
+# topsols(control=False)
+# topsols(control=True)
+
+side_bias()
