@@ -79,3 +79,22 @@ def test_promoter_constraints(
     )
     sol_prom = opt.optimal()
     assert sol_prom.nb_motifs == prom
+
+
+def test_side_bias():
+    opt = da.Optimizer(["AAA", "CCC"], sequence_length=6, strands="double")
+    opt.add_side_biases(left=["AAA"], right=["CCC"])
+    sol_left = opt.optimal()
+    norm_offset_indices_left = [
+        (offset, index % opt.nb_motifs)
+        for offset, index in sol_left.offset_indices_in_order()
+    ]
+    assert norm_offset_indices_left == [(0, 0), (3, 1)]
+
+    opt.add_side_biases(left=["CCC"], right=["AAA"])
+    sol_right = opt.optimal()
+    norm_offset_indices_right = [
+        (offset, index % opt.nb_motifs)
+        for offset, index in sol_right.offset_indices_in_order()
+    ]
+    assert norm_offset_indices_right == [(0, 1), (3, 0)]

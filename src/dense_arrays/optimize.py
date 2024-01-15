@@ -526,8 +526,14 @@ class Optimizer:
 
         for i in self.ilefts:
             objective.SetCoefficient(self.model.position[i], -weight)
+            if self.strands == "double":
+                irev = i + self.nb_motifs
+                objective.SetCoefficient(self.model.position[irev], -weight)
         for i in self.irights:
             objective.SetCoefficient(self.model.position[i], weight)
+            if self.strands == "double":
+                irev = i + self.nb_motifs
+                objective.SetCoefficient(self.model.position[irev], weight)
 
     def solve(self: Self) -> DenseArray:  # noqa: C901
         """
