@@ -98,3 +98,49 @@ def test_side_bias():
         for offset, index in sol_right.offset_indices_in_order()
     ]
     assert norm_offset_indices_right == [(0, 1), (3, 0)]
+
+
+def test_side_bias_with_same_promoter():
+    opt = da.Optimizer(["AAA", "CCC"], sequence_length=6, strands="double")
+    opt.add_promoter_constraints(
+        upstream="AAA", downstream="CCC", upstream_pos=(0, 2), spacer_length=(0, 2)
+    )
+
+    opt.add_side_biases(left=["AAA"], right=["CCC"])
+    sol_left = opt.optimal()
+    norm_offset_indices_left = [
+        (offset, index % opt.nb_motifs)
+        for offset, index in sol_left.offset_indices_in_order()
+    ]
+    assert norm_offset_indices_left == [(0, 0), (3, 1)]
+
+    opt.add_side_biases(left=["CCC"], right=["AAA"])
+    sol_right = opt.optimal()
+    norm_offset_indices_right = [
+        (offset, index % opt.nb_motifs)
+        for offset, index in sol_right.offset_indices_in_order()
+    ]
+    assert norm_offset_indices_right == [(0, 0), (3, 1)]
+
+
+def test_side_bias_with_other_promoter():
+    library = ["GGGT", "CTTC", "TAGG", "AATC", "TCTA"]
+    opt = da.Optimizer(library, sequence_length=14, strands="double")
+
+    sol = opt.optimal()
+    assert sol.nb_motifs == 5
+    assert sol.offset_indices_in_order() == [(0, 3), (3, 1), (5, 4), (7, 2), (9, 0)]
+
+    opt.add_promoter_constraints(
+        upstream="GGGT", downstream="CTTC", upstream_pos=(0, 3), spacer_length=(1, 4)
+    )
+
+    opt.add_side_biases(left=library[::2], right=library[1::2])
+    sol_left = opt.optimal()
+    assert sol_left.nb_motifs == 4
+    assert sol_left.offset_indices_in_order() == [(0, 2), (2, 0), (5, 4), (9, 1)]
+
+    opt.add_side_biases(left=library[1::2], right=library[::2])
+    sol_right = opt.optimal()
+    assert sol_right.nb_motifs == 4
+    assert sol_right.offset_indices_in_order() == [(0, 0), (4, 3), (7, 1), (10, 7)]
