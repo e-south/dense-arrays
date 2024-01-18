@@ -333,7 +333,9 @@ class Optimizer:
         """
         return self.nb_motifs * {"single": 1, "double": 2}[self.strands]
 
-    def build_model(self: Self, solver: str = "CBC") -> None:
+    def build_model(
+        self: Self, solver: str = "CBC", solver_options: list[str] | None = None
+    ) -> None:
         """
         Create the solver instance and build the linear model.
 
@@ -423,6 +425,10 @@ class Optimizer:
         # Apply user-defined side biases
         # (needs to be after the objective definition because it modifies it)
         self._add_side_biases()
+
+        if solver_options:
+            for option in solver_options:
+                self.model.SetSolverSpecificParametersAsString(option)
 
     def _add_continuity_variables(self: Self) -> None:
         """Implement subtour elimination variables and constraints into the model."""
@@ -633,7 +639,9 @@ class Optimizer:
             if self.strands == "double" and i != imotif2:
                 objective.SetCoefficient(self.model.X[i, imotif2], weight)
 
-    def solutions(self: Self, solver: str = "CBC") -> Iterator[DenseArray]:
+    def solutions(
+        self: Self, solver: str = "CBC", solver_options: list[str] | None = None
+    ) -> Iterator[DenseArray]:
         """
         Iterate over solutions in decreasing order of score.
 
@@ -643,13 +651,16 @@ class Optimizer:
         ----------
         solver
             Solver name given to OrTools.
+        solver_options
+            List of strings passed to the solver
+            with `SetSolverSpecificParametersAsString`.
 
         Yields
         ------
         solution :
             Solutions in decreasing order of score.
         """
-        self.build_model(solver)
+        self.build_model(solver, solver_options=solver_options)
 
         while True:
             try:
@@ -659,7 +670,9 @@ class Optimizer:
             yield sol
             self.forbid(sol)
 
-    def solutions_diverse(self: Self, solver: str = "CBC") -> Iterator[DenseArray]:
+    def solutions_diverse(
+        self: Self, solver: str = "CBC", solver_options: list[str] | None = None
+    ) -> Iterator[DenseArray]:
         """
         Return an iterator of optimal solutions trying to minimize the bias in motifs.
 
@@ -669,13 +682,16 @@ class Optimizer:
         ----------
         solver
             Solver name given to OrTools.
+        solver_options
+            List of strings passed to the solver
+            with `SetSolverSpecificParametersAsString`.
 
         Yields
         ------
         solution :
             Solutions in decreasing order of score.
         """
-        self.build_model(solver)
+        self.build_model(solver, solver_options=solver_options)
 
         epsilon = 0.5 / self.nb_motifs
 
@@ -703,18 +719,28 @@ class Optimizer:
             for imin in imins:
                 self.set_motif_weight(imin, 1 + epsilon)
 
-    def optimal(self: Self, solver: str = "CBC") -> DenseArray:
+    def optimal(
+        self: Self, solver: str = "CBC", solver_options: list[str] | None = None
+    ) -> DenseArray:
         """
         Return the optimal solution.
 
         Note that this function (re)builds the model automatically.
+
+        Parameters
+        ----------
+        solver
+            Solver name given to OrTools.
+        solver_options
+            List of strings passed to the solver
+            with `SetSolverSpecificParametersAsString`.
 
         Returns
         -------
         solution :
             Optimal solution.
         """
-        return next(self.solutions(solver))
+        return next(self.solutions(solver, solver_options=solver_options))
 
     def approximate(self: Self) -> DenseArray:
         """
