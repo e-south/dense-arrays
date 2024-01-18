@@ -1,6 +1,6 @@
 # Dense Arrays
 
-This library facilitates the design of double-stranded nucleotid sequences made of many motifs.
+This library facilitates the design of double-stranded nucleotide sequences made of many motifs.
 
 ## Installation
 
@@ -37,18 +37,18 @@ library = [
     "TATAAT",
 ]
 
-opt = da.Optimizer(library=library, sequence_length=75)
+opt = da.Optimizer(library=library, sequence_length=100)
 
 best = opt.optimal()
 print(f"Optimal solution, containing {best.nb_motifs} motifs")
 print(best)
 
-# Optimal solution, containing 7 motifs
-# -->                                         TTGACA
-# -->          GCTTAAAAAATGAAC   ATAATATTCTGAATT    TGCACTAAAATGGTGCAA
-# --> CTCATCCCCGCTTAAAAAATGAACATTATAATATTCTGAATTGACATGCACTAAAATGGTGCAATCAATCAATTA
-# <-- GAGTAGGGGCGAATTTTTTACTTGTAATATTATAAGACTTAACTGTACGTGATTTTACCACGTTAGTTAGTTAAT
-# <-- GAGTAGGGGC              TAATAT                                TTAGTTAGTTAAT
+# Optimal solution, score 8
+# -->          GCTTAAAAAATGAAC     ACTGAATTTTTATGCAAA            AATATGTAACCAAAAGTAA
+# --> CGGGGATGAG              TTGACA                          TATAAT
+# --> CGGGGATGAGCTTAAAAAATGAACTTGACACTGAATTTTTATGCAAATCAATCAATTATAATATGTAACCAAAAGTAATTTTCTTATAGGGA--------
+# <-- GCCCCTACTCGAATTTTTTACTTGAACTGTGACTTAAAAATACGTTTAGTTAGTTAATATTATACATTGGTTTTCATTAAAAGAATATCCCT--------
+# <--                                              TTAGTTAGTTAAT                 ATTAAAAGAATATCCCT
 
 print("List of all solutions")
 for solution in opt.solutions():
@@ -70,34 +70,122 @@ for solution in opt.solutions_diverse():
 
 ## Incorporating Positional Constraints into Solutions
 
-You can designate certain binding sites within the provided library as special, and thereby stipulate added constraints to the solver, such as these sites appearing at specific or rough positions within the final dense array sequence. While overly stringent constraints risk yielding no feasible solution, you can generate sequences with pairs of fixed binding sites, such as sigma factor recognition elements appearing at the -35 and -10 relative to the transcription start site (i.e., the terminus of L). Sigma factor recognition sites are crucial elements in bacterial promoters.
+You can designate certain binding sites within the provided library as special, and thereby stipulate added constraints to the solver, such as having these sites appear at specific or rough positions within the final dense array sequence. While overly stringent constraints risk yielding no feasible solution, you can generate sequences with pairs of fixed binding sites, such as sigma factor recognition elements appearing at the -35 and -10 sites relative to the transcription start site (e.g., the terminus of L). Sigma factor recognition sites are crucial elements in bacterial promoters.
 
 ``` python
 # Adding another constraint to the previous optimizer
 opt.add_promoter_constraints(
     upstream="TTGACA",
     downstream="TATAAT",
-    upstream_pos=(5, 10),
-    spacer_length=(3, 13),
+    upstream_pos=(40, 80),
+    spacer_length=(16, 18),
 )
 
 best = opt.optimal()
 print(best)
 
-#     position 10  spacer length: 10
-#               v    |<-------->|
-# -->           TTGACA          |                                 GCTTAAAAAATGAAC
-# --> CGGGGATGAG                TATAAT           TCCCTATAAGAAAATTA
-# --> CGGGGATGAGTTGACAATCAATCAATTATAATTCAGAATATTATCCCTATAAGAAAATTAGCTTAAAAAATGAAC
-# <-- GCCCCTACTCAACTGTTAGTTAGTTAATATTAAGTCTTATAATAGGGATATTCTTTTAATCGAATTTTTTACTTG
-# <--                TTAGTTAGTTAAT TTAAGTCTTATAATA
+#                                                                position 60  spacer length: 17
+#                                                                v    |<--------------->|
+# -->                                                            TTGACA                 TATAAT
+# --> TCCCTATAAGAAAATTA                               TAATTGATTGATT   ACTGAATTTTTATGCAAA
+# --> TCCCTATAAGAAAATTACTTTTGGTTACATATTGTTCATTTTTTAAGCTAATTGATTGATTGACACTGAATTTTTATGCAAATATAATTCAGAATATTAT
+# <-- AGGGATATTCTTTTAATGAAAACCAATGTATAACAAGTAAAAAATTCGATTAACTAACTAACTGTGACTTAAAAATACGTTTATATTAAGTCTTATAATA
+# <--               AATGAAAACCAATGTATAA                                                    TTAAGTCTTATAATA
+# <--                                  CAAGTAAAAAATTCG
+
 ```
 
-In some cases, motifs may come with labels, such as being associated with transcription factor activators or repressors. In such cases, these labels typically suggest a motif's natural placement within specific subregions of a gene's cis-regulatory region. For instance, activator binding sites are typically found upstream of the -35 sigma factor recognition element in bacterial promoters. Their effectiveness in gene regulation tends to decrease when positioned downstream of this element. The solver can be adapted to reflect these biological realities. By adjusting the initial edge weights in the SPP graph, the solver can be configured to preferentially select activator motifs for upstream positions. This adaptive weighting approach enhances the ability to create sequences that more accurately represent the complex organization of natural, multi-factor promoters, with site-specific enrichment of different types of binding motifs.
+In some cases, motifs may be associated with labels indicating their role as binding sites for transcription factor activators or repressors. Studies analyzing natural sequences have shown that activators or repressors often occupy specific areas within cis-regulatory regions. For example, activator binding sites are typically located upstream of the -35 sigma factor recognition element in bacterial promoters. Notably, the regulatory effectiveness of these sites diminishes when they are positioned downstream of this element. The solver can be adapted to mirror these biological patterns by allowing for the specification of motifs with upstream or downstream preferences. As the solver traverses the graph to assemble the output sequence, a position variable of each motif encountered is integrated into the scoring function. Here, position[i] signifies the starting point of motif i in the sequence. By dividing these position variables by a large constant K, the solver is configured to find solutions that favor positioning activator motifs upstream and repressor motifs downstream. This method, which can be combined with other promoter constraints, enables the generation of sequences that more accurately mimic the intricate arrangement of motifs in natural, multi-factor promoters.
 
 ``` python
-# Example code for adaptive weighting to favor activator binding sites
-# [placeholder for usage code]
+motifs = [
+    "GAAATAACATAATTGA",
+    "TGTTAATAATAAGTAAT",
+    "TTATATTTTACCCATTT",
+    "AGGTTAATCCTAAAA",
+    "ATTGAAACGATTCAGC",
+    "CTCTGTCATAAAACTGTCATAT",
+    "TTACGCATTTTTAC",
+    "ATTTGTACACAA",
+    "AAGGCATAACCTATCACTGT",
+    "ACGCAAACGTTTTCTT",
+    "TACATTTAGTTACA",
+    "TTAATAAAACCTTAAGGTT",
+    "CCTTTTAGGTGCTT",
+    "TACTGTATATAAAAACAGTA",
+    "TAAAATTCATGGTAATTAT",
+    "AATGAGAATGATTATTAT",
+    "TGTTTATATTTTGTTTA",
+    "CATAAGAAAAA",
+    "CATTCATTTG",
+    "TTGACA",
+    "TATAAT",
+    "TATACT",
+    "TGGCAGG",
+    "TTGCA"
+]
+
+# Subset of motifs which you would prefer to be placed upstream
+upstream = [
+        "GAAATAACATAATTGA",
+        "TGTTAATAATAAGTAAT",
+        "TTATATTTTACCCATTT",
+        "AGGTTAATCCTAAAA",
+        "ATTGAAACGATTCAGC",
+        "CTCTGTCATAAAACTGTCATAT",
+        "TTACGCATTTTTAC",
+        "ATTTGTACACAA",
+        "AAGGCATAACCTATCACTGT",
+        "ACGCAAACGTTTTCTT",
+]
+
+# Subset of motifs which you would prefer to be placed downstream
+downstream = [
+        "TTAATAAAACCTTAAGGTT",
+        "CCTTTTAGGTGCTT",
+        "TACTGTATATAAAAACAGTA",
+        "TAAAATTCATGGTAATTAT",
+        "AATGAGAATGATTATTAT",
+        "TGTTTATATTTTGTTTA",
+        "CATAAGAAAAA",
+        "CATTCATTTG",
+]
+
+# Adding a promoter constraint: sigma D -35 and -10 motifs
+opt.add_promoter_constraints(
+    upstream="TTGACA",
+    downstream="TATAAT",
+    upstream_pos=(40, 80),
+    spacer_length=(16, 18),
+)
+
+# Adding a promoter constraint: sigma E -24 and -12 motifs
+opt.add_promoter_constraints(
+    upstream="TGGCAGG",
+    downstream="TTGCA",
+    upstream_pos=(40, 80),
+    spacer_length=(3, 5),
+)
+
+# Declare upstream and downstream preferences
+opt.add_side_biases(
+    left=upstream,
+    right=downstream
+)
+
+best = opt.optimal()
+print(best)
+
+# Upstream preference: *                       position 42  spacer length: 18
+# Downstream preference: +                     v    |<---------------->|     position 72  spacer length: 5
+#                                                   |                  |     v     |<--->|
+#                                                   |                  |           |     |
+#                                                   |                  |           |     |
+# -->                       TACATTTAGTTACA     TTGACA                  |     TGGCAGG     TTGCA
+# -->           *TTACGCATTTTTAC        +CATTCATTTG+CATAAGAAAAA         TATAAT      TATACT
+# --> TTGTGTACAAATTACGCATTTTTACATTTAGTTACATTCATTTGACATAAGAAAAATGGGTAAAATATAATGGCAGGTATACTTGCAAGCACCTAAAAGG
+# <-- AACACATGTTTAATGCGTAAAAATGTAAATCAATGTAAGTAAACTGTATTCTTTTTACCCATTTTATATTACCGTCCATATGAACGTTCGTGGATTTTCC
+# <-- AACACATGTTTA*                                        TTTACCCATTTTATATT*               TTCGTGGATTTTCC+
 ```
 
 ## Citation
