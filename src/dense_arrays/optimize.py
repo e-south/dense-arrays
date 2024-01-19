@@ -39,6 +39,8 @@ def shift_metric(motifa: str, motifb: str) -> int:
         motifb:         TTAA    # okay
         shift : 012345678
     """
+    if motifa == motifb:
+        return len(motifa)
     for shift in range(max(len(motifa) - len(motifb), 0), len(motifa)):
         if motifa[shift:] == motifb[: len(motifa) - shift]:
             return shift

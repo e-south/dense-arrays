@@ -17,6 +17,7 @@ import pytest
         ("CAG", "AGC", 1),
         ("CGT", "CAG", 3),
         ("", "CGT", 0),
+        ("ATGC", "ATGC", 4),
     ],
 )
 def test_shift_metric(motifa: str, motifb: str, shift: int):
