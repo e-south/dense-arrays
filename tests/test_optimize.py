@@ -82,6 +82,60 @@ def test_promoter_constraints(
     assert sol_prom.nb_motifs == prom
 
 
+def test_multiple_promoter_constraints():
+    opt = da.Optimizer(
+        ["GCA", "CCC", "ACACT", "ATGC", "CATT", "ACACT", "GCA", "AAA"],
+        sequence_length=10,
+        strands="double",
+    )
+    opt.add_promoter_constraints(
+        upstream="ATGC", downstream="CCC", upstream_pos=(0, 2), spacer_length=(0, 3)
+    )
+    with pytest.raises(ValueError, match="must appear several times"):
+        opt.add_promoter_constraints(
+            upstream="ATGC", downstream="GCA", upstream_pos=(0, 2), spacer_length=(0, 3)
+        )
+    with pytest.raises(ValueError, match="must appear several times"):
+        opt.add_promoter_constraints(
+            upstream="GCA", downstream="ATGC", upstream_pos=(0, 2), spacer_length=(0, 3)
+        )
+    with pytest.raises(ValueError, match="must appear several times"):
+        opt.add_promoter_constraints(
+            upstream="CATT", downstream="CCC", upstream_pos=(0, 2), spacer_length=(0, 3)
+        )
+    with pytest.raises(ValueError, match="must appear several times"):
+        opt.add_promoter_constraints(
+            upstream="CCC", downstream="CATT", upstream_pos=(0, 2), spacer_length=(0, 3)
+        )
+    opt.add_promoter_constraints(
+        upstream="GCA", downstream="CATT", upstream_pos=(0, 2), spacer_length=(0, 3)
+    )
+    opt.add_promoter_constraints(
+        upstream="ACACT", downstream="ACACT", upstream_pos=(0, 2), spacer_length=(0, 3)
+    )
+    opt.add_promoter_constraints(
+        upstream="GCA", downstream="AAA", upstream_pos=(0, 2), spacer_length=(0, 3)
+    )
+    assert len(opt.promoters) == 4
+    upstream = {p.upstream_index for p in opt.promoters}
+    downstream = {p.downstream_index for p in opt.promoters}
+    assert len(upstream | downstream) == 2 * len(opt.promoters)
+
+
+def test_multiple_constraints_optimization():
+    opt = da.Optimizer(
+        ["AAA", "CCC", "AAA", "CCC"], sequence_length=12, strands="double"
+    )
+    opt.add_promoter_constraints(
+        upstream="AAA", downstream="CCC", upstream_pos=(0, 0), spacer_length=(0, 0)
+    )
+    opt.add_promoter_constraints(
+        upstream="AAA", downstream="CCC", upstream_pos=(6, 6), spacer_length=(0, 0)
+    )
+    sol = opt.optimal()
+    assert sol.offset_indices_in_order() == [(0, 0), (3, 1), (6, 2), (9, 3)]
+
+
 def test_side_bias():
     opt = da.Optimizer(["AAA", "CCC"], sequence_length=6, strands="double")
     opt.add_side_biases(left=["AAA"], right=["CCC"])

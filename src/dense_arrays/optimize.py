@@ -278,12 +278,8 @@ class Optimizer:
         spacer_length
             Length of the spacer between both elements, or tuple (min, max).
         """
-        try:
-            upstream_index = self.library.index(upstream)
-            downstream_index = self.library.index(downstream)
-        except ValueError as err:
-            msg = "Both promoter elements must be present in the library."
-            raise ValueError(msg) from err
+        upstream_index = self._find_motif_index(upstream)
+        downstream_index = self._find_motif_index(downstream, avoid=upstream_index)
 
         constraint = PromoterConstraint(
             upstream_index=upstream_index,
@@ -293,6 +289,27 @@ class Optimizer:
             spacer_length=spacer_length,
         )
         self.promoters.append(constraint)
+
+    def _find_motif_index(self: Self, motif: str, avoid: int | None = None) -> int:
+        upstream_indices = {p.upstream_index for p in self.promoters}
+        downstream_indices = {p.downstream_index for p in self.promoters}
+        all_indices = upstream_indices | downstream_indices | {avoid}
+        try:
+            start = 0
+            while True:
+                index = self.library.index(motif, start)
+                if index not in all_indices:
+                    return index
+                start = index + 1
+        except ValueError as err:
+            if start == 0:
+                msg = "Promoter elements must be present in the library."
+            else:
+                msg = (
+                    "If a promoter element is reused, "
+                    "it must appear several times in the library."
+                )
+            raise ValueError(msg) from err
 
     def add_side_biases(
         self: Self, *, left: list[str] | None = None, right: list[str] | None = None
