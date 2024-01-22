@@ -200,6 +200,75 @@ def side_bias() -> None:
             )
 
 
+def multiple_promoters() -> None:
+    """
+    Create the "multiple_promoters.csv" file.
+
+    Each is a csv with motifs in columns and solutions in rows.
+    """
+    rng = npr.default_rng(seed=42)
+    library_size = 20
+    motif_min_size = 5
+    motif_max_size = 15
+    sequence_length = 100
+    solver = "Gurobi"
+    upstreams = ["TTGACA", "TTGACA", "TGGCAGG"]
+    downstreams = ["TATAAT", "TATACT", "TTGCA"]
+    with Path("multiple_promoters.csv").open("w") as out:
+        for replicate in range(10000):
+            library = [
+                "".join(
+                    rng.choice(
+                        ATGC,
+                        rng.integers(motif_min_size, motif_max_size, endpoint=True),
+                    )
+                )
+                for _ in range(library_size)
+            ]
+            library += upstreams
+            library += downstreams
+            optimizer = da.Optimizer(
+                library, sequence_length=sequence_length, strands="double"
+            )
+            optimizer.add_promoter_constraints(
+                upstream=upstreams[0],
+                downstream=downstreams[0],
+                upstream_pos=(40, 60),
+                spacer_length=(16, 18),
+            )
+            optimizer.add_promoter_constraints(
+                upstream=upstreams[1],
+                downstream=downstreams[1],
+                upstream_pos=(50, 70),
+                spacer_length=(16, 18),
+            )
+            optimizer.add_promoter_constraints(
+                upstream=upstreams[2],
+                downstream=downstreams[2],
+                upstream_pos=(60, 80),
+                spacer_length=(3, 5),
+            )
+            try:
+                sol = optimizer.optimal(solver=solver, solver_options=["TimeLimit=300"])
+            except StopIteration:
+                print("no sol or timeout")
+                continue
+            print(
+                replicate,
+                *library,
+                sep=",",
+                file=out,
+            )
+            print(
+                replicate,
+                *sol.offsets_fwd,
+                *sol.offsets_rev,
+                sep=",",
+                file=out,
+                flush=True,
+            )
+
+
 # benchmarks(double=True)
 
 # topsols(control=False)
