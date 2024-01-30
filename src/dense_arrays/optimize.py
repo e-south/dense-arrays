@@ -9,7 +9,7 @@ from ortools.linear_solver import pywraplp
 
 COMPLEMENT = {"A": "T", "T": "A", "C": "G", "G": "C", "-": "-"}
 
-__all__ = ["shift_metric", "DenseArray", "Optimizer"]
+__all__ = ["DenseArray", "Optimizer", "shift_metric"]
 
 
 def shift_metric(motifa: str, motifb: str) -> int:
