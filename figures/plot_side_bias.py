@@ -57,12 +57,12 @@ axs[0].set_title("No side bias")
 axs[0].plot(range(100), activators[0], label="upstream pref.")
 axs[0].plot(range(100), repressors[0], label="downstream pref.")
 axs[0].plot(range(100), upstream[0], label="-35")
-axs[0].plot(range(100), downstream[0], label="-10")
+axs[0].plot(range(100), downstream[0], "--", label="-10")
 axs[1].set_title("With side bias")
 axs[1].plot(range(100), activators[1], label="upstream pref.")
 axs[1].plot(range(100), repressors[1], label="downstream pref.")
 axs[1].plot(range(100), upstream[1], label="-35")
-axs[1].plot(range(100), downstream[1], label="-10")
+axs[1].plot(range(100), downstream[1], "--", label="-10")
 axs[1].set_xlabel("Sequence position (bp)")
 axs[0].legend(loc="upper left")
 for ax in axs:
@@ -83,6 +83,5 @@ for ax in axs:
         alpha=0.3,
         transform=ax.get_xaxis_transform(),
     )
-    ax.grid()
 plt.savefig("side_bias.svg", bbox_inches="tight")
 plt.savefig("side_bias.png", bbox_inches="tight")

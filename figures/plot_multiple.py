@@ -46,14 +46,14 @@ with Path("../benchmarks/multiple_promoters.csv").open("r") as f:
             else:
                 motifs[offset : offset + len(library[index % 26])] += 1
 
-fig, ax = plt.subplots(figsize=(8, 3))
+fig, ax = plt.subplots(figsize=(7, 4))
 
 bps = range(sequence_length)
 
 ax.plot(bps, motifs, label="normal motifs", color="C0")
-for ipromoter, (up, down) in enumerate(zip(upstream, downstream, strict=True)):
-    ax.plot(bps, up, label=f"#{ipromoter} up", color=f"C{ipromoter + 1}")
-    ax.plot(bps, down, "--", label=f"#{ipromoter} down", color=f"C{ipromoter + 1}")
+for ipromoter, (up, down) in enumerate(zip(upstream, downstream, strict=True), start=1):
+    ax.plot(bps, up, label=f"#{ipromoter} up", color=f"C{ipromoter}")
+    ax.plot(bps, down, "--", label=f"#{ipromoter} down", color=f"C{ipromoter}")
 
 ax.set_xlabel("Sequence position (bp)")
 ax.set_ylabel("Number of motifs\ncovering this position")
