@@ -23,7 +23,8 @@ dev = [
 requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.ruff]
+[tool.ruff.lint]
+preview = true
 select = ["ALL"]
 ignore = [
     # Commas something
@@ -47,6 +48,3 @@ convention = "numpy"
 
 [tool.ruff.lint.flake8-pytest-style]
 parametrize-names-type = "csv"
-
-[tool.ruff.lint]
-preview = true

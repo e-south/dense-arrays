@@ -16,14 +16,14 @@ repos:
       - id: name-tests-test
         args: [--pytest-test-first]
   - repo: https://github.com/crate-ci/typos
-    rev: v1.17.2
+    rev: v1.18.0
     hooks:
       - id: typos
         args:
           - --config=.typos.toml
         exclude: ^.*\.svg
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.15
+    rev: v0.2.0
     hooks:
       - id: ruff-format
       - id: ruff
