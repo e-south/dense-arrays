@@ -130,9 +130,9 @@ def size_bias() -> None:
 
 def side_bias() -> None:
     """
-    Create the "side_nobias.csv" and "side_bias.csv" files.
+    Create the "side_bias_both.csv" file.
 
-    Each is a csv with motifs in columns and solutions in rows.
+    It is a csv with motifs in columns and solutions in rows.
     """
     rng = npr.default_rng(seed=42)
     library_size = 20
