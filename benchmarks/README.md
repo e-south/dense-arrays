@@ -31,6 +31,20 @@ on a different promoter library. The first line corresponds to the motifs of
 the library, and each of the following lines corresponds to whether a given
 motif is or not included in the solution.
 
+This function has been called with three different solvers, to investigate
+solver transient bias.  Gurobi was the most efficient solver, followed by SCIP
+and CBC:
+
++-----------+----------+----------+-----------+
+|           |  Gurobi  |   SCIP   |    CBC    |
++-----------+----------+----------+-----------+
+| Library 0 |   11m20s | 2h46m46s | 16h02m48s |
++-----------+----------+----------+-----------+
+| Library 1 |   22m04s | 6h19m44s |   > 20h   |
++-----------+----------+----------+-----------+
+| Library 2 | 3h29m28s |  > 20h   |   > 20h   |
++-----------+----------+----------+-----------+
+
 ## Function `multiple_promoters`
 
 * Creates the file `multiple_promoters.csv`

@@ -58,7 +58,7 @@ def benchmarks(*, double: bool) -> None:
             )
 
 
-def topsols(*, control: bool) -> None:
+def topsols(*, control: bool, solver: str = "Gurobi") -> None:
     """
     Create the "topsols10_{i}_solver.csv" and "topsols10_{i}_control.csv" files.
 
@@ -67,14 +67,13 @@ def topsols(*, control: bool) -> None:
     """
     rng = npr.default_rng(seed=42)
 
-    solver = "Gurobi"
     library_size = 10
     sequence_length = 50
 
-    for i in range(1):
+    for i in range(3):
         motifs = ["".join(rng.choice(ATGC, 10)) for _ in range(library_size)]
         with Path(
-            f"topsols10_{i}_" + ["solver", "control"][int(control)] + ".csv"
+            f"topsols10_{i}_" + ["solver", "control"][int(control)] + f"_{solver}.csv"
         ).open("w") as out:
             nodes = motifs + [da.optimize.reverse_complement(motif) for motif in motifs]
             print(",".join(nodes), file=out)
