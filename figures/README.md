@@ -13,3 +13,4 @@ The data must have already generated running the `benchmarks/main.py` file.
 | S2 | `size_bias` | `plot_size_bias.py` | `size_bias.svg` |
 | S3 | `size_bias` | `plot_control.py` | `size_bias_control.svg` |
 | S4 | `topsols` | `plot_overlap_bias.py` | `overlap_bias.svg` |
+| S5 | `topsols` | `plot_control.py` | `solver_bias.svg` |
