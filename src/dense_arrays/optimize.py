@@ -247,7 +247,7 @@ class Optimizer:
         self.strands = strands
         self.promoters: list[PromoterConstraint] = []
         if strands == "double":
-            library = library + [reverse_complement(motif) for motif in library]
+            library = library + [reverse_complement(motif) for motif in library]  # noqa: PLR6104
         self.adjacency_matrix = adjacency_matrix(library)
         self.model = None
         self.ilefts: list[int] = []
@@ -560,7 +560,7 @@ class Optimizer:
                 irev = i + self.nb_motifs
                 objective.SetCoefficient(self.model.position[irev], weight)
 
-    def solve(self: Self) -> DenseArray:  # noqa: C901
+    def solve(self: Self) -> DenseArray:
         """
         Solve the currently built model and return its optimal solution.
 
@@ -575,19 +575,16 @@ class Optimizer:
         status = self.model.Solve()
 
         if status != pywraplp.Solver.OPTIMAL:
-            match status:
-                case pywraplp.Solver.FEASIBLE:
-                    msg = "A feasible solution was found, but not necessarily optimal."
-                case pywraplp.Solver.INFEASIBLE:
-                    msg = "No feasible solution was found."
-                case pywraplp.Solver.UNBOUNDED:
-                    msg = "The model is unbounded."
-                case pywraplp.Solver.ABNORMAL:
-                    msg = "The model is abnormal."
-                case pywraplp.Solver.NOT_SOLVED:
-                    msg = "The model has not been solved."
-                case _:
-                    msg = f"Solver ended with unknown status: {status}."
+            status_messages = {
+                pywraplp.Solver.FEASIBLE: "A feasible solution was found, but not necessarily optimal.",  # noqa: E501
+                pywraplp.Solver.INFEASIBLE: "No feasible solution was found.",
+                pywraplp.Solver.UNBOUNDED: "The model is unbounded.",
+                pywraplp.Solver.ABNORMAL: "The model is abnormal.",
+                pywraplp.Solver.NOT_SOLVED: "The model has not been solved.",
+            }
+            msg = status_messages.get(
+                status, f"Solver ended with unknown status: {status}."
+            )
             raise ValueError(msg)
 
         # Extract the solution
