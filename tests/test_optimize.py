@@ -3,8 +3,9 @@
 import itertools as it
 from collections import Counter
 
-import dense_arrays as da
 import pytest
+
+import dense_arrays as da
 
 
 @pytest.mark.parametrize(

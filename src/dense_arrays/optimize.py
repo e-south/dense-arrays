@@ -38,6 +38,11 @@ def shift_metric(motifa: str, motifb: str) -> int:
         motifb:    TTAA         # not allowed
         motifb:         TTAA    # okay
         shift : 012345678
+
+    Returns
+    -------
+    shift : int
+        The result.
     """
     if motifa == motifb:
         return len(motifa)
@@ -179,7 +184,14 @@ class DenseArray:
         return total_length / self.sequence_length
 
     def __str__(self: Self) -> str:
-        """Build a string that visually represents the solution."""
+        """
+        Build a string that visually represents the solution.
+
+        Returns
+        -------
+        s : str
+            The solution as a string.
+        """
         sequence = self.sequence + "-" * (self.sequence_length - len(self.sequence))
         seq_rev = "".join(COMPLEMENT[c] for c in sequence)
         lines_fwd = dispatch_labels(self.library, self.offsets_fwd, rev=False)
@@ -201,7 +213,7 @@ class PromoterConstraint:
     downstream_pos: tuple[int | None, int | None]
     spacer_length: tuple[int | None, int | None]
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self: Self,
         *,
         upstream_index: int,
@@ -253,7 +265,7 @@ class Optimizer:
         self.ilefts: list[int] = []
         self.irights: list[int] = []
 
-    def add_promoter_constraints(  # noqa: PLR0913
+    def add_promoter_constraints(
         self: Self,
         *,
         upstream: str,
@@ -327,6 +339,11 @@ class Optimizer:
             List of motifs that should preferentially appear on the left.
         right
             List of motifs that should preferentially appear on the right.
+
+        Raises
+        ------
+        ValueError
+            If the left or right motifs don't belong to the initial library.
         """
         try:
             self.ilefts = [self.library.index(motif) for motif in left] if left else []
@@ -361,6 +378,11 @@ class Optimizer:
         This method belongs to the advanced API: most users should not build the model
         themselves, but rather use functions which build it automatically, such as
         `optimal`, `solutions` or `solutions_diverse`.
+
+        Raises
+        ------
+        RuntimeError
+            If the backend could not create the model.
         """
         self.model = pywraplp.Solver.CreateSolver(solver)
 
@@ -566,6 +588,18 @@ class Optimizer:
 
         This belongs to the advanced API: most users should rather use `optimal()`
         instead, which builds the model automatically.
+
+        Raises
+        ------
+        RuntimeError
+            If the model has not been built yet (`build_model` should be called).
+        ValueError
+            If the model could not be solved optimally.
+
+        Returns
+        -------
+        solution : DenseArray
+            The optimal solution.
         """
         if self.model is None:
             msg = "Model not built: call `build_model(solver)` first"
@@ -622,6 +656,11 @@ class Optimizer:
         ----------
         solution
             The solution to forbid.
+
+        Raises
+        ------
+        RuntimeError
+            If the model has not been built yet (`build_model` should be called).
         """
         if self.model is None:
             msg = "Model not built: call `build_model(solver)` first"
@@ -641,6 +680,11 @@ class Optimizer:
             Index of the motif.
         weight
             Weight of the motif.
+
+        Raises
+        ------
+        RuntimeError
+            If the model has not been built yet (`build_model` should be called).
         """
         if self.model is None:
             msg = "Model not built: call `build_model(solver)` first"
