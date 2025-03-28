@@ -4,7 +4,8 @@
 
 For more detailed documentation, please visit our [documentation site](https://dunloplab.gitlab.io/dense-arrays).
 
-![Dense Arrays Diagram](images/SPP_overview.png)  
+<img src="images/SPP_overview.png" alt="Dense Arrays Diagram" width="600"/>
+
 *Formulation of the nucleotide String Packing Problem (SPP) as an Orienteering Problem (OP). For more details, see the [associated paper](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1012276).*
 
 ## Installation
