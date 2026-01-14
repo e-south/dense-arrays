@@ -1,8 +1,13 @@
 image: python:latest
 
 before_script:
-  - pip install pytest mkdocs mkdocstrings[python] mkdocs-material
+  - pip install pytest mkdocs mkdocstrings[python] mkdocs-material pre-commit
   - pip install .
+
+pre-commit:
+  stage: test
+  script:
+    - pre-commit run --all-files
 
 test:
   stage: test

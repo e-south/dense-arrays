@@ -49,7 +49,7 @@ dev = [
 requires-dist = [
     { name = "numpy", specifier = ">=1.25.2" },
     { name = "ortools", specifier = ">=9.7.2996" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.4.0" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.5.1" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4.2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6.0" },
 ]

@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "A library to create densely packed DNA arrays from motifs"
 authors = [
     {name = "Virgile Andreani", email = "andreani@bu.edu"},
+    {name = "Eric J South", email = "ericjohnsouth@gmail.com"},
 ]
 dependencies = [
     "numpy>=1.25.2",
@@ -16,7 +17,7 @@ license-files = ["LICENSE"]
 
 [project.optional-dependencies]
 dev = [
-    "pre-commit>=3.4.0",
+    "pre-commit>=4.5.1",
     "pytest>=7.4.2",
     "ruff>=0.6.0",
 ]

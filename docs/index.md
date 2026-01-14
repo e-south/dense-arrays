@@ -23,6 +23,21 @@ Or with pip:
 $ pip install .
 ```
 
+## Development (pre-commit)
+
+To keep formatting and checks consistent with CI, install dev tools and hooks:
+
+```
+$ uv sync --extra dev
+$ uv run pre-commit install
+```
+
+Run hooks on all files:
+
+```
+$ uv run pre-commit run --all-files
+```
+
 ## Quick usage
 
 In the simplest use case, the user can provide a list of motifs (e.g., transcription factor binding sites), along with a maximum length of the output sequence. Motifs must be non-empty strings using only A/C/G/T (uppercase). The solver will return a sequence that accommodates a maximal number of the provided binding sites. If the specified length is too short to accommodate all provided sequences, then the returned sequence will only contain a subset of the provided binding sites.

@@ -23,6 +23,21 @@ If you prefer pip:
 pip install .
 ```
 
+## Development (pre-commit)
+
+Install dev tools and enable pre-commit hooks:
+
+```bash
+uv sync --extra dev
+uv run pre-commit install
+```
+
+Run the full hook suite locally:
+
+```bash
+uv run pre-commit run --all-files
+```
+
 ## Simple usage
 
 Here's an example that demonstrates how to use **dense-arrays**:
