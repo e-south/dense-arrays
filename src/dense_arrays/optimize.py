@@ -1,6 +1,7 @@
 """Optimization module."""
 
 import itertools as it
+from collections import Counter
 from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Self
@@ -8,6 +9,7 @@ from typing import Self
 from ortools.linear_solver import pywraplp
 
 COMPLEMENT = {"A": "T", "T": "A", "C": "G", "G": "C", "-": "-"}
+VALID_BASES = {"A", "C", "G", "T"}
 
 __all__ = ["DenseArray", "Optimizer", "shift_metric"]
 
@@ -105,6 +107,73 @@ def dispatch_labels(
     return lines
 
 
+def _normalize_regulator_mapping(
+    nb_motifs: int,
+    regulator_by_index: list[str] | dict[int, str],
+) -> dict[int, str]:
+    if isinstance(regulator_by_index, list):
+        if len(regulator_by_index) != nb_motifs:
+            msg = "regulator_by_index list length must match number of motifs"
+            raise ValueError(msg)
+        mapping = {i: str(label).strip() for i, label in enumerate(regulator_by_index)}
+    elif isinstance(regulator_by_index, dict):
+        if set(regulator_by_index.keys()) != set(range(nb_motifs)):
+            msg = "regulator_by_index dict must cover all motif indices"
+            raise ValueError(msg)
+        mapping = {
+            int(i): str(label).strip() for i, label in regulator_by_index.items()
+        }
+    else:
+        msg = "regulator_by_index must be a list or dict"
+        raise TypeError(msg)
+    if any(not label for label in mapping.values()):
+        msg = "regulator_by_index labels must be non-empty strings"
+        raise ValueError(msg)
+    return mapping
+
+
+def _normalize_min_counts(
+    mapping: dict[int, str],
+    required: set[str],
+    min_count_by_regulator: dict[str, int] | None,
+) -> dict[str, int]:
+    min_counts = {str(k): int(v) for k, v in (min_count_by_regulator or {}).items()}
+    for regulator, count in min_counts.items():
+        if count <= 0:
+            msg = f"min_count_by_regulator must be > 0 (got {regulator}={count})"
+            raise ValueError(msg)
+        if regulator not in set(mapping.values()):
+            msg = f"min_count_by_regulator regulator not in mapping: {regulator}"
+            raise ValueError(msg)
+    for regulator in required:
+        min_counts[regulator] = max(1, min_counts.get(regulator, 1))
+
+    counts = Counter(mapping.values())
+    for regulator, count in min_counts.items():
+        if counts[regulator] < count:
+            msg = (
+                f"Regulator '{regulator}' has only {counts[regulator]} motifs, "
+                f"cannot satisfy min_count={count}."
+            )
+            raise ValueError(msg)
+    return min_counts
+
+
+def _normalize_min_required(
+    min_required_regulators: int | None,
+    available: set[str],
+) -> int | None:
+    if min_required_regulators is None:
+        return None
+    if min_required_regulators <= 0:
+        msg = "min_required_regulators must be > 0 (use None to disable)."
+        raise ValueError(msg)
+    if min_required_regulators > len(available):
+        msg = "min_required_regulators exceeds available regulators"
+        raise ValueError(msg)
+    return min_required_regulators
+
+
 @dataclass
 class DenseArray:
     """Representation of a solution."""
@@ -197,7 +266,7 @@ class DenseArray:
         lines_fwd = dispatch_labels(self.library, self.offsets_fwd, rev=False)
         lines_rev = dispatch_labels(self.library, self.offsets_rev, rev=True)
 
-        s_fwd = "--> " + "\n--> ".join(lines_fwd[::-1] + [sequence])
+        s_fwd = "--> " + "\n--> ".join([*lines_fwd[::-1], sequence])
         s_rev = "<-- " + "\n<-- ".join([seq_rev, *lines_rev])
 
         return s_fwd + "\n" + s_rev
@@ -250,14 +319,32 @@ class Optimizer:
         sequence_length: int,
         strands: str = "double",
     ) -> None:
+        if sequence_length <= 0:
+            msg = "sequence_length must be > 0"
+            raise ValueError(msg)
         if strands not in {"single", "double"}:
             msg = "strands must be single or double"
             raise ValueError(msg)
+        if not library:
+            msg = "library must contain at least one motif"
+            raise ValueError(msg)
+        for i, motif in enumerate(library):
+            if not isinstance(motif, str) or not motif:
+                msg = f"motif at index {i} must be a non-empty string"
+                raise ValueError(msg)
+            invalid = set(motif) - VALID_BASES
+            if invalid:
+                msg = (
+                    f"motif at index {i} contains invalid bases: {sorted(invalid)}. "
+                    "Use uppercase A/C/G/T only."
+                )
+                raise ValueError(msg)
 
         self.library = list(library)
         self.sequence_length = sequence_length
         self.strands = strands
         self.promoters: list[PromoterConstraint] = []
+        self._regulator_constraints: dict | None = None
         if strands == "double":
             library = library + [reverse_complement(motif) for motif in library]  # noqa: PLR6104
         self.adjacency_matrix = adjacency_matrix(library)
@@ -353,6 +440,73 @@ class Optimizer:
         except ValueError as err:
             msg = "All motifs must belong to the initial library."
             raise ValueError(msg) from err
+
+    def add_regulator_constraints(
+        self: Self,
+        regulator_by_index: list[str] | dict[int, str],
+        *,
+        required: set[str] | None = None,
+        min_count_by_regulator: dict[str, int] | None = None,
+        min_required_regulators: int | None = None,
+    ) -> None:
+        """
+        Add regulator coverage constraints to the optimization problem.
+
+        Parameters
+        ----------
+        regulator_by_index
+            Mapping from motif index to regulator label (len == nb_motifs).
+        required
+            Regulators that must appear at least once (>=1).
+        min_count_by_regulator
+            Per-regulator minimum counts (>=1).
+        min_required_regulators
+            Require at least this many unique regulators to appear (k-of-n).
+
+        Raises
+        ------
+        ValueError
+            If constraints are invalid or infeasible given the motif library.
+        RuntimeError
+            If regulator constraints are already set.
+        """
+        if self._regulator_constraints is not None:
+            msg = (
+                "Regulator constraints already set; create a new Optimizer "
+                "to change them."
+            )
+            raise RuntimeError(msg)
+
+        if (
+            required is None
+            and not min_count_by_regulator
+            and min_required_regulators is None
+        ):
+            msg = "At least one regulator constraint must be provided."
+            raise ValueError(msg)
+
+        mapping = _normalize_regulator_mapping(self.nb_motifs, regulator_by_index)
+        available = set(mapping.values())
+        required_set = set(required or [])
+        if not required_set.issubset(available):
+            missing = sorted(required_set - available)
+            msg = f"Required regulators missing from mapping: {missing}"
+            raise ValueError(msg)
+
+        min_counts = _normalize_min_counts(
+            mapping, required_set, min_count_by_regulator
+        )
+        min_required_regulators = _normalize_min_required(
+            min_required_regulators,
+            available,
+        )
+
+        self._regulator_constraints = {
+            "mapping": mapping,
+            "required": required_set,
+            "min_counts": min_counts,
+            "min_required": min_required_regulators,
+        }
 
     @property
     def nb_motifs(self: Self) -> int:
@@ -453,6 +607,9 @@ class Optimizer:
         # Apply user-defined distance constraints
         self._add_promoter_constraints()
 
+        # Apply regulator coverage constraints
+        self._add_regulator_constraints()
+
         # Objective
         self.model.Maximize(
             sum(
@@ -509,16 +666,14 @@ class Optimizer:
             for i in range(self.nb_nodes)
         ]
 
-        # Set position for the start point
-        self.model.Add(self.model.position[-1] == 0)
-
         # Define position for each node
         for i in range(-1, self.nb_nodes):
             for j in range(self.nb_nodes):
                 if i == j:
                     continue
                 shift = 0 if i == -1 else self.adjacency_matrix[i][j]
-                distance_i_j = self.model.position[j] - self.model.position[i]
+                base_pos = 0 if i == -1 else self.model.position[i]
+                distance_i_j = self.model.position[j] - base_pos
                 slack = (self.sequence_length - 1) * (1 - self.model.X[i, j])
                 self.model.Add(shift * self.model.X[i, j] - slack <= distance_i_j)
                 self.model.Add(distance_i_j <= shift * self.model.X[i, j] + slack)
@@ -581,6 +736,54 @@ class Optimizer:
             if self.strands == "double":
                 irev = i + self.nb_motifs
                 objective.SetCoefficient(self.model.position[irev], weight)
+
+    def _add_regulator_constraints(self: Self) -> None:
+        """Implement regulator coverage constraints into the model."""
+        if not self._regulator_constraints:
+            return
+
+        mapping: dict[int, str] = self._regulator_constraints["mapping"]
+        min_counts: dict[str, int] = self._regulator_constraints["min_counts"]
+        min_required = self._regulator_constraints["min_required"]
+
+        self.model.selected = [
+            self.model.BoolVar(f"selected[{i}]") for i in range(self.nb_motifs)
+        ]
+
+        def _incoming(node: int) -> pywraplp.LinearExpr:
+            return sum(
+                self.model.X[i, node] for i in range(-1, self.nb_nodes) if i != node
+            )
+
+        for i in range(self.nb_motifs):
+            used_fwd = _incoming(i)
+            if self.strands == "double":
+                used_rev = _incoming(i + self.nb_motifs)
+                used_total = used_fwd + used_rev
+            else:
+                used_total = used_fwd
+            self.model.Add(used_total <= self.model.selected[i])
+            self.model.Add(self.model.selected[i] <= used_total)
+
+        groups: dict[str, list[int]] = {}
+        for idx, label in mapping.items():
+            groups.setdefault(label, []).append(idx)
+
+        for label, indices in groups.items():
+            total = sum(self.model.selected[i] for i in indices)
+            min_count = min_counts.get(label)
+            if min_count is not None:
+                self.model.Add(total >= min_count)
+
+        if min_required is not None:
+            covered_flags = []
+            for ridx, indices in enumerate(groups.values()):
+                covered = self.model.BoolVar(f"covered[{ridx}]")
+                total = sum(self.model.selected[i] for i in indices)
+                self.model.Add(total >= covered)
+                self.model.Add(total <= len(indices) * covered)
+                covered_flags.append(covered)
+            self.model.Add(sum(covered_flags) >= min_required)
 
     def solve(self: Self) -> DenseArray:
         """
@@ -799,8 +1002,17 @@ class Optimizer:
         -------
         solution :
             Optimal solution.
+
+        Raises
+        ------
+        ValueError
+            If no feasible solution exists.
         """
-        return next(self.solutions(solver, solver_options=solver_options))
+        try:
+            return next(self.solutions(solver, solver_options=solver_options))
+        except StopIteration as err:
+            msg = "No feasible solution was found."
+            raise ValueError(msg) from err
 
     def approximate(self: Self) -> DenseArray:
         """
