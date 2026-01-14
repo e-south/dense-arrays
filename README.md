@@ -8,29 +8,30 @@ For more detailed documentation, please visit our [documentation site](https://d
 
 *Formulation of the nucleotide String Packing Problem (SPP) as an Orienteering Problem (OP). For more details, see the [associated paper](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1012276).*
 
-## Installation
+## Installation (uv recommended)
 
-1. **(Optional but Recommended) Create a Conda Environment**  
-   Create and activate a new environment:
-   ```bash
-   conda create -n dense-arrays python
-   conda activate dense-arrays
-   ```
+From the repo root:
 
-2. **Install the Package**  
-   Use pip to install:
-   ```bash
-   pip install .
-   ```
+```bash
+uv sync --extra dev
+```
 
-## Simple Usage
+This creates a local `.venv` and installs dev tools (pytest/ruff).
+If you prefer pip:
+
+```bash
+pip install .
+```
+
+## Simple usage
 
 Here's an example that demonstrates how to use **dense-arrays**:
 
 ```python
 import dense_arrays as da
 
-# Define a list of nucleotide motifs and initialize the optimizer with a target sequence length.
+# Motifs must be non-empty strings containing only A/C/G/T (uppercase).
+# Initialize the optimizer with a target sequence length.
 opt = da.Optimizer([
     "ATAATATTCTGAATT",
     "TCCCTATAAGAAAATTA",
@@ -49,6 +50,13 @@ print("List of all solutions")
 for solution in opt.solutions():
     print(f"Solution with score {solution.nb_motifs}:")
     print(solution)
+```
+
+Regulator constraints (optional, solver-level):
+
+```python
+regulators = ["R1", "R1", "R2", "R3", "R4"]
+opt.add_regulator_constraints(regulators, min_required_regulators=2)
 ```
 
 ## Solver Backends

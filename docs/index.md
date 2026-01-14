@@ -11,7 +11,13 @@ $ git clone https://gitlab.com/dunloplab/dense-arrays
 $ cd dense-arrays
 ```
 
-Then create conda or pip environment (optional but recommended), and install the package with
+Then create a local environment and install the package. Using uv (recommended):
+
+```
+$ uv sync --extra dev
+```
+
+Or with pip:
 
 ```
 $ pip install .
@@ -19,7 +25,7 @@ $ pip install .
 
 ## Quick usage
 
-In the simplest use case, the user can provide a list of motifs (e.g., transcription factor binding sites), along with a maximum length of the output sequence. The solver will return a sequence that accommodates a maximal number of the provided binding sites. If the specified length is too short to accommodate all provided sequences, then the returned sequence will only contain a subset of the provided binding sites.
+In the simplest use case, the user can provide a list of motifs (e.g., transcription factor binding sites), along with a maximum length of the output sequence. Motifs must be non-empty strings using only A/C/G/T (uppercase). The solver will return a sequence that accommodates a maximal number of the provided binding sites. If the specified length is too short to accommodate all provided sequences, then the returned sequence will only contain a subset of the provided binding sites.
 
 ``` python
 import dense_arrays as da
@@ -96,6 +102,38 @@ print(best)
 ```
 
 In some cases, motifs may be associated with labels indicating their role as binding sites for transcription factor activators or repressors. Studies analyzing natural sequences have shown that activators or repressors often occupy specific areas within cis-regulatory regions. For example, activator binding sites are typically located upstream of the -35 sigma factor recognition element in bacterial promoters. Notably, the regulatory effectiveness of these sites diminishes when they are positioned downstream of this element. The solver can be adapted to mirror these biological patterns by allowing for the specification of motifs with upstream or downstream preferences. As the solver traverses the graph to assemble the output sequence, a position variable of each motif encountered is integrated into the scoring function. Here, position[i] signifies the starting point of motif i in the sequence. By dividing these position variables by a large constant K, the solver is configured to find solutions that favor positioning activator motifs upstream and repressor motifs downstream. This method, which can be combined with other promoter constraints, enables the generation of sequences that more accurately mimic the intricate arrangement of motifs in natural, multi-factor promoters.
+
+## Regulator coverage constraints
+
+Dense-arrays can enforce regulator-level coverage directly in the solver. Provide a
+mapping from motif index to regulator label and configure either strict coverage
+or a k-of-n coverage constraint.
+
+``` python
+motifs = ["AAA", "CCC", "GGG", "TTT"]
+regulators = ["R1", "R2", "R3", "R4"]
+
+opt = da.Optimizer(motifs, sequence_length=6, strands="single")
+
+# Require at least 2 distinct regulators to appear (k-of-n coverage)
+opt.add_regulator_constraints(
+    regulators,
+    min_required_regulators=2,
+)
+
+best = opt.optimal()
+print(best)
+```
+
+You can also enforce strict coverage for specific regulators:
+
+``` python
+opt.add_regulator_constraints(
+    regulators,
+    required={"R1", "R2"},
+    min_count_by_regulator={"R1": 2},
+)
+```
 
 ``` python
 motifs = [
