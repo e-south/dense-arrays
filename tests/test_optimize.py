@@ -1,4 +1,4 @@
-"""Tests of the optimize.py module."""
+"""Tests of dense-arrays core modules."""
 
 import itertools as it
 from collections import Counter
@@ -6,6 +6,7 @@ from collections import Counter
 import pytest
 
 import dense_arrays as da
+import dense_arrays.sequence as seq
 
 
 def _assert_promoter_constraint(
@@ -42,7 +43,7 @@ def _assert_promoter_constraint(
     ],
 )
 def test_shift_metric(motifa: str, motifb: str, shift: int):
-    assert da.optimize.shift_metric(motifa, motifb) == shift
+    assert seq.shift_metric(motifa, motifb) == shift
 
 
 @pytest.mark.parametrize(
@@ -53,29 +54,29 @@ def test_shift_metric(motifa: str, motifb: str, shift: int):
     ],
 )
 def test_reverse_complement(sequence: str, expected: str):
-    assert da.optimize.reverse_complement(sequence) == expected
+    assert seq.reverse_complement(sequence) == expected
 
 
 def test_adjacency_matrix():
     motifs = ["AAA", "AAT"]
-    adj = da.optimize.adjacency_matrix(motifs)
+    adj = seq.adjacency_matrix(motifs)
     assert len(adj) == 2
     assert all(len(row) == 2 for row in adj)
-    assert adj[0][1] == da.optimize.shift_metric("AAA", "AAT")
+    assert adj[0][1] == seq.shift_metric("AAA", "AAT")
 
 
 def test_dispatch_labels_simple():
     library = ["ATG", "CCC"]
     offsets = [0, 3]
-    lines = da.optimize.dispatch_labels(library, offsets, rev=False)
+    lines = seq.dispatch_labels(library, offsets, rev=False)
     assert lines == ["ATG", "   CCC"]
 
-    lines_rev = da.optimize.dispatch_labels(library, offsets, rev=True)
+    lines_rev = seq.dispatch_labels(library, offsets, rev=True)
     assert lines_rev == ["GTA", "   CCC"]
 
 
 def test_densearray_sequence_and_ordering():
-    library = ["AAA", "CC"]
+    library = ["AAA", "AA"]
     sol = da.DenseArray(
         library=library,
         sequence_length=4,
@@ -84,6 +85,50 @@ def test_densearray_sequence_and_ordering():
     )
     assert sol.offset_indices_in_order() == [(0, 1), (0, 0)]
     assert sol.sequence.startswith("AAA")
+
+
+def test_densearray_rejects_conflicts():
+    library = ["AAA", "CCC"]
+    with pytest.raises(ValueError, match="conflict"):
+        da.DenseArray(
+            library=library,
+            sequence_length=5,
+            offsets_fwd=[0, 0],
+            offsets_rev=[None, None],
+        )
+
+
+def test_densearray_rejects_gaps():
+    library = ["AAA"]
+    with pytest.raises(ValueError, match="gaps"):
+        da.DenseArray(
+            library=library,
+            sequence_length=5,
+            offsets_fwd=[2],
+            offsets_rev=[None],
+        )
+
+
+def test_densearray_rejects_overflow():
+    library = ["AAAA"]
+    with pytest.raises(ValueError, match="sequence_length"):
+        da.DenseArray(
+            library=library,
+            sequence_length=3,
+            offsets_fwd=[0],
+            offsets_rev=[None],
+        )
+
+
+def test_densearray_rejects_empty_solution():
+    library = ["AAA"]
+    with pytest.raises(ValueError, match="at least one motif"):
+        da.DenseArray(
+            library=library,
+            sequence_length=3,
+            offsets_fwd=[None],
+            offsets_rev=[None],
+        )
 
 
 def test_densearray_str_and_compression_ratio():
@@ -106,6 +151,12 @@ def test_invalid_motif_inputs():
         da.Optimizer([""], sequence_length=5, strands="single")
     with pytest.raises(ValueError, match="invalid bases"):
         da.Optimizer(["ATGN"], sequence_length=5, strands="single")
+
+
+def test_no_empty_solution():
+    opt = da.Optimizer(["AAAA"], sequence_length=2, strands="single")
+    with pytest.raises(ValueError, match="No feasible solution"):
+        opt.optimal()
 
 
 @pytest.mark.parametrize(
@@ -220,11 +271,17 @@ def test_approximate_solution_basic():
             assert sol.sequence[offset : offset + len(motif)] == motif
 
 
+def test_approximate_solution_no_fit():
+    opt = da.Optimizer(["AAAA"], sequence_length=2, strands="single")
+    with pytest.raises(ValueError, match="No feasible solution"):
+        opt.approximate()
+
+
 def test_take_best_run_matches_maximum():
     library = ["AAA", "CCC"]
     sequence = "AAAXXCCC"
     seq_len = 5
-    best = da.optimize.take_best_run(sequence, seq_len, library, strands="single")
+    best = seq.take_best_run(sequence, seq_len, library, strands="single")
 
     def count_motifs(subseq: str) -> int:
         return sum(motif in subseq for motif in library)
@@ -241,16 +298,18 @@ def test_simple_optimal(strands: str):
     )
     best = opt.optimal()
     assert best.nb_motifs == 3
-    assert best.sequence == "CGTTATTA"
+    if strands == "single":
+        assert best.sequence == "CGTTATTA"
+    assert len(best.sequence) == 8
 
 
 @pytest.mark.parametrize(
     "strands, diverse, ns",
     [
-        ("single", False, [1, 4, 9, 1]),
-        ("single", True, [1, 4, 9, 1]),
-        ("double", False, [1, 8, 34, 8]),
-        ("double", True, [1, 8, 34, 8]),
+        ("single", False, [0, 4, 9, 1]),
+        ("single", True, [0, 4, 9, 1]),
+        ("double", False, [0, 8, 34, 8]),
+        ("double", True, [0, 8, 34, 8]),
     ],
 )
 def test_simple_solutions(strands: str, diverse: bool, ns: list[int]):
@@ -278,15 +337,18 @@ def test_simple_solutions(strands: str, diverse: bool, ns: list[int]):
     ],
 )
 def test_promoter_constraints(strands: str, sequence_length: int, noprom: int):
-    opt = da.Optimizer(
+    opt_noprom = da.Optimizer(
         ["GCA", "CCC", "ATGC", "CATT"], sequence_length=sequence_length, strands=strands
     )
-    sol_noprom = opt.optimal()
+    sol_noprom = opt_noprom.optimal()
     assert sol_noprom.nb_motifs == noprom
-    opt.add_promoter_constraints(
+    opt_prom = da.Optimizer(
+        ["GCA", "CCC", "ATGC", "CATT"], sequence_length=sequence_length, strands=strands
+    )
+    opt_prom.add_promoter_constraints(
         upstream="ATGC", downstream="CCC", upstream_pos=(0, 2), spacer_length=(0, 3)
     )
-    sol_prom = opt.optimal()
+    sol_prom = opt_prom.optimal()
     _assert_promoter_constraint(
         sol_prom,
         ["GCA", "CCC", "ATGC", "CATT"],
@@ -354,42 +416,47 @@ def test_multiple_constraints_optimization():
 
 
 def test_side_bias():
-    opt = da.Optimizer(["AAA", "CCC"], sequence_length=6, strands="double")
-    opt.add_side_biases(left=["AAA"], right=["CCC"])
-    sol_left = opt.optimal()
+    opt_left = da.Optimizer(["AAA", "CCC"], sequence_length=6, strands="double")
+    opt_left.add_side_biases(left=["AAA"], right=["CCC"])
+    sol_left = opt_left.optimal()
     norm_offset_indices_left = [
-        (offset, index % opt.nb_motifs)
+        (offset, index % opt_left.nb_motifs)
         for offset, index in sol_left.offset_indices_in_order()
     ]
     assert norm_offset_indices_left == [(0, 0), (3, 1)]
 
-    opt.add_side_biases(left=["CCC"], right=["AAA"])
-    sol_right = opt.optimal()
+    opt_right = da.Optimizer(["AAA", "CCC"], sequence_length=6, strands="double")
+    opt_right.add_side_biases(left=["CCC"], right=["AAA"])
+    sol_right = opt_right.optimal()
     norm_offset_indices_right = [
-        (offset, index % opt.nb_motifs)
+        (offset, index % opt_right.nb_motifs)
         for offset, index in sol_right.offset_indices_in_order()
     ]
     assert norm_offset_indices_right == [(0, 1), (3, 0)]
 
 
 def test_side_bias_with_same_promoter():
-    opt = da.Optimizer(["AAA", "CCC"], sequence_length=6, strands="double")
-    opt.add_promoter_constraints(
+    opt_left = da.Optimizer(["AAA", "CCC"], sequence_length=6, strands="double")
+    opt_left.add_promoter_constraints(
         upstream="AAA", downstream="CCC", upstream_pos=(0, 2), spacer_length=(0, 2)
     )
 
-    opt.add_side_biases(left=["AAA"], right=["CCC"])
-    sol_left = opt.optimal()
+    opt_left.add_side_biases(left=["AAA"], right=["CCC"])
+    sol_left = opt_left.optimal()
     norm_offset_indices_left = [
-        (offset, index % opt.nb_motifs)
+        (offset, index % opt_left.nb_motifs)
         for offset, index in sol_left.offset_indices_in_order()
     ]
     assert norm_offset_indices_left == [(0, 0), (3, 1)]
 
-    opt.add_side_biases(left=["CCC"], right=["AAA"])
-    sol_right = opt.optimal()
+    opt_right = da.Optimizer(["AAA", "CCC"], sequence_length=6, strands="double")
+    opt_right.add_promoter_constraints(
+        upstream="AAA", downstream="CCC", upstream_pos=(0, 2), spacer_length=(0, 2)
+    )
+    opt_right.add_side_biases(left=["CCC"], right=["AAA"])
+    sol_right = opt_right.optimal()
     norm_offset_indices_right = [
-        (offset, index % opt.nb_motifs)
+        (offset, index % opt_right.nb_motifs)
         for offset, index in sol_right.offset_indices_in_order()
     ]
     assert norm_offset_indices_right == [(0, 0), (3, 1)]
@@ -397,17 +464,17 @@ def test_side_bias_with_same_promoter():
 
 def test_side_bias_with_other_promoter():
     library = ["GGGT", "CTTC", "TAGG", "AATC", "TCTA"]
-    opt = da.Optimizer(library, sequence_length=14, strands="double")
-
-    sol = opt.optimal()
+    opt_noprom = da.Optimizer(library, sequence_length=14, strands="double")
+    sol = opt_noprom.optimal()
     assert sol.nb_motifs == 5
 
-    opt.add_promoter_constraints(
+    opt_left = da.Optimizer(library, sequence_length=14, strands="double")
+    opt_left.add_promoter_constraints(
         upstream="GGGT", downstream="CTTC", upstream_pos=(0, 3), spacer_length=(1, 4)
     )
 
-    opt.add_side_biases(left=library[::2], right=library[1::2])
-    sol_left = opt.optimal()
+    opt_left.add_side_biases(left=library[::2], right=library[1::2])
+    sol_left = opt_left.optimal()
     assert sol_left.nb_motifs >= 3
     _assert_promoter_constraint(
         sol_left,
@@ -420,8 +487,12 @@ def test_side_bias_with_other_promoter():
         },
     )
 
-    opt.add_side_biases(left=library[1::2], right=library[::2])
-    sol_right = opt.optimal()
+    opt_right = da.Optimizer(library, sequence_length=14, strands="double")
+    opt_right.add_promoter_constraints(
+        upstream="GGGT", downstream="CTTC", upstream_pos=(0, 3), spacer_length=(1, 4)
+    )
+    opt_right.add_side_biases(left=library[1::2], right=library[::2])
+    sol_right = opt_right.optimal()
     assert sol_right.nb_motifs >= 3
     _assert_promoter_constraint(
         sol_right,

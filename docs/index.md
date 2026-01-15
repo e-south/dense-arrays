@@ -42,8 +42,19 @@ $ uv run pre-commit run --all-files
 
 In the simplest use case, the user can provide a list of motifs (e.g., transcription factor binding sites), along with a maximum length of the output sequence. Motifs must be non-empty strings using only A/C/G/T (uppercase). The solver will return a sequence that accommodates a maximal number of the provided binding sites. If the specified length is too short to accommodate all provided sequences, then the returned sequence will only contain a subset of the provided binding sites.
 
+CLI (minimal):
+
+```
+$ dense-arrays optimize --motifs-file motifs.txt --length 30 --strands double
+$ dense-arrays solutions --motifs-file motifs.txt --length 30 --max-solutions 5 --diverse
+```
+
+Motifs file format: one motif per line (blank lines and `#` comments ignored).
+If no motif can fit within the requested length, the solver raises a `ValueError`.
+
 ``` python
 import dense_arrays as da
+import dense_arrays.sequence as seq
 
 library = [
     "ATAATATTCTGAATT",
@@ -75,7 +86,12 @@ print("List of all solutions")
 for solution in opt.solutions():
     print(f"Solution containing {solution.nb_motifs} motifs")
     print(solution)
+
+print("Shift metric:", seq.shift_metric("ATGCATTA", "CATTATG"))
 ```
+
+Constraints (promoter/regulator/side bias) must be configured before calling
+`optimal()` or `solutions()`. To change constraints, create a new `Optimizer`.
 
 If you want to generate multiple sequences composed of binding sites from the same library, and not just find the "densest solution," you can list all solutions found.
 

@@ -1,313 +1,33 @@
-"""Optimization module."""
+"""Optimization model and solver for dense-arrays.
+
+--------------------------------------------------------------------------------
+<dense-array project>
+
+Optimization model and solver for dense-arrays.
+
+Module Author(s): Virgile Andreani, Eric J. South
+Dunlop Lab
+--------------------------------------------------------------------------------
+"""
+
+from __future__ import annotations
 
 import itertools as it
-from collections import Counter
-from collections.abc import Iterator
-from dataclasses import dataclass
-from typing import Self
+from typing import TYPE_CHECKING, Self
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 from ortools.linear_solver import pywraplp
 
-COMPLEMENT = {"A": "T", "T": "A", "C": "G", "G": "C", "-": "-"}
-VALID_BASES = {"A", "C", "G", "T"}
-
-__all__ = ["DenseArray", "Optimizer", "shift_metric"]
-
-
-def shift_metric(motifa: str, motifb: str) -> int:
-    """Compute how much we have to shift `motifb` to match the end of `motifa`.
-
-    Example
-    -------
-    shift_metric("ATGCATTA", "CATTATG") == 3 because
-
-        motifa: ATGCATTA
-        motifb:    CATTATG
-        shift : 0123
-
-    and shift_metric("ATGCATTA", "TATGA") == 6 because
-
-        motifa: ATGCATTA
-        motifb:       TATGA
-        shift : 0123456
-
-    Note: we only consider shifts such that the shifted `motifb` overhangs from
-    `motifa`.  If `motifb` is contained inside `motifa`, it will not be counted:
-
-    shift_metric("ATGTTAACT", "TTAA") == 8 because
-
-        motifa: ATGTTAACT
-        motifb:    TTAA         # not allowed
-        motifb:         TTAA    # okay
-        shift : 012345678
-
-    Returns
-    -------
-    shift : int
-        The result.
-    """
-    if motifa == motifb:
-        return len(motifa)
-    for shift in range(max(len(motifa) - len(motifb), 0), len(motifa)):
-        if motifa[shift:] == motifb[: len(motifa) - shift]:
-            return shift
-    return len(motifa)
-
-
-def adjacency_matrix(motifs: list[str]) -> list[list[int]]:
-    """Return the matrix A_ij such that A_ij = shift_metric(motifs[i], motifs[j]).
-
-    Parameters
-    ----------
-    motifs
-        List of motifs.
-
-    Returns
-    -------
-    adj :
-        Adjacency matrix.
-    """
-    return [[shift_metric(motifa, motifb) for motifb in motifs] for motifa in motifs]
-
-
-def reverse_complement(sequence: str) -> str:
-    """
-    Return the reverse complement of the sequence.
-
-    Parameters
-    ----------
-    sequence
-        String composed of ATGC characters.
-
-    Returns
-    -------
-    rev_comp :
-        Reverse complement of the sequence.
-    """
-    return "".join(COMPLEMENT[c] for c in sequence[::-1])
-
-
-def dispatch_labels(
-    library: list[str],
-    offsets: list[int | None],
-    *,
-    rev: bool,
-) -> list[str]:
-    lines: list[str] = []
-    order = sorted((o, i) for i, o in enumerate(offsets) if o is not None)
-    for offset, i in order:
-        motif = library[i][::-1] if rev else library[i]
-        for iline, line in enumerate(lines):
-            if not line or len(line) < offset:
-                lines[iline] += " " * (offset - len(line)) + motif
-                break
-        else:
-            line = " " * offset + motif
-            lines.append(line)
-    return lines
-
-
-def _normalize_regulator_mapping(
-    nb_motifs: int,
-    regulator_by_index: list[str] | dict[int, str],
-) -> dict[int, str]:
-    if isinstance(regulator_by_index, list):
-        if len(regulator_by_index) != nb_motifs:
-            msg = "regulator_by_index list length must match number of motifs"
-            raise ValueError(msg)
-        mapping = {i: str(label).strip() for i, label in enumerate(regulator_by_index)}
-    elif isinstance(regulator_by_index, dict):
-        if set(regulator_by_index.keys()) != set(range(nb_motifs)):
-            msg = "regulator_by_index dict must cover all motif indices"
-            raise ValueError(msg)
-        mapping = {
-            int(i): str(label).strip() for i, label in regulator_by_index.items()
-        }
-    else:
-        msg = "regulator_by_index must be a list or dict"
-        raise TypeError(msg)
-    if any(not label for label in mapping.values()):
-        msg = "regulator_by_index labels must be non-empty strings"
-        raise ValueError(msg)
-    return mapping
-
-
-def _normalize_min_counts(
-    mapping: dict[int, str],
-    required: set[str],
-    min_count_by_regulator: dict[str, int] | None,
-) -> dict[str, int]:
-    min_counts = {str(k): int(v) for k, v in (min_count_by_regulator or {}).items()}
-    for regulator, count in min_counts.items():
-        if count <= 0:
-            msg = f"min_count_by_regulator must be > 0 (got {regulator}={count})"
-            raise ValueError(msg)
-        if regulator not in set(mapping.values()):
-            msg = f"min_count_by_regulator regulator not in mapping: {regulator}"
-            raise ValueError(msg)
-    for regulator in required:
-        min_counts[regulator] = max(1, min_counts.get(regulator, 1))
-
-    counts = Counter(mapping.values())
-    for regulator, count in min_counts.items():
-        if counts[regulator] < count:
-            msg = (
-                f"Regulator '{regulator}' has only {counts[regulator]} motifs, "
-                f"cannot satisfy min_count={count}."
-            )
-            raise ValueError(msg)
-    return min_counts
-
-
-def _normalize_min_required(
-    min_required_regulators: int | None,
-    available: set[str],
-) -> int | None:
-    if min_required_regulators is None:
-        return None
-    if min_required_regulators <= 0:
-        msg = "min_required_regulators must be > 0 (use None to disable)."
-        raise ValueError(msg)
-    if min_required_regulators > len(available):
-        msg = "min_required_regulators exceeds available regulators"
-        raise ValueError(msg)
-    return min_required_regulators
-
-
-@dataclass
-class DenseArray:
-    """Representation of a solution."""
-
-    library: list[str]
-    sequence_length: int
-    sequence: str
-    offsets_fwd: list[int | None]
-    offsets_rev: list[int | None]
-
-    def __init__(
-        self: Self,
-        library: list[str],
-        sequence_length: int,
-        offsets_fwd: list[int | None],
-        offsets_rev: list[int | None],
-    ) -> None:
-        self.library = library
-        self.sequence_length = sequence_length
-        self.offsets_fwd = offsets_fwd
-        self.offsets_rev = offsets_rev
-        sequence = ""
-        for offset, i in self.offset_indices_in_order():
-            motif = library[i % len(library)]
-            if i >= len(library):
-                motif = reverse_complement(motif)
-            sequence = sequence[:offset] + motif
-        self.sequence = sequence
-
-    def offset_indices_in_order(self: Self) -> list[tuple[int, int]]:
-        """
-        List the motifs in the solution by ascending offset.
-
-        Returns
-        -------
-        offset_indices :
-            Each element represents `(offset, index)` where `offset` is the
-            offset where the motif starts and `index` is its index in the motif library.
-        """
-        order_fwd = [
-            (offset, i)
-            for i, offset in enumerate(self.offsets_fwd)
-            if offset is not None
-        ]
-        order_rev = [
-            (offset, i + len(self.library))
-            for i, offset in enumerate(self.offsets_rev)
-            if offset is not None
-        ]
-        # We sort by offset first and then by motif length:
-        # If two motifs have the same index, we want the shortest first
-        return sorted(
-            order_fwd + order_rev,
-            key=lambda o_i: (o_i[0], len(self.library[o_i[1] % len(self.library)])),
-        )
-
-    @property
-    def nb_motifs(self: Self) -> int:
-        """Number of motifs that fit in this solution."""
-        nb_fwd = sum(offset is not None for offset in self.offsets_fwd)
-        nb_rev = sum(offset is not None for offset in self.offsets_rev)
-        return nb_fwd + nb_rev
-
-    @property
-    def compression_ratio(self: Self) -> float:
-        """Compression ratio, i.e. `length of motifs in solution / sequence length`."""
-        total_length = sum(
-            len(motif)
-            for motif, fwd, rev in zip(
-                self.library,
-                self.offsets_fwd,
-                self.offsets_rev,
-                strict=True,
-            )
-            if fwd is not None or rev is not None
-        )
-        return total_length / self.sequence_length
-
-    def __str__(self: Self) -> str:
-        """
-        Build a string that visually represents the solution.
-
-        Returns
-        -------
-        s : str
-            The solution as a string.
-        """
-        sequence = self.sequence + "-" * (self.sequence_length - len(self.sequence))
-        seq_rev = "".join(COMPLEMENT[c] for c in sequence)
-        lines_fwd = dispatch_labels(self.library, self.offsets_fwd, rev=False)
-        lines_rev = dispatch_labels(self.library, self.offsets_rev, rev=True)
-
-        s_fwd = "--> " + "\n--> ".join([*lines_fwd[::-1], sequence])
-        s_rev = "<-- " + "\n<-- ".join([seq_rev, *lines_rev])
-
-        return s_fwd + "\n" + s_rev
-
-
-@dataclass
-class PromoterConstraint:
-    """Promoter constraint (up/downstream elements, positions and spacing)."""
-
-    upstream_index: int
-    downstream_index: int
-    upstream_pos: tuple[int | None, int | None]
-    downstream_pos: tuple[int | None, int | None]
-    spacer_length: tuple[int | None, int | None]
-
-    def __init__(
-        self: Self,
-        *,
-        upstream_index: int,
-        downstream_index: int,
-        upstream_pos: int | tuple[int | None, int | None] | None = None,
-        downstream_pos: int | tuple[int | None, int | None] | None = None,
-        spacer_length: int | tuple[int | None, int | None] | None = None,
-    ) -> None:
-        self.upstream_index = upstream_index
-        self.downstream_index = downstream_index
-        self.upstream_pos = (
-            upstream_pos
-            if isinstance(upstream_pos, tuple)
-            else (upstream_pos, upstream_pos)
-        )
-        self.downstream_pos = (
-            downstream_pos
-            if isinstance(downstream_pos, tuple)
-            else (downstream_pos, downstream_pos)
-        )
-        self.spacer_length = (
-            spacer_length
-            if isinstance(spacer_length, tuple)
-            else (spacer_length, spacer_length)
-        )
+from .constraints import (
+    PromoterConstraint,
+    _normalize_min_counts,
+    _normalize_min_required,
+    _normalize_regulator_mapping,
+)
+from .sequence import VALID_BASES, adjacency_matrix, reverse_complement, take_best_run
+from .solution import DenseArray
 
 
 class Optimizer:
@@ -352,6 +72,14 @@ class Optimizer:
         self.ilefts: list[int] = []
         self.irights: list[int] = []
 
+    def _ensure_model_not_built(self: Self, action: str) -> None:
+        if self.model is not None:
+            msg = (
+                f"{action} must be added before build_model(); "
+                "create a new Optimizer to change them."
+            )
+            raise RuntimeError(msg)
+
     def add_promoter_constraints(
         self: Self,
         *,
@@ -377,6 +105,7 @@ class Optimizer:
         spacer_length
             Length of the spacer between both elements, or tuple (min, max).
         """
+        self._ensure_model_not_built("Promoter constraints")
         upstream_index = self._find_motif_index(upstream)
         downstream_index = self._find_motif_index(downstream, avoid=upstream_index)
 
@@ -432,6 +161,7 @@ class Optimizer:
         ValueError
             If the left or right motifs don't belong to the initial library.
         """
+        self._ensure_model_not_built("Side biases")
         try:
             self.ilefts = [self.library.index(motif) for motif in left] if left else []
             self.irights = (
@@ -470,6 +200,7 @@ class Optimizer:
         RuntimeError
             If regulator constraints are already set.
         """
+        self._ensure_model_not_built("Regulator constraints")
         if self._regulator_constraints is not None:
             msg = (
                 "Regulator constraints already set; create a new Optimizer "
@@ -549,9 +280,7 @@ class Optimizer:
         start = {
             (-1, j): self.model.BoolVar(f"X[-1,{j}]") for j in range(self.nb_nodes)
         }
-        end = {
-            (i, -1): self.model.BoolVar(f"X[{i},-1]") for i in range(-1, self.nb_nodes)
-        }
+        end = {(i, -1): self.model.BoolVar(f"X[{i},-1]") for i in range(self.nb_nodes)}
         middle = {
             (i, j): self.model.BoolVar(f"X[{i},{j}]")
             for i in range(self.nb_nodes)
@@ -562,10 +291,10 @@ class Optimizer:
         self.model.X = X
 
         # Path starts at the start
-        self.model.Add(sum(X[-1, j] for j in range(-1, self.nb_nodes)) == 1)
+        self.model.Add(sum(X[-1, j] for j in range(self.nb_nodes)) == 1)
 
         # Path ends at the end
-        self.model.Add(sum(X[i, -1] for i in range(-1, self.nb_nodes)) == 1)
+        self.model.Add(sum(X[i, -1] for i in range(self.nb_nodes)) == 1)
 
         # Conservation of flow
         for k in range(self.nb_nodes):
@@ -785,7 +514,7 @@ class Optimizer:
                 covered_flags.append(covered)
             self.model.Add(sum(covered_flags) >= min_required)
 
-    def solve(self: Self) -> DenseArray:
+    def solve(self: Self) -> DenseArray:  # noqa: C901, PLR0912
         """
         Solve the currently built model and return its optimal solution.
 
@@ -830,19 +559,30 @@ class Optimizer:
         offsets_fwd = [None] * self.nb_motifs
         offsets_rev = [None] * self.nb_motifs
         while sol[-1] >= 0 or len(sol) == 1:
-            for j in range(-1, self.nb_nodes):
-                if sol[-1] >= 0 and j == sol[-1]:
+            current = sol[-1]
+            if current == -1:
+                candidates = range(self.nb_nodes)
+            else:
+                candidates = range(-1, self.nb_nodes)
+            for j in candidates:
+                if current >= 0 and j == current:
                     continue
-                if round(self.model.X[sol[-1], j].solution_value()) == 1:
+                if round(self.model.X[current, j].solution_value()) == 1:
                     if len(sol) > 1:
-                        offset += self.adjacency_matrix[sol[-1]][j]
+                        offset += self.adjacency_matrix[current][j]
                     if j >= self.nb_motifs:
                         offsets_rev[j % self.nb_motifs] = offset
                     elif j >= 0:
                         offsets_fwd[j] = offset
                     sol.append(j)
                     break
+            else:
+                msg = "Solver returned an invalid path."
+                raise RuntimeError(msg)
         sol = sol[1:-1]
+        if not sol:
+            msg = "No feasible solution was found."
+            raise ValueError(msg)
 
         return DenseArray(
             self.library,
@@ -1018,6 +758,11 @@ class Optimizer:
         """
         Return a solution approximated with a greedy algorithm.
 
+        Raises
+        ------
+        ValueError
+            If no feasible solution exists.
+
         Returns
         -------
         solution :
@@ -1067,90 +812,9 @@ class Optimizer:
                     offsets_rev[i] = None
         else:
             offsets_rev = [None] * self.nb_motifs
+        if all(offset is None for offset in offsets_fwd) and all(
+            offset is None for offset in offsets_rev
+        ):
+            msg = "No feasible solution was found."
+            raise ValueError(msg)
         return DenseArray(self.library, self.sequence_length, offsets_fwd, offsets_rev)
-
-
-def take_best_run(
-    sequence: str,
-    sequence_length: int,
-    library: list[str],
-    strands: str,
-) -> str:
-    max_nb_motifs = -1
-    offset_max_nb_motifs = None
-    for offset in range(max(1, len(sequence) - sequence_length + 1)):
-        subseq = sequence[offset : offset + sequence_length]
-        if strands == "single":
-            nb_motifs = sum(motif in subseq for motif in library)
-        else:
-            nb_motifs = sum(
-                (motif in subseq) or (reverse_complement(motif) in subseq)
-                for motif in library
-            )
-        if nb_motifs > max_nb_motifs:
-            max_nb_motifs = nb_motifs
-            offset_max_nb_motifs = offset
-    if offset_max_nb_motifs is None:
-        msg = "This should not have happened."
-        raise AssertionError(msg)
-    subseq = sequence[offset_max_nb_motifs : offset_max_nb_motifs + sequence_length]
-    return subseq
-
-
-# def optimize_basepairs(
-#    motifs: list[str], sequence_length: int, double: bool = False, solver: str = "CBC"
-# ):
-#    solver = pywraplp.Solver.CreateSolver(solver)
-#
-#    ATGC = list("ATGC")
-#
-#    sequence = [
-#        [solver.IntVar(0, 1, f"{c}[{i}]") for c in ATGC]
-#        for i in range(sequence_length)
-#    ]
-#
-#    motif_present = [
-#        [
-#            solver.IntVar(0, 1, f"d[{i},{j}]")
-#            for j in range(sequence_length - len(motifs[i]) + 1)
-#        ]
-#        for i in range(len(motifs))
-#    ]
-#
-#    motif_present_summary = [solver.IntVar(0, 1, f"d[{i}]")
-#                             for i in range(len(motifs))]
-#
-#    # There needs to be one basepair selected on every position of the sequence
-#    for basepair in sequence:
-#        solver.Add(sum(basepair) == 1)
-#
-#    for imotif, motif in enumerate(motifs):
-#        for offset in range(sequence_length - len(motif) + 1):
-#            solver.Add(
-#                len(motif) * motif_present[imotif][offset]
-#                <= sum(
-#                    sequence[offset + ibp][{"A": 0, "T": 1, "G": 2, "C": 3}[bp]]
-#                    for ibp, bp in enumerate(motif)
-#                )
-#            )
-#        solver.Add(motif_present_summary[imotif] <= sum(motif_present[imotif]))
-#
-#    solver.Maximize(sum(motif_present_summary))
-#
-#    print("Number of variables =", solver.NumVariables())
-#    print("Number of constraints =", solver.NumConstraints())
-#
-#    status = solver.Solve()
-#
-#    if status == pywraplp.Solver.OPTIMAL:
-#        print("Optimal solution found!")
-#        print("Objective value =", round(solver.Objective().Value()))
-#        solution = []
-#        for basepair in sequence:
-#            for var, bp in zip(basepair, ATGC):
-#                if round(var.solution_value()) == 1:
-#                    solution.append(bp)
-#                    break
-#        return "".join(solution)
-#
-#    print("The problem does not have an optimal solution.")

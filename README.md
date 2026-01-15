@@ -8,7 +8,9 @@ For more detailed documentation, please visit our [documentation site](https://d
 
 *Formulation of the nucleotide String Packing Problem (SPP) as an Orienteering Problem (OP). For more details, see the [associated paper](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1012276).*
 
-## Installation (uv recommended)
+---
+
+### Installation
 
 From the repo root:
 
@@ -17,33 +19,31 @@ uv sync --extra dev
 ```
 
 This creates a local `.venv` and installs dev tools (pytest/ruff).
+
 If you prefer pip:
 
 ```bash
 pip install .
 ```
 
-## Development (pre-commit)
+---
 
-Install dev tools and enable pre-commit hooks:
+### Simple usage
 
-```bash
-uv sync --extra dev
-uv run pre-commit install
-```
-
-Run the full hook suite locally:
+CLI (minimal):
 
 ```bash
-uv run pre-commit run --all-files
+dense-arrays optimize --motifs-file motifs.txt --length 30 --strands double
+dense-arrays solutions --motifs-file motifs.txt --length 30 --max-solutions 5 --diverse
 ```
 
-## Simple usage
+Motifs file format: one motif per line (blank lines and `#` comments ignored). If no motif can fit within the requested length, the solver raises a `ValueError`.
 
 Here's an example that demonstrates how to use **dense-arrays**:
 
 ```python
 import dense_arrays as da
+import dense_arrays.sequence as seq
 
 # Motifs must be non-empty strings containing only A/C/G/T (uppercase).
 # Initialize the optimizer with a target sequence length.
@@ -65,7 +65,11 @@ print("List of all solutions")
 for solution in opt.solutions():
     print(f"Solution with score {solution.nb_motifs}:")
     print(solution)
+
+print("Shift metric:", seq.shift_metric("ATGCATTA", "CATTATG"))
 ```
+
+Constraints (promoter/regulator/side bias) must be configured before calling `optimal()` or `solutions()`. To change constraints, create a new `Optimizer`.
 
 Regulator constraints (optional, solver-level):
 
@@ -74,7 +78,9 @@ regulators = ["R1", "R1", "R2", "R3", "R4"]
 opt.add_regulator_constraints(regulators, min_required_regulators=2)
 ```
 
-## Solver Backends
+---
+
+### Solver Backends
 
 The methods `Optimizer.optimal` and `Optimizer.solutions` allow you to specify a solver backend. They accept any solver supported by `ortools`. The available options include:
 
@@ -84,3 +90,20 @@ The methods `Optimizer.optimal` and `Optimizer.solutions` allow you to specify a
 - `"CPLEX"`
 - `"XPRESS"`
 - `"GLPK"`
+
+---
+
+### Development
+
+Install dev tools and enable pre-commit hooks:
+
+```bash
+uv sync --extra dev
+uv run pre-commit install
+```
+
+Run the full hook suite locally:
+
+```bash
+uv run pre-commit run --all-files
+```
