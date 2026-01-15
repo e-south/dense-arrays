@@ -31,42 +31,40 @@ pip install .
 
 ---
 
-### Simple usage
+### Usage modes
 
-CLI (minimal):
+Use **dense-arrays** either via the CLI for quick runs or the Python API for scripting.
+
+CLI:
 
 ```bash
 dense-arrays optimize --motifs-file motifs.txt --length 30 --strands double
 dense-arrays solutions --motifs-file motifs.txt --length 30 --max-solutions 5 --diverse
 ```
 
-Motifs file format: one motif per line (blank lines and `#` comments ignored). If no motif can fit within the requested length, the solver raises a `ValueError`.
+Motifs file format: one motif per line (blank lines and `#` comments ignored). If no motif can fit within the requested length, the CLI exits non-zero with an explicit error; in Python, `Optimizer.optimal()` raises a `ValueError`.
 
-Here's an example that demonstrates how to use **dense-arrays**:
+Python API:
 
 ```python
 import dense_arrays as da
 import dense_arrays.sequence as seq
 
-# Motifs must be non-empty strings containing only A/C/G/T (uppercase).
-# Initialize the optimizer with a target sequence length.
-opt = da.Optimizer([
+motifs = [
     "ATAATATTCTGAATT",
     "TCCCTATAAGAAAATTA",
     "TAATTGATTGATT",
     "GCTTAAAAAATGAAC",
     "TGCACTAAAATGGTGCAA",
-], sequence_length=30)
+]
 
-# Find and print the optimal solution.
+opt = da.Optimizer(motifs, sequence_length=30)
 best = opt.optimal()
-print(f"Optimal solution, score {best.nb_motifs}")
+# Best (highest score) solution.
 print(best)
 
-# List and print all possible solutions.
-print("List of all solutions")
+# Enumerate all solutions in decreasing score order.
 for solution in opt.solutions():
-    print(f"Solution with score {solution.nb_motifs}:")
     print(solution)
 
 print("Shift metric:", seq.shift_metric("ATGCATTA", "CATTATG"))
