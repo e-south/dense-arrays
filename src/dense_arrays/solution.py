@@ -1,5 +1,4 @@
-"""Solution representation for dense-arrays.
-
+"""
 --------------------------------------------------------------------------------
 <dense-array project>
 

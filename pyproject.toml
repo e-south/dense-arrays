@@ -50,6 +50,12 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "src/dense_arrays/main.py" = ["T201"]
+"src/dense_arrays/__init__.py" = ["D205", "D400"]
+"src/dense_arrays/cli.py" = ["D205", "D400", "FBT002"]
+"src/dense_arrays/constraints.py" = ["D205", "D400"]
+"src/dense_arrays/optimizer.py" = ["D205", "D400"]
+"src/dense_arrays/sequence.py" = ["D205", "D400"]
+"src/dense_arrays/solution.py" = ["D205", "D400"]
 "tests/test_*.py" = ["ANN201", "D103", "S101", "PLR2004", "FBT001"]
 
 [tool.ruff.lint.pydocstyle]

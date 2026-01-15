@@ -1,5 +1,4 @@
-"""Constraint helpers for dense-arrays.
-
+"""
 --------------------------------------------------------------------------------
 <dense-array project>
 

@@ -1,5 +1,4 @@
-"""Optimization model and solver for dense-arrays.
-
+"""
 --------------------------------------------------------------------------------
 <dense-array project>
 

@@ -1,6 +1,4 @@
-# ruff: noqa: FBT002
-"""Dense-arrays command-line interface.
-
+"""
 --------------------------------------------------------------------------------
 <dense-array project>
 

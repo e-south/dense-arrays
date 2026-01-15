@@ -1,5 +1,4 @@
-"""Sequence utilities for dense-arrays.
-
+"""
 --------------------------------------------------------------------------------
 <dense-array project>
 
