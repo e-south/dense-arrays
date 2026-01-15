@@ -1,5 +1,12 @@
 image: python:3.12
 
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+
 before_script:
   - pip install pytest mkdocs mkdocstrings[python] mkdocs-material pre-commit
   - pip install .
@@ -17,7 +24,7 @@ test:
 pages:
   stage: deploy
   script:
-    - mkdocs build --strict --verbose
+    - mkdocs build --strict --verbose --site-dir public
   artifacts:
     paths:
       - public

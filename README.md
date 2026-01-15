@@ -1,5 +1,8 @@
 # dense-arrays
 
+[![pipeline status](https://gitlab.com/dunloplab/dense-arrays/badges/main/pipeline.svg)](https://gitlab.com/dunloplab/dense-arrays/-/pipelines)
+[![docs](https://img.shields.io/badge/docs-gitlab_pages-blue)](https://dunloplab.gitlab.io/dense-arrays)
+
 **dense-arrays** is a library for designing double-stranded nucleotide sequences with densely packed DNA-protein binding sites, which we name the nucleotide String Packing Problem (SPP), related to the classical Shortest Common Superstring problem in theoretical computer science.
 
 For more detailed documentation, please visit our [documentation site](https://dunloplab.gitlab.io/dense-arrays).
