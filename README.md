@@ -108,3 +108,31 @@ Run the full hook suite locally:
 ```bash
 uv run pre-commit run --all-files
 ```
+
+### Solution playback
+
+Persisted placements can be compiled into a renderer-independent playback plan
+without claiming that their order is the solver-recorded path:
+
+```python
+from dense_arrays.playback import reconstruct_playback, render_playback_html
+from dense_arrays.realized import RealizedArray
+
+realized: RealizedArray = load_realized_array()
+plan = reconstruct_playback(realized)
+html = render_playback_html(plan, title="Dense-array packing")
+```
+
+The standalone renderer accepts strict `RealizedArray` or `PlaybackPlan` JSON:
+
+```bash
+dense-arrays-playback render realized.json \
+  --html playback.html \
+  --poster poster.png \
+  --mp4 playback.mp4
+```
+
+HTML output is self-contained. Poster and MP4 export require the optional
+`playback` extra and a local FFmpeg installation. Reconstructed plans always
+declare `placement_reconstructed` authority; `solver_selected` is reserved for
+future exact traces captured by the optimizer.
