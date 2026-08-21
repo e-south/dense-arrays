@@ -1,6 +1,6 @@
 [project]
 name = "dense-arrays"
-version = "0.1.0"
+version = "0.2.0"
 description = "A library to create densely packed DNA arrays from motifs"
 authors = [
     {name = "Virgile Andreani", email = "andreani@bu.edu"},
@@ -18,6 +18,10 @@ license = "MIT"
 license-files = ["LICENSE"]
 
 [project.optional-dependencies]
+playback = [
+    "matplotlib>=3.8.0",
+    "networkx>=3.6.1",
+]
 dev = [
     "pre-commit>=4.5.1",
     "pytest>=7.4.2",
@@ -26,6 +30,7 @@ dev = [
 
 [project.scripts]
 dense-arrays = "dense_arrays.cli:app"
+dense-arrays-playback = "dense_arrays.playback.cli:app"
 
 [build-system]
 requires = ["setuptools>=61", "wheel"]
@@ -49,6 +54,68 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"src/dense_arrays/playback/*.py" = [
+    "ANN",
+    "C901",
+    "D101",
+    "D102",
+    "D103",
+    "D105",
+    "DOC201",
+    "DOC501",
+    "E501",
+    "EM101",
+    "EM102",
+    "FBT001",
+    "PLC0415",
+    "PLR0911",
+    "PLR0912",
+    "PLR0913",
+    "PLR0914",
+    "PLR0915",
+    "PLR0917",
+    "PLR2004",
+    "TC001",
+    "TC003",
+    "TID252",
+    "TRY003",
+]
+"src/dense_arrays/playback/**/*.py" = [
+    "ANN",
+    "C901",
+    "D101",
+    "D102",
+    "D103",
+    "D105",
+    "DOC201",
+    "DOC501",
+    "E402",
+    "E501",
+    "EM101",
+    "EM102",
+    "FBT001",
+    "PLC0415",
+    "PLR0911",
+    "PLR0912",
+    "PLR0913",
+    "PLR0914",
+    "PLR0915",
+    "PLR0917",
+    "PLR2004",
+    "TC001",
+    "TC003",
+    "TID252",
+    "TRY003",
+]
+"src/dense_arrays/realized.py" = [
+    "D105",
+    "EM101",
+    "EM102",
+    "PLR2004",
+    "TC003",
+    "TRY003",
+]
+"tests/test_optional_playback_imports.py" = ["S101", "S404", "S603"]
 "src/dense_arrays/main.py" = ["T201"]
 "src/dense_arrays/__init__.py" = ["D205", "D400"]
 "src/dense_arrays/cli.py" = ["D205", "D400", "FBT002"]
