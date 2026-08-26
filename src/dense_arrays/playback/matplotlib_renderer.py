@@ -30,6 +30,7 @@ from .theme import (
     constraint_relation_color,
     step_text_color,
 )
+from .timeline import complement_sequence, current_added_indices, revealed_indices
 
 DuplexFrameRenderer = Callable[[PlaybackDocument, int], Any]
 _PAPER = "#ffffff"
@@ -40,7 +41,6 @@ _TRAVERSED = "#50635f"
 _ACTIVE = "#167a70"
 _GRAPH_TEXT = "#1F2423"
 _TERMINAL_FONT_SIZE_PT = 12.4
-_COMPLEMENTS = str.maketrans("ATCGRYSWKMBDHVN", "TAGCYRSWMKVHDBN")
 
 
 def _require_documents(documents: tuple[PlaybackDocument, ...]) -> None:
@@ -100,7 +100,6 @@ def _draw_graph(
         routed
         for routed in routes.context
         if document.presentation.graph_detail == "full"
-        and routed.edge.relation_kind != "declared_constraint"
     )
     for routed in visible_context:
         curve = routed.curve
@@ -294,9 +293,9 @@ def _draw_fallback_duplex(axis, document: PlaybackDocument, step_index: int) -> 
 
     plan = document.plan
     sequence = plan.realized_sequence
-    current = plan.steps[step_index]
-    reveal_end = max(step.end for step in plan.steps[: step_index + 1])
-    complement = sequence.translate(_COMPLEMENTS)
+    revealed = revealed_indices(plan.steps, step_index)
+    current_added = frozenset(current_added_indices(plan.steps, step_index))
+    complement = complement_sequence(sequence)
     length = len(sequence)
     axis.set_xlim(-4, length + 3)
     axis.set_ylim(-2.2, 2.2)
@@ -308,30 +307,34 @@ def _draw_fallback_duplex(axis, document: PlaybackDocument, step_index: int) -> 
             else -1.30 - (index % 2) * 0.48
         )
         color = step_color(step, index, document.presentation.color_profile)
-        axis.add_patch(
-            FancyBboxPatch(
-                (step.start, y),
-                step.end - step.start,
-                0.38,
-                boxstyle="round,pad=0.01,rounding_size=0.08",
-                facecolor=color,
-                edgecolor=_ACTIVE if index == step_index else color,
-                linewidth=2.6 if index == step_index else 1.2,
+        for span in step.added_spans:
+            axis.add_patch(
+                FancyBboxPatch(
+                    (span.start, y),
+                    span.end - span.start,
+                    0.38,
+                    boxstyle="round,pad=0.01,rounding_size=0.08",
+                    facecolor=color,
+                    edgecolor=_ACTIVE if index == step_index else color,
+                    linewidth=2.6 if index == step_index else 1.2,
+                )
             )
-        )
-        axis.text(
-            (step.start + step.end) / 2,
-            y + 0.19,
-            step.placement_sequence,
-            ha="center",
-            va="center",
-            color="white",
-            fontsize=5.8,
-            family=KMER_FONT_FAMILY,
-        )
+            segment = step.placement_sequence[
+                span.start - step.start : span.end - step.start
+            ]
+            axis.text(
+                (span.start + span.end) / 2,
+                y + 0.19,
+                segment,
+                ha="center",
+                va="center",
+                color="white",
+                fontsize=5.8,
+                family=KMER_FONT_FAMILY,
+            )
     font_size = max(5.2, min(10.5, 830 / max(1, length)))
-    for index in range(reveal_end):
-        color = _ACTIVE if current.start <= index < current.end else _INK
+    for index in sorted(revealed):
+        color = _ACTIVE if index in current_added else _INK
         axis.text(
             index + 0.5,
             0.30,
@@ -737,7 +740,7 @@ def render_collection_mp4(
     )
     hold_frames = max(1, round(fps * hold_seconds))
     lead_frames = max(1, round(fps * lead_seconds))
-    transition_frames = round(fps * scene_transition_seconds)
+    scene_transition_frames = round(fps * scene_transition_seconds)
     with writer.saving(figure, str(output_path), dpi=150):
         for document_index, document in enumerate(documents):
             transition_frame_counts = _transition_frame_counts(
@@ -753,8 +756,8 @@ def render_collection_mp4(
                 figure=figure,
                 duplex_frame_renderer=duplex_frame_renderer,
             )
-            if document_index > 0 and transition_frames:
-                for frame_index in range(transition_frames):
+            if document_index > 0 and scene_transition_frames:
+                for frame_index in range(scene_transition_frames):
                     _draw_document(
                         document,
                         transition_index=0,
@@ -772,18 +775,16 @@ def render_collection_mp4(
                             transform=figure.transFigure,
                             facecolor=_PAPER,
                             edgecolor="none",
-                            alpha=1.0 - ((frame_index + 1) / transition_frames),
+                            alpha=1.0 - ((frame_index + 1) / scene_transition_frames),
                             zorder=1000,
                         )
                     )
                     writer.grab_frame(facecolor=_PAPER)
             for _ in range(lead_frames):
                 writer.grab_frame(facecolor=_PAPER)
-            for transition_index, transition_frames in enumerate(
-                transition_frame_counts
-            ):
-                for frame_index in range(transition_frames):
-                    progress = (frame_index + 1) / transition_frames
+            for transition_index, step_frames in enumerate(transition_frame_counts):
+                for frame_index in range(step_frames):
+                    progress = (frame_index + 1) / step_frames
                     _draw_document(
                         document,
                         transition_index=transition_index,
@@ -801,8 +802,8 @@ def render_collection_mp4(
             )
             for _ in range(hold_frames):
                 writer.grab_frame(facecolor=_PAPER)
-            if document_index < len(documents) - 1 and transition_frames:
-                for frame_index in range(transition_frames):
+            if document_index < len(documents) - 1 and scene_transition_frames:
+                for frame_index in range(scene_transition_frames):
                     _draw_document(
                         document,
                         transition_index=len(document.plan.steps),
@@ -820,7 +821,7 @@ def render_collection_mp4(
                             transform=figure.transFigure,
                             facecolor=_PAPER,
                             edgecolor="none",
-                            alpha=(frame_index + 1) / transition_frames,
+                            alpha=(frame_index + 1) / scene_transition_frames,
                             zorder=1000,
                         )
                     )
@@ -863,8 +864,9 @@ def render_collection_gif(
     writer = PillowWriter(fps=fps)
     hold_frames = max(1, round(fps * hold_seconds))
     lead_frames = max(1, round(fps * lead_seconds))
+    scene_transition_frames = round(fps * scene_transition_seconds)
     with writer.saving(figure, str(output_path), dpi=100):
-        for document in documents:
+        for document_index, document in enumerate(documents):
             transition_frame_counts = _transition_frame_counts(
                 document,
                 figure,
@@ -878,6 +880,30 @@ def render_collection_gif(
                 figure=figure,
                 duplex_frame_renderer=duplex_frame_renderer,
             )
+            if document_index > 0 and scene_transition_frames:
+                for frame_index in range(scene_transition_frames):
+                    _draw_document(
+                        document,
+                        transition_index=0,
+                        progress=0.0,
+                        figure=figure,
+                        duplex_frame_renderer=duplex_frame_renderer,
+                    )
+                    figure.add_artist(
+                        __import__(
+                            "matplotlib.patches", fromlist=["Rectangle"]
+                        ).Rectangle(
+                            (0.0, 0.0),
+                            1.0,
+                            1.0,
+                            transform=figure.transFigure,
+                            facecolor=_PAPER,
+                            edgecolor="none",
+                            alpha=1.0 - ((frame_index + 1) / scene_transition_frames),
+                            zorder=1000,
+                        )
+                    )
+                    writer.grab_frame(facecolor=_PAPER)
             for _ in range(lead_frames):
                 writer.grab_frame(facecolor=_PAPER)
             for transition_index, transition_frames in enumerate(
@@ -902,5 +928,29 @@ def render_collection_gif(
             )
             for _ in range(hold_frames):
                 writer.grab_frame(facecolor=_PAPER)
+            if document_index < len(documents) - 1 and scene_transition_frames:
+                for frame_index in range(scene_transition_frames):
+                    _draw_document(
+                        document,
+                        transition_index=len(document.plan.steps),
+                        progress=1.0,
+                        figure=figure,
+                        duplex_frame_renderer=duplex_frame_renderer,
+                    )
+                    figure.add_artist(
+                        __import__(
+                            "matplotlib.patches", fromlist=["Rectangle"]
+                        ).Rectangle(
+                            (0.0, 0.0),
+                            1.0,
+                            1.0,
+                            transform=figure.transFigure,
+                            facecolor=_PAPER,
+                            edgecolor="none",
+                            alpha=(frame_index + 1) / scene_transition_frames,
+                            zorder=1000,
+                        )
+                    )
+                    writer.grab_frame(facecolor=_PAPER)
     plt.close(figure)
     return output_path

@@ -12,6 +12,7 @@ from typing import Any
 from .models import PlaybackPlan
 from .positions import radial_path_positions
 from .theme import PlaybackPresentation
+from .timeline import complement_sequence, current_added_indices, revealed_indices
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,6 +44,18 @@ def _jsonable(value: Any) -> Any:
 def _document_payload(document: PlaybackDocument) -> dict[str, Any]:
     payload = _jsonable(document)
     payload["graph_positions"] = radial_path_positions(len(document.plan.steps))
+    payload["complement_sequence"] = complement_sequence(
+        document.plan.realized_sequence
+    )
+    payload["timeline_frames"] = [
+        {
+            "revealed_indices": revealed_indices(document.plan.steps, step_index),
+            "current_added_indices": current_added_indices(
+                document.plan.steps, step_index
+            ),
+        }
+        for step_index in range(len(document.plan.steps))
+    ]
     return payload
 
 
@@ -143,10 +156,11 @@ _TEMPLATE = r"""<!doctype html>
       el.graph.innerHTML=`<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Realized k-mer path">${edges}${nodes}</svg>`;
     }
     function fallbackDuplex(doc){
-      const plan=doc.plan,seq=plan.realized_sequence,current=plan.steps[state.step],end=Math.max(...plan.steps.slice(0,state.step+1).map(step=>step.end));
-      const shown=seq.slice(0,end),comp={A:'T',T:'A',C:'G',G:'C',N:'N'};
-      const paired=[...shown].map(base=>comp[base]??'N').join('');
-      const bars=plan.steps.slice(0,state.step+1).map((step,index)=>{ const x=80+step.start/seq.length*1040,w=(step.end-step.start)/seq.length*1040,y=step.orientation==='rev'?435:150; return `<rect x="${x}" y="${y}" width="${w}" height="62" rx="7" fill="${stepColor(step,index)}"/><text x="${x+w/2}" y="${y+39}" text-anchor="middle" fill="white" font-family="DejaVu Sans Mono" font-size="22">${esc(step.placement_sequence)}</text>`; }).join('');
+      const plan=doc.plan,seq=plan.realized_sequence;
+      const revealed=new Set(doc.timeline_frames[state.step].revealed_indices);
+      const shown=[...seq].map((base,index)=>revealed.has(index)?base:'\u00b7').join('');
+      const paired=[...doc.complement_sequence].map((base,index)=>revealed.has(index)?base:'\u00b7').join('');
+      const bars=plan.steps.slice(0,state.step+1).flatMap((step,index)=>step.added_spans.map(span=>{ const x=80+span.start/seq.length*1040,w=(span.end-span.start)/seq.length*1040,y=step.orientation==='rev'?435:150,offset=span.start-step.start,segment=step.placement_sequence.slice(offset,offset+span.end-span.start); return `<rect x="${x}" y="${y}" width="${w}" height="62" rx="7" fill="${stepColor(step,index)}"/><text x="${x+w/2}" y="${y+39}" text-anchor="middle" fill="white" font-family="DejaVu Sans Mono" font-size="22">${esc(segment)}</text>`; })).join('');
       return `<svg viewBox="0 0 1200 650"><text x="20" y="297" font-size="30" fill="#4b5563">5'</text><text x="20" y="362" font-size="30" fill="#4b5563">3'</text><text x="80" y="300" textLength="1040" lengthAdjust="spacing" font-family="DejaVu Sans Mono" font-size="22" fill="#4b5563">${shown}</text><text x="80" y="365" textLength="1040" lengthAdjust="spacing" font-family="DejaVu Sans Mono" font-size="22" fill="#4b5563">${paired}</text>${bars}</svg>`;
     }
     function render(){ const doc=documents[state.scene]; state.step=Math.max(0,Math.min(state.step,doc.plan.steps.length-1)); el.timeline.max=String(doc.plan.steps.length-1); el.timeline.value=String(state.step); renderGraph(doc); el.duplex.innerHTML=doc.duplex_svg_frames?.[state.step]||fallbackDuplex(doc); }

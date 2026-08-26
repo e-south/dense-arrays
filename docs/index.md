@@ -78,7 +78,7 @@ print(best)
 # Optimal solution, score 8
 # -->          GCTTAAAAAATGAAC     ACTGAATTTTTATGCAAA            AATATGTAACCAAAAGTAA
 # --> CGGGGATGAG              TTGACA                          TATAAT
-# --> CGGGGATGAGCTTAAAAAATGAACTTGACACTGAATTTTTATGCAAATCAATCAATTATAATATGTAACCAAAAGTAATTTTCTTATAGGGA--------
+# --> CGGGGATGAGCTTAAAAAATGAACTTGACACTGAATTTTTATGCAAATCAATCAATTATAATATGTAACCAAAAGTAATTTTCTTATAGGGA--------  # pragma: allowlist secret
 # <-- GCCCCTACTCGAATTTTTTACTTGAACTGTGACTTAAAAATACGTTTAGTTAGTTAATATTATACATTGGTTTTCATTAAAAGAATATCCCT--------
 # <--                                              TTAGTTAGTTAAT                 ATTAAAAGAATATCCCT
 
@@ -100,7 +100,9 @@ If you want to generate multiple sequences composed of binding sites from the sa
 Sometimes, depending on the motifs provided, the creation of dense arrays inherently tends to favor the inclusion of specific motifs, which is due to the unique interplay among sites within each specific library. To mitigate this, the user can stipulate either the default solver order of solutions returned or a modified diversity-driven order, such that the sequence of returned solutions tends to contain dense arrays composed of new combinations of motifs.
 
 ``` python
-print("Return solutions in an order that transiently improves inclusivity in binding site representation.")
+print(
+    "Return solutions in an order that transiently improves inclusivity in binding site representation."
+)
 for solution in opt.solutions_diverse():
     print(solution)
 ```
@@ -126,10 +128,9 @@ print(best)
 # -->                                                            TTGACA                 TATAAT
 # --> TCCCTATAAGAAAATTA                               TAATTGATTGATT   ACTGAATTTTTATGCAAA
 # --> TCCCTATAAGAAAATTACTTTTGGTTACATATTGTTCATTTTTTAAGCTAATTGATTGATTGACACTGAATTTTTATGCAAATATAATTCAGAATATTAT
-# <-- AGGGATATTCTTTTAATGAAAACCAATGTATAACAAGTAAAAAATTCGATTAACTAACTAACTGTGACTTAAAAATACGTTTATATTAAGTCTTATAATA
+# <-- AGGGATATTCTTTTAATGAAAACCAATGTATAACAAGTAAAAAATTCGATTAACTAACTAACTGTGACTTAAAAATACGTTTATATTAAGTCTTATAATA  # pragma: allowlist secret
 # <--               AATGAAAACCAATGTATAA                                                    TTAAGTCTTATAATA
 # <--                                  CAAGTAAAAAATTCG
-
 ```
 
 In some cases, motifs may be associated with labels indicating their role as binding sites for transcription factor activators or repressors. Studies analyzing natural sequences have shown that activators or repressors often occupy specific areas within cis-regulatory regions. For example, activator binding sites are typically located upstream of the -35 sigma factor recognition element in bacterial promoters. Notably, the regulatory effectiveness of these sites diminishes when they are positioned downstream of this element. The solver can be adapted to mirror these biological patterns by allowing for the specification of motifs with upstream or downstream preferences. As the solver traverses the graph to assemble the output sequence, a position variable of each motif encountered is integrated into the scoring function. Here, position[i] signifies the starting point of motif i in the sequence. By dividing these position variables by a large constant K, the solver is configured to find solutions that favor positioning activator motifs upstream and repressor motifs downstream. This method, which can be combined with other promoter constraints, enables the generation of sequences that more accurately mimic the intricate arrangement of motifs in natural, multi-factor promoters.
@@ -191,33 +192,33 @@ motifs = [
     "TATAAT",
     "TATACT",
     "TGGCAGG",
-    "TTGCA"
+    "TTGCA",
 ]
 
 # Subset of motifs which you would prefer to be placed upstream
 upstream = [
-        "GAAATAACATAATTGA",
-        "TGTTAATAATAAGTAAT",
-        "TTATATTTTACCCATTT",
-        "AGGTTAATCCTAAAA",
-        "ATTGAAACGATTCAGC",
-        "CTCTGTCATAAAACTGTCATAT",
-        "TTACGCATTTTTAC",
-        "ATTTGTACACAA",
-        "AAGGCATAACCTATCACTGT",
-        "ACGCAAACGTTTTCTT",
+    "GAAATAACATAATTGA",
+    "TGTTAATAATAAGTAAT",
+    "TTATATTTTACCCATTT",
+    "AGGTTAATCCTAAAA",
+    "ATTGAAACGATTCAGC",
+    "CTCTGTCATAAAACTGTCATAT",
+    "TTACGCATTTTTAC",
+    "ATTTGTACACAA",
+    "AAGGCATAACCTATCACTGT",
+    "ACGCAAACGTTTTCTT",
 ]
 
 # Subset of motifs which you would prefer to be placed downstream
 downstream = [
-        "TTAATAAAACCTTAAGGTT",
-        "CCTTTTAGGTGCTT",
-        "TACTGTATATAAAAACAGTA",
-        "TAAAATTCATGGTAATTAT",
-        "AATGAGAATGATTATTAT",
-        "TGTTTATATTTTGTTTA",
-        "CATAAGAAAAA",
-        "CATTCATTTG",
+    "TTAATAAAACCTTAAGGTT",
+    "CCTTTTAGGTGCTT",
+    "TACTGTATATAAAAACAGTA",
+    "TAAAATTCATGGTAATTAT",
+    "AATGAGAATGATTATTAT",
+    "TGTTTATATTTTGTTTA",
+    "CATAAGAAAAA",
+    "CATTCATTTG",
 ]
 
 # Adding a promoter constraint: sigma D -35 and -10 motifs
@@ -237,10 +238,7 @@ opt.add_promoter_constraints(
 )
 
 # Declare upstream and downstream preferences
-opt.add_side_biases(
-    left=upstream,
-    right=downstream
-)
+opt.add_side_biases(left=upstream, right=downstream)
 
 best = opt.optimal()
 print(best)

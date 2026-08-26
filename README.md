@@ -1,9 +1,11 @@
 # dense-arrays
 
-[![pipeline status](https://gitlab.com/dunloplab/dense-arrays/badges/main/pipeline.svg)](https://gitlab.com/dunloplab/dense-arrays/-/pipelines)
+[![CI](https://github.com/e-south/dense-arrays/actions/workflows/ci.yml/badge.svg)](https://github.com/e-south/dense-arrays/actions/workflows/ci.yml)
 [![docs](https://img.shields.io/badge/docs-gitlab_pages-blue)](https://dunloplab.gitlab.io/dense-arrays)
 
-**dense-arrays** is a library for designing double-stranded nucleotide sequences with densely packed DNA-protein binding sites, which we name the nucleotide String Packing Problem (SPP), related to the classical Shortest Common Superstring problem in theoretical computer science.
+**dense-arrays** finds short double-stranded DNA sequences that densely pack a
+requested set of protein-binding motifs. It also emits explicit realized-array
+records and optional playback views that explain how the motifs overlap.
 
 For more detailed documentation, please visit our [documentation site](https://dunloplab.gitlab.io/dense-arrays).
 
@@ -18,7 +20,7 @@ For more detailed documentation, please visit our [documentation site](https://d
 From the repo root:
 
 ```bash
-uv sync --extra dev
+uv sync --extra dev --extra playback --extra docs
 ```
 
 This creates a local `.venv` and installs dev tools (pytest/ruff).
@@ -126,7 +128,7 @@ html = render_playback_html(plan, title="Dense-array packing")
 The standalone renderer accepts strict `RealizedArray` or `PlaybackPlan` JSON:
 
 ```bash
-dense-arrays-playback render realized.json \
+dense-arrays-playback realized.json \
   --html playback.html \
   --poster poster.png \
   --mp4 playback.mp4

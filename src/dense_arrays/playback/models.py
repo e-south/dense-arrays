@@ -95,6 +95,11 @@ class ConstraintResult:
     passed: bool
     label: str | None = None
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.passed, bool):
+            msg = "constraint result passed must be a boolean"
+            raise TypeError(msg)
+
 
 @dataclass(frozen=True, slots=True)
 class PlaybackNotice:

@@ -1,8 +1,10 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+minimum_pre_commit_version: "4.5.1"
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # pragma: allowlist secret
     hooks:
       - id: check-ast
       - id: check-case-conflict
@@ -19,15 +21,23 @@ repos:
       - id: mixed-line-ending
       - id: name-tests-test
         args: [--pytest-test-first]
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 6b63472e72e1a91ed8a2f6d483790dfb644fa1d3 # pragma: allowlist secret
+    hooks:
+      - id: check-github-workflows
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: 5e141933554a0b74e7341841f318be21e895339c # pragma: allowlist secret
+    hooks:
+      - id: detect-secrets
   - repo: https://github.com/crate-ci/typos
-    rev: v1.23.6
+    rev: 12ffd4a04b4893ab75db66a59aaad2d996c3e982 # pragma: allowlist secret
     hooks:
       - id: typos
         args:
           - --config=.typos.toml
         exclude: ^.*\.svg
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.0
+    rev: aab412d509121cb5f7533134b7e67f9fab59c682 # pragma: allowlist secret
     hooks:
       - id: ruff-format
       - id: ruff

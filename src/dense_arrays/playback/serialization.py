@@ -301,6 +301,10 @@ def playback_plan_from_dict(value: Mapping[str, object]) -> PlaybackPlan:
     ):
         item = _object(raw, context=f"constraint_results[{index}]")
         _exact_keys(item, expected=result_keys, context=f"constraint_results[{index}]")
+        passed = item["passed"]
+        if not isinstance(passed, bool):
+            msg = f"constraint_results[{index}].passed must be a JSON boolean"
+            raise TypeError(msg)
         results.append(
             ConstraintResult(
                 constraint_id=str(item["constraint_id"]),
@@ -309,7 +313,7 @@ def playback_plan_from_dict(value: Mapping[str, object]) -> PlaybackPlan:
                 actual_distance_bp=int(item["actual_distance_bp"]),
                 min_distance_bp=int(item["min_distance_bp"]),
                 max_distance_bp=int(item["max_distance_bp"]),
-                passed=bool(item["passed"]),
+                passed=passed,
                 label=None if item["label"] is None else str(item["label"]),
             )
         )
