@@ -210,7 +210,7 @@ def test_html_is_self_contained_and_preserves_authority() -> None:
     assert "placement_reconstructed" in artifact
     assert '<script id="playback-data" type="application/json">' in artifact
     assert "https://" not in artifact
-    assert "step.added_spans" in artifact
+    assert "revealed_indices" in artifact
     assert "timeline_frames" in artifact
 
 
@@ -249,6 +249,33 @@ def test_revealed_positions_follow_added_spans_not_whole_placements() -> None:
     document = matplotlib_renderer.PlaybackDocument(plan=plan, title="fixture")
 
     assert revealed_indices(document.plan.steps, 1) == (0, 1, 2, 6, 7, 8)
+
+
+def test_overlap_reveal_mask_preserves_complete_placement_bars() -> None:
+    plan = reconstruct_playback(
+        RealizedArray(
+            source_id="fixture#overlap",
+            sequence="AAAT",
+            placements=(
+                _placement("first", "AAA", 0),
+                _placement("overlap", "AAT", 1),
+            ),
+        )
+    )
+    document = matplotlib_renderer.PlaybackDocument(plan=plan, title="fixture")
+    figure, axis = plt.subplots()
+
+    matplotlib_renderer._draw_fallback_duplex(axis, document, 1)  # noqa: SLF001
+    bar_widths = [patch.get_width() for patch in axis.patches]
+    bar_labels = {text.get_text() for text in axis.texts}
+    artifact = render_playback_html(plan, title="Overlap fixture")
+
+    assert revealed_indices(plan.steps, 1) == (0, 1, 2, 3)
+    assert bar_widths == [3, 3]
+    assert {"AAA", "AAT"} <= bar_labels
+    assert "step.added_spans.map" not in artifact
+    assert "esc(step.placement_sequence)" in artifact
+    plt.close(figure)
 
 
 def test_iupac_complement_is_complete() -> None:

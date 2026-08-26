@@ -307,31 +307,27 @@ def _draw_fallback_duplex(axis, document: PlaybackDocument, step_index: int) -> 
             else -1.30 - (index % 2) * 0.48
         )
         color = step_color(step, index, document.presentation.color_profile)
-        for span in step.added_spans:
-            axis.add_patch(
-                FancyBboxPatch(
-                    (span.start, y),
-                    span.end - span.start,
-                    0.38,
-                    boxstyle="round,pad=0.01,rounding_size=0.08",
-                    facecolor=color,
-                    edgecolor=_ACTIVE if index == step_index else color,
-                    linewidth=2.6 if index == step_index else 1.2,
-                )
+        axis.add_patch(
+            FancyBboxPatch(
+                (step.start, y),
+                step.end - step.start,
+                0.38,
+                boxstyle="round,pad=0.01,rounding_size=0.08",
+                facecolor=color,
+                edgecolor=_ACTIVE if index == step_index else color,
+                linewidth=2.6 if index == step_index else 1.2,
             )
-            segment = step.placement_sequence[
-                span.start - step.start : span.end - step.start
-            ]
-            axis.text(
-                (span.start + span.end) / 2,
-                y + 0.19,
-                segment,
-                ha="center",
-                va="center",
-                color="white",
-                fontsize=5.8,
-                family=KMER_FONT_FAMILY,
-            )
+        )
+        axis.text(
+            (step.start + step.end) / 2,
+            y + 0.19,
+            step.placement_sequence,
+            ha="center",
+            va="center",
+            color="white",
+            fontsize=5.8,
+            family=KMER_FONT_FAMILY,
+        )
     font_size = max(5.2, min(10.5, 830 / max(1, length)))
     for index in sorted(revealed):
         color = _ACTIVE if index in current_added else _INK
