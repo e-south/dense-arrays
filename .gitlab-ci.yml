@@ -1,30 +1,31 @@
-image: python:3.12
+image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 variables:
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  UV_CACHE_DIR: "$CI_PROJECT_DIR/.cache/uv"
+  UV_LINK_MODE: copy
 
 cache:
   paths:
-    - .cache/pip
+    - .cache/uv
 
 before_script:
-  - pip install pytest mkdocs mkdocstrings[python] mkdocs-material pre-commit
-  - pip install .
+  - uv sync --frozen --extra dev --extra playback --extra docs
 
 pre-commit:
   stage: test
   script:
-    - pre-commit run --all-files
+    - uv run pre-commit run --all-files
 
 test:
   stage: test
   script:
-    - pytest -v
+    - uv run pytest -v
+    - uv export --frozen --all-extras --no-hashes --no-emit-project | uv run pip-audit -r /dev/stdin --progress-spinner off
 
 pages:
   stage: deploy
   script:
-    - mkdocs build --strict --verbose --site-dir public
+    - uv run mkdocs build --strict --verbose --site-dir public
   artifacts:
     paths:
       - public

@@ -1,9 +1,11 @@
 # dense-arrays
 
-[![pipeline status](https://gitlab.com/dunloplab/dense-arrays/badges/main/pipeline.svg)](https://gitlab.com/dunloplab/dense-arrays/-/pipelines)
+[![CI](https://github.com/e-south/dense-arrays/actions/workflows/ci.yml/badge.svg)](https://github.com/e-south/dense-arrays/actions/workflows/ci.yml)
 [![docs](https://img.shields.io/badge/docs-gitlab_pages-blue)](https://dunloplab.gitlab.io/dense-arrays)
 
-**dense-arrays** is a library for designing double-stranded nucleotide sequences with densely packed DNA-protein binding sites, which we name the nucleotide String Packing Problem (SPP), related to the classical Shortest Common Superstring problem in theoretical computer science.
+**dense-arrays** finds short double-stranded DNA sequences that densely pack a
+requested set of protein-binding motifs. It also emits explicit realized-array
+records and optional playback views that explain how the motifs overlap.
 
 For more detailed documentation, please visit our [documentation site](https://dunloplab.gitlab.io/dense-arrays).
 
@@ -18,7 +20,7 @@ For more detailed documentation, please visit our [documentation site](https://d
 From the repo root:
 
 ```bash
-uv sync --extra dev
+uv sync --extra dev --extra playback --extra docs
 ```
 
 This creates a local `.venv` and installs dev tools (pytest/ruff).
@@ -108,3 +110,31 @@ Run the full hook suite locally:
 ```bash
 uv run pre-commit run --all-files
 ```
+
+### Solution playback
+
+Persisted placements can be compiled into a renderer-independent playback plan
+without claiming that their order is the solver-recorded path:
+
+```python
+from dense_arrays.playback import reconstruct_playback, render_playback_html
+from dense_arrays.realized import RealizedArray
+
+realized: RealizedArray = load_realized_array()
+plan = reconstruct_playback(realized)
+html = render_playback_html(plan, title="Dense-array packing")
+```
+
+The standalone renderer accepts strict `RealizedArray` or `PlaybackPlan` JSON:
+
+```bash
+dense-arrays-playback realized.json \
+  --html playback.html \
+  --poster poster.png \
+  --mp4 playback.mp4
+```
+
+HTML output is self-contained. Poster and MP4 export require the optional
+`playback` extra and a local FFmpeg installation. Reconstructed plans always
+declare `placement_reconstructed` authority; `solver_selected` is reserved for
+future exact traces captured by the optimizer.

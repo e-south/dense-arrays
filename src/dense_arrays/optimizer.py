@@ -65,7 +65,7 @@ class Optimizer:
         self.promoters: list[PromoterConstraint] = []
         self._regulator_constraints: dict | None = None
         if strands == "double":
-            library = library + [reverse_complement(motif) for motif in library]  # noqa: PLR6104
+            library = library + [reverse_complement(motif) for motif in library]
         self.adjacency_matrix = adjacency_matrix(library)
         self.model = None
         self.ilefts: list[int] = []

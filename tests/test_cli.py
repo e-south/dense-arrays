@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from click import unstyle
 from typer.testing import CliRunner
 
 from dense_arrays.cli import app
@@ -57,4 +58,5 @@ def test_cli_rejects_both_inputs(tmp_path: Path) -> None:
     )
     assert result.exit_code != 0
     combined = result.stdout + (result.stderr or "")
-    assert "either --motif or --motifs-file" in combined
+    plain_output = " ".join(unstyle(combined).split())
+    assert "either --motif or --motifs-file" in plain_output

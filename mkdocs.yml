@@ -1,7 +1,7 @@
 site_name: Dense Arrays
 site_url: https://dunloplab.gitlab.io/dense-arrays
 site_dir: public
-repo_url: https://gitlab.com/dunloplab/dense-arrays
+repo_url: https://github.com/e-south/dense-arrays
 
 theme:
   name: material
