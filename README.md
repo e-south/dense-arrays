@@ -8,8 +8,8 @@ save space. Dense Arrays searches for an arrangement of supplied motifs within
 a length limit and returns the sequence and motif offsets. Choose single- or
 double-strand placement, require motif groups, or constrain positions.
 
-The package also accepts persisted feature placements for playback. These
-views explain a realized array; their ordering is reconstructed from its
+The package also renders persisted feature placements as PNG, MP4, or GIF.
+These views explain a realized array; their ordering is reconstructed from its
 coordinates. Motif packing and playback describe sequence arrangements, not
 binding, expression, or laboratory performance.
 
@@ -32,8 +32,9 @@ enumeration of further solutions.
 
 - [Create and read your first array](docs/quickstart.md).
 - [Set positional and regulator constraints](docs/constraints.md).
-- [Render saved feature placements](docs/playback.md).
+- [Render saved placements as images or video](docs/playback.md).
 - [Look up Python interfaces](docs/api.md).
+- [Update an existing caller](docs/migration.md).
 
 For the formulation and associated paper, see [the method](docs/method.md).
 The [documentation index](docs/index.md) also routes integrators and

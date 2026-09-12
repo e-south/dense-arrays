@@ -1,6 +1,6 @@
 ---
 title: Optimizer
-description: Inputs, lifecycle, solver behavior, and Python signatures for motif packing.
+description: Inputs, lifecycle, solver outcomes, and Python signatures for motif packing.
 ---
 
 # Optimizer
@@ -11,44 +11,72 @@ Start with [one array](../quickstart.md), then add
 
 ## Inputs and lifecycle
 
-- Supply a non-empty list of non-empty uppercase `A/C/G/T` strings, a positive
-  integer length, and `single` or `double` strands. Each list entry is a
-  selectable motif; repeated strings remain separate entries.
-- Configure all requirements before building or solving. Adding requirements
-  to a built model raises `RuntimeError`. Create a new optimizer to change the
-  problem; do not mutate its library or cached model state directly.
+- Supply a non-empty sequence of non-empty uppercase `A/C/G/T` strings, a
+  positive integer length, and `single` or `double` strands. Each library entry
+  is selectable once, in at most one orientation; repeated strings retain
+  separate entry identities.
+- The optimizer keeps an immutable input snapshot. Its library, adjacency, and
+  configured-requirement views return independent copies. Mutating a supplied
+  list or returned view does not reconfigure the problem.
+- Configure requirements before building or solving. Adding requirements to
+  a built model raises `RuntimeError`; use a fresh optimizer for another problem.
 - `optimal()`, `solutions()`, and `solutions_diverse()` build the model
-  automatically. Results are [DenseArray objects](results.md).
-- Bound enumeration with `itertools.islice`. The bound limits returned
-  results, not the time spent solving each result.
+  automatically and return [DenseArray objects](results.md).
+- Bound enumeration with `itertools.islice`. This limits returned results,
+  not the time spent solving each result.
 
-## Current solver limitations
+## Solver outcomes
 
-CBC is the default. Backend availability depends on the installed OR-Tools
-build. A backend that cannot be created raises `RuntimeError`.
-`solver_options` forwards backend-specific strings; their acceptance is not
-checked by this package. Do not treat that argument as a verified portable
-timeout control.
+CBC is the default. A requested backend must be available in the installed
+OR-Tools build. `solver_options` contains backend-specific strings; rejected
+options raise `ValueError` before replacing an existing model. Their syntax
+and support depend on that backend, so they are not a portable timeout API.
 
-`solve()` accepts only an optimal solver status. It raises `ValueError` for
-other statuses, including infeasibility, an unproven feasible result, and
-solver failure. The enumeration methods currently catch these errors and stop;
-`optimal()` then reports no feasible solution. An empty or shortened iterator
-therefore does not distinguish exhaustion from failure.
+Only an optimal solver status returns a result. Exceptions are exported from
+`dense_arrays` and `dense_arrays.errors`:
 
-`approximate()` is an unconstrained greedy heuristic. It does not apply promoter
-requirements, regulator coverage, or side biases configured on the optimizer.
-Use the exact solver methods for those requirements. Its substring-based result
-extraction can also count repeated entries at the same location or leave gaps
-that the result constructor rejects. See the [audit examples](../development/audit.md#reproduce-the-core-failures)
-and [selected-entry meaning](../method.md) before comparing heuristic and exact
-motif counts.
+| Exception | Meaning |
+| --- | --- |
+| `InfeasibleError` | No feasible result exists; a `ValueError` subclass |
+| `UnprovenSolutionError` | A feasible incumbent exists, but optimality was not proved |
+| `SolverBackendError` | The backend is unavailable, fails to run, or returns an unsuccessful status |
+| `InvalidSolverResultError` | Reported solver output fails path or result validation |
+| `OptimizationError` | Base `RuntimeError` for the three execution failures above |
+
+The enumeration methods stop normally only on `InfeasibleError`. Other failures
+propagate even after a result has been yielded. An iterator that stops because
+the caller reached an `islice` bound has not proved exhaustion.
+`optimal()` raises `InfeasibleError` if enumeration has no first result.
+
+Malformed problem inputs and rejected API operations use `ValueError` or
+`TypeError`; they are separate from backend outcomes. Both optimizer commands
+report failures on stderr and exit nonzero. See [CLI behavior](cli.md).
+
+## Greedy approximation
+
+`approximate()` builds a feasible path with a multi-start greedy heuristic;
+it does not prove optimality. It rejects configured promoter constraints,
+regulator requirements, side biases, and model changes made by `forbid()` or
+`set_motif_weight()`. Use an exact solver method when those requirements matter.
+
+The heuristic records selected entries and orientations as it builds the
+path. Repeated motifs need separate placements, and an incidental contained
+substring does not add a selected entry. See the [packing method](../method.md)
+for this counting rule. If no entry fits, it raises `InfeasibleError`.
+
+## Advanced model operations
+
+`build_model()` creates the model; `solve()` uses it without rebuilding.
+`forbid(result)` requires the same library, length limit, strand policy, and
+exact path-placement semantics. `set_motif_weight(index, weight)` requires an
+original library index and a finite real weight. Invalid indices, boolean
+weights, and nonfinite values are rejected before model mutation.
 
 ## Signatures
 
 The main calls are readable here as well as in the generated reference:
 
-```python
+```text
 Optimizer(library, sequence_length, strands="double")
 optimizer.optimal(solver="CBC", solver_options=None)
 optimizer.solutions(solver="CBC", solver_options=None)
@@ -57,9 +85,8 @@ optimizer.approximate()
 ```
 
 For requirement arguments, use the complete [constraint examples](../constraints.md).
-The generated class reference below includes advanced model methods.
 
-::: dense_arrays.optimizer
+::: dense_arrays.optimizer.Optimizer
 
 Return to the [API index](../api.md) or locate the implementation in the
 [code map](../architecture/README.md).

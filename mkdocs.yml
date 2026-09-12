@@ -16,6 +16,8 @@ nav:
       - Sequence utilities: reference/sequence.md
       - Realized arrays: reference/realized.md
       - Playback API: reference/playback.md
+      - Media presentation: reference/playback-presentation.md
+      - Update an existing caller: migration.md
       - Command-line options: reference/cli.md
   - Architecture:
       - Module boundaries: architecture/README.md
@@ -37,6 +39,13 @@ plugins:
         python:
           options:
             docstring_style: numpy
+            show_source: false
+            show_root_heading: true
+            show_root_full_path: false
+            merge_init_into_class: true
+            separate_signature: true
+            filters:
+              - '!^_'
 
 markdown_extensions:
   - pymdownx.superfences

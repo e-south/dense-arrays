@@ -1,113 +1,116 @@
 ---
 title: Playback contract
-description: Ownership, coordinate interpretation, implemented checks, and remaining enforcement gaps.
+description: Ownership, coordinate interpretation, validated v1 semantics, and producer handoffs.
 ---
 
 # Playback contract
 
-Playback reconstructs an explanation from persisted placements. This page
-defines the ownership and interpretation rules; the
-[API reference](../reference/playback.md) describes callable interfaces.
-
-## Implemented behavior and remaining gaps
-
-Reconstruction checks placement bounds, sequence agreement, and constraint
-references, then derives an order and evaluates declared distances. Invalid
-placements fail; a valid layout that violates a distance requirement returns
-a failed constraint result. Ordering and provenance qualifications are recorded
-separately in `notices`.
-
-Saved plans do not yet receive equivalent semantic validation. Renderers also
-do not display every authority, ordering, or constraint qualification. The
-[audit](../development/audit.md) records these gaps. The rules below state the
-required interpretation; they are not evidence that every entrypoint enforces
-it. Exact solver trace capture is not implemented.
+Playback reconstructs an explanation from persisted placements. Dense Arrays
+validates the layout, derives its coordinate order, and evaluates declared
+distances. A renderer presents those facts together with caller-owned labels
+and evidence. Exact solver trace capture is not implemented.
 
 ## Ownership
 
 `dense-arrays` owns renderer-independent realized-array and playback-plan
-contracts, deterministic reconstruction, validation, and reference playback.
+contracts, deterministic reconstruction, validation, and reference renderers.
 Producer packages own translation from their persisted schemas. A study owns
-only selected record identities, domain labels, captions, and review evidence.
+selected record identities, domain labels, captions, and review evidence.
 
-BaseRender may provide sequence-frame or video-publication integration. It does
-not own graph semantics, solver claims, or the playback clock.
+BaseRender may provide sequence frames or video-publication integration. It
+does not own graph semantics, solver claims, or the playback clock. Installing
+Dense Arrays does not require BaseRender, DenseGen, or a study repository.
 
 ## What the order means
 
-`placement_reconstructed` means the order was derived from persisted placement
-coordinates. Relations are coordinate precedence, not recorded solver-selected
-edges. The ordering status further qualifies the result:
+Version 1 accepts only `placement_reconstructed` authority and
+`coordinate_precedence` relations. The order is derived from placement
+coordinates, with these qualifications:
 
 - `unique`: the persisted intervals imply one strict left-to-right order.
 - `ambiguous`: equal starts or containment require a deterministic tie-break.
 - `layout_only`: an internal uncovered span prevents a complete placement chain.
 
-`solver_selected` is reserved for a future exact trace captured from the solver
-result. A reconstructed plan must never use that authority value.
+The deterministic order is start coordinate, shorter placement first for an
+equal start, then stable placement ID. Each step names the preceding step as
+its predecessor. This reference describes coordinate ordering; it does not
+claim a recorded solver edge. A `layout_only` view suppresses active traversal.
 
-## Contracts
+`solver_selected` remains an enum value reserved for a future exact-trace
+schema. Constructing or loading a v1 plan with that authority is rejected.
 
-`RealizedArray` contains a realized sequence, stable feature and placement
-identities, oriented sequences, zero-based half-open coordinates, declared
-constraints, and source provenance.
+## Record and plan validation
 
-`PlaybackPlan` contains frozen semantic records, newly revealed sequence spans,
-constraint evaluations, ordering status, authority, and notices. Renderers
-consume this plan. They must not depend on optimizer or OR-Tools state.
-The package root currently imports the optimizer eagerly; isolating those
-imports is part of the hardening plan.
+`RealizedArray` contains an IUPAC sequence, stable feature and placement
+identities, oriented feature sequences, zero-based half-open coordinates,
+declared constraints, and immutable JSON provenance. Construction validates
+sequence agreement, bounds, unique IDs, and constraint references.
+See the [realized-array reference](../reference/realized.md) for field domains.
 
-For placement reconstruction, the deterministic order is:
+`PlaybackPlan` contains frozen steps, newly revealed spans, constraint results,
+ordering status, authority, and notices. Python constructors and JSON loaders
+share validation. Plans must match actual layout order, exact newly covered
+bases, predecessor references, and distance evaluations. JSON record keys are
+checked at every level; numeric and textual fields are not coerced into other
+types. See [plan validation](../reference/playback.md#interpretation-and-validation).
 
-1. Start coordinate.
-2. Shorter placement first for equal starts.
-3. Stable placement ID.
+The distance between declared placements is
+`downstream.start - upstream.end`. A layout that violates its declared range
+remains valid data and returns `passed=False`. A result whose stored distance
+or `passed` flag contradicts that layout is malformed and rejected.
 
-Record construction checks local field invariants and unique placement and
-constraint IDs. Reconstruction validates sequence agreement, bounds, and
-constraint references, and evaluates distance ranges before producing a plan.
+Digests are SHA-256 identifiers with validated syntax. The source holder must
+verify source bytes separately: a playback plan cannot authenticate external
+source content or recompute every realization field from v1 alone.
+
+## Evidence and presentation
+
+Renderers consume validated plans without importing optimizer or OR-Tools
+state. A `PlaybackDocument` resolves artifact metadata, labels, colors, and
+compact visible evidence. NetworkX supplies the established graph layout;
+Matplotlib draws the scene and writes PNG, MP4, or GIF through the same media
+pipeline. A compact summary preserves authority, ordering qualifications, and
+failed requirements. Full evidence is stored in native media metadata;
+notices are an optional addition. Presentation settings and evidence retrieval
+belong in the [presentation reference](../reference/playback-presentation.md).
+
+Adapters can supply `PlaybackNotice` records through
+`reconstruct_playback(realized, notices=...)`. Dense Arrays preserves explicit
+caller evidence and rejects conflicting reserved authority/order codes. It
+does not infer biological identity or coordinate-recovery methods from labels,
+IDs, or metadata keys. Caller-authored prose remains the caller's evidence.
 
 ## Producer handoffs
 
-Producer adapters and publication recipes remain outside this package. DenseGen
-is one caller; installing Dense Arrays does not require DenseGen or a study
-repository. The following describes that adapter's ownership, not a command
-implemented by Dense Arrays.
+A producer translates its records to `RealizedArray`; a recipe selects labels,
+colors, captions, and outputs. For example, a DenseGen adapter can translate
+persisted feature coordinates and fixed-element relationships. Producer-specific
+coordinate fields remain metadata unless the adapter explicitly converts them
+to realized-sequence coordinates. Dense Arrays does not guess that conversion.
 
-DenseGen translates `densegen__used_tfbs_detail` into `RealizedArray`. Display
-coordinates use the persisted `offset`, while `offset_raw` and padding remain in
-placement metadata. Fixed upstream/downstream pairs become declared distance
-constraints. DenseGen labels remain producer metadata; endpoint recipes decide
-whether those elements are neutral anchors or biological -35/-10 elements.
+Endpoint recipes pin source-table digests and record IDs. They own source
+verification, record selection, biological interpretation, and publication
+bundles. A recipe can publish normalized input and plan JSON, MP4, a
+poster, and a manifest of input/output digests and versions. The package CLI
+renders requested files; it does not create that manifest or publish a site.
 
-Endpoint recipes pin source-table digests and record IDs. They must not select
-records randomly during publication. Generated publication bundles contain:
+Existing consumers must review the [migration requirements](../migration.md)
+before updating their integration. Updating this package does not migrate
+external adapters automatically.
 
-```text
-manifest.json
-playback.html
-playback.mp4
-poster.png
-```
+## Future trace work
 
-The manifest records source and realization digests, authority, ordering status,
-label profile, renderer version, and output digests.
-
-## Data flow and future trace work
-
-Existing DenseGen corpora compile through:
+The current data flow is:
 
 ```text
-DenseGen record -> RealizedArray -> reconstructed PlaybackPlan -> renderers
+Producer record -> RealizedArray -> reconstructed PlaybackPlan -> renderer
 ```
 
-A future exact-trace design could use:
+A future exact trace needs its own versioned validation and migration decision:
 
 ```text
-SolveResult -> ExactSolutionTrace -> solver-selected PlaybackPlan -> renderers
+Solver result -> exact solution trace -> solver-selected plan -> renderer
 ```
 
-The intended reuse point is the renderer's plan input. Any exact-trace extension
-needs its own versioned validation and migration decision; it is outside the
-current hardening plan.
+That extension is outside v1. The reusable renderer input remains an explicit,
+validated plan.

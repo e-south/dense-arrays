@@ -21,9 +21,9 @@ uv sync --frozen
 
 Run the commands below from that checkout. To install into an existing Python
 environment instead, run `python -m pip install .` from the repository root.
-The core installation includes the optimizer and HTML playback. Extra
-dependencies are described in [playback](playback.md) and
-[development](development.md).
+The core installation includes the optimizer and persisted-placement
+contracts. Rendering requires the extra dependencies described in
+[playback](playback.md); contributor tools are listed in [development](development.md).
 
 ## Solve from the terminal
 
@@ -44,8 +44,8 @@ starting with `#` are ignored. The two input forms cannot be combined.
 
 Use `uv run dense-arrays optimize --help` to see all options. CBC is the
 default OR-Tools backend. `--solver` selects another backend only if the local
-OR-Tools installation can create it. An unavailable backend raises an error
-and may display a traceback. See [CLI failures](reference/cli.md).
+OR-Tools installation can create it. An unavailable backend produces a concise error and a nonzero exit.
+See [CLI failures](reference/cli.md).
 
 ## Solve from Python
 
@@ -59,6 +59,8 @@ best = optimizer.optimal()
 print(best.sequence)  # CAGCGT
 print(best.nb_motifs)  # 3
 print(best.offsets_fwd)  # [0, 1, 3]
+assert best.sequence == "CAGCGT"
+assert best.nb_motifs == 3
 ```
 
 `optimal()` returns a `DenseArray`. `sequence_length` is the requested limit;
@@ -71,10 +73,11 @@ interface.
 Configure every [constraint](constraints.md) before solving. Solving builds
 the model; to change constraints afterward, create a new `Optimizer`.
 If no motif can fit or the declared constraints are infeasible, `optimal()`
-raises `ValueError`. Other unsuccessful solver statuses currently reach the
-same message; see [solver limitations](reference/optimizer.md#current-solver-limitations)
-before interpreting that error. The `optimize` command exits nonzero when it
-cannot return a result.
+raises `InfeasibleError`, a `ValueError` subclass. Backend failure, an unproven
+feasible result, and invalid solver output have distinct exceptions; see
+[solver outcomes](reference/optimizer.md#solver-outcomes). Both commands exit
+nonzero on a solver failure, including one that occurs after an earlier result
+was printed.
 
 ## Request further solutions
 

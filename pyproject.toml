@@ -47,7 +47,7 @@ preview = true
 explicit-preview-rules = true
 select = ["ALL"]
 ignore = [
-    # Commas something
+    # The formatter owns trailing commas.
     "COM812",
     # Implicitly concatenated string literals on one line
     # (does not work well with ruff format)
@@ -61,75 +61,20 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"src/dense_arrays/playback/*.py" = [
-    "ANN",
-    "C901",
-    "D101",
-    "D102",
-    "D103",
-    "D105",
-    "DOC201",
-    "DOC501",
-    "E501",
-    "EM101",
-    "EM102",
-    "FBT001",
-    "PLC0415",
-    "PLR0911",
-    "PLR0912",
-    "PLR0913",
-    "PLR0914",
-    "PLR0915",
-    "PLR0917",
-    "PLR2004",
-    "TC001",
-    "TC003",
-    "TID252",
-    "TRY003",
-]
+# Optional visualization imports stay inside the functions that use them.
+# Relative imports follow the playback package boundary.
 "src/dense_arrays/playback/**/*.py" = [
-    "ANN",
-    "C901",
-    "D101",
-    "D102",
-    "D103",
-    "D105",
-    "DOC201",
-    "DOC501",
-    "E402",
-    "E501",
-    "EM101",
-    "EM102",
-    "FBT001",
     "PLC0415",
-    "PLR0911",
-    "PLR0912",
-    "PLR0913",
-    "PLR0914",
-    "PLR0915",
-    "PLR0917",
-    "PLR2004",
-    "TC001",
-    "TC003",
     "TID252",
-    "TRY003",
-]
-"src/dense_arrays/realized.py" = [
-    "D105",
-    "EM101",
-    "EM102",
-    "PLR2004",
-    "TC003",
-    "TRY003",
 ]
 "tests/test_optional_playback_imports.py" = ["S101", "S404", "S603"]
 "src/dense_arrays/main.py" = ["T201"]
-"src/dense_arrays/__init__.py" = ["D205", "D400"]
-"src/dense_arrays/cli.py" = ["D205", "D400", "FBT002"]
-"src/dense_arrays/constraints.py" = ["D205", "D400"]
-"src/dense_arrays/optimizer.py" = ["D205", "D400"]
-"src/dense_arrays/sequence.py" = ["D205", "D400"]
-"src/dense_arrays/solution.py" = ["D205", "D400"]
+# Typer evaluates Path annotations and supplies option defaults at runtime.
+"src/dense_arrays/cli.py" = ["FBT002"]
+"src/dense_arrays/playback/cli.py" = ["TC003", "PLR0913", "PLR0917"]
+# Keep the existing explicit media option signatures.
+"src/dense_arrays/playback/matplotlib_renderer.py" = ["PLR0913"]
+"src/dense_arrays/playback/export.py" = ["PLR0913"]
 "tests/test_*.py" = ["ANN201", "D103", "S101", "PLR2004", "FBT001"]
 
 [tool.ruff.lint.pydocstyle]

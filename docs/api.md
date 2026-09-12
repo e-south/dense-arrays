@@ -12,7 +12,7 @@ and [playback guide](playback.md) provide runnable examples.
 ## Optimization
 
 [Optimizer](reference/optimizer.md): construct a problem, add requirements,
-solve with CBC, or enumerate arrangements.
+solve with CBC, enumerate arrangements, and handle distinct failure outcomes.
 
 ## Dense-array results
 
@@ -33,3 +33,4 @@ and sequence-display helpers.
   placements. These interfaces live in explicit submodules.
 
 For command-line use, see [CLI options and failures](reference/cli.md).
+Existing integrators should review [caller migrations](migration.md).

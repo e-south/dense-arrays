@@ -7,8 +7,9 @@ description: Source-backed findings and local dogfood evidence for the September
 
 Author: Eric J. South. Audited 12 September 2026 against
 [`006b361e`](https://github.com/e-south/dense-arrays/tree/006b361e462c460d9fc398bd55ed7be174790f76).
-The documentation changes accompanying this audit do not change runtime code.
-The [improvement plan](improvement-plan.md) owns the remaining delivery sequence.
+This records the baseline findings, before runtime repairs. The
+[improvement plan](improvement-plan.md) owns the implementation sequence and the
+subsequent decision to remove the separate HTML playback renderer.
 
 The package has useful ownership boundaries and working small examples. Its
 largest risks are incomplete input contracts and output that can hide a failure

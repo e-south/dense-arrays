@@ -1,6 +1,6 @@
 ---
 title: Command-line reference
-description: Select optimization or playback commands and interpret their limits and failures.
+description: Choose optimization or playback commands and interpret failures and export behavior.
 ---
 
 # Command-line reference
@@ -30,22 +30,33 @@ There is no CLI solve-time limit; `--max-solutions` limits result count only.
 Output is a terminal display. It is not the persisted placement JSON expected
 by playback.
 
-Bad options and missing motif input produce usage errors. Invalid DNA and a
-solve that returns no results exit nonzero. If `solutions` has already printed
-a result, a later solve failure can be swallowed and the command can exit zero.
-Backend creation failures can currently show a Python traceback;
-[solver limitations](optimizer.md#current-solver-limitations) explain why a
-solve ending early is not always proof of infeasibility.
+Bad options, unreadable motif files, malformed inputs, no feasible first
+result, and solver failures produce errors on stderr and a nonzero exit.
+If a failure follows an already printed result, the command still exits
+nonzero; preceding output does not imply that enumeration completed.
+See [solver outcomes](optimizer.md#solver-outcomes) for the Python exception types.
 
 ## Render saved placements
 
-Supply a realized-array or playback-plan JSON file and the required `--html`
-path. `--poster`, `--mp4`, and `--gif` add exports. `--title` labels the HTML
-document; `--subtitle` is accepted but is not visibly rendered. Raster exports
-do not currently draw either field. See [the export guide](../playback.md#export-a-still-or-video)
-for dependencies and working-directory instructions.
+Supply a realized-array or playback-plan JSON file and at least one output:
+`--poster` for PNG, `--mp4`, or `--gif`. Multiple formats can be requested in
+one command. `--title` and `--subtitle` supply artifact metadata; the
+[evidence reference](playback-presentation.md#read-the-evidence) explains where
+each format stores it. All formats require the playback extra, and MP4 also
+requires FFmpeg. See the
+[export guide](../playback.md#export-a-still-or-video) for working-directory
+instructions and the [media presentation reference](playback-presentation.md)
+for Python settings and producer frame callbacks.
 
-Some malformed inputs and missing renderer dependencies currently produce
-tracebacks. HTML is written before optional exports, so a failed media export
-can leave an HTML file. Output paths are overwritten; use a fresh output
-directory and keep inputs separate from outputs.
+Inputs must pass schema and semantic validation before export. The command
+rejects input/output aliases, colliding destinations, symlink output paths,
+and existing files unless `--replace` is given. Invalid input, missing media
+dependencies, and export failures produce concise errors on stderr and exit
+nonzero.
+
+Every requested format is rendered to temporary files before any destination
+is published. A rendering failure leaves existing destination files untouched.
+Publication then occurs atomically **per file**, not as one filesystem
+transaction across all formats. If publication fails partway through, the
+error lists the files already published. Successful commands print each
+written path.

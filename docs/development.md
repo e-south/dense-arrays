@@ -12,8 +12,9 @@ serialized placements, reconstruction, or rendering.
 
 Choose a focused test from the [task-to-file map](architecture/README.md#find-the-files-for-a-change).
 For documentation, use the [writing and routing guide](development/documentation.md).
-The [audit](development/audit.md) records confirmed gaps; the
-[improvement plan](development/improvement-plan.md) sequences the remaining work.
+The [audit](development/audit.md) records the original findings; the
+[improvement plan](development/improvement-plan.md) tracks implementation and
+verification status.
 
 ## Local verification
 
@@ -26,13 +27,18 @@ uv run ruff check .
 uv run ruff format --check .
 uv run pytest -q
 uv run mkdocs build --strict
-uv export --frozen --all-extras --no-hashes --no-emit-project | uv run pip-audit -r /dev/stdin --progress-spinner off
+uv export --frozen --all-extras --no-emit-project | uv run pip-audit -r /dev/stdin --require-hashes --disable-pip --progress-spinner off
 uv build
 ```
 
 To run checks when committing, install the hooks with
 `uv run pre-commit install`. The optional `dev`, `playback`, and `docs` extras
 supply the tools needed by the full gate.
+
+The test suite executes the guides' Python examples and checks internal links
+and anchors after a strict documentation build. The dependency audit uses the
+complete locked export, including all extras and hashes, without resolving a
+different environment.
 
 ## Documentation changes
 
@@ -41,6 +47,13 @@ short enough to choose a task. Use [the documentation index](index.md) to route
 readers to a guide, and keep signature details in [the API reference](api.md).
 Run changed examples in the locked environment. Examples that add constraints
 must construct a fresh optimizer before solving.
+
+`tests/test_documentation.py` executes the Python examples in `quickstart.md`,
+`constraints.md`, and `playback.md`, then builds the site strictly and checks
+built links, assets, and anchors. Keep examples on each page runnable in order;
+temporary playback outputs are isolated by the test. The linked presentation
+example continues from the playback guide's `plan` and output directory and
+also needs a manual run when changed.
 
 Preview documentation with `uv run mkdocs serve`; `uv run mkdocs build --strict`
 writes the static site to `public/`. Shared documentation images live in

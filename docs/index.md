@@ -9,7 +9,7 @@ description: Pack supplied DNA motifs into a short sequence, or inspect saved pl
 
 Fit more supplied DNA motifs into a short sequence by sharing compatible
 bases. Dense Arrays returns the selected motifs and their positions so you can
-inspect the arrangement. Saved placements can also be rendered independently
+inspect the arrangement. Saved placements can also be rendered as images or video independently
 of optimization.
 
 ## Use Dense Arrays
@@ -28,6 +28,8 @@ of optimization.
 - [Architecture](architecture/README.md): ownership and module boundaries.
 - [Playback authority](architecture/solution-playback.md): coordinates, schemas,
   reconstruction, and producer handoffs.
+- [Update an existing caller](migration.md): stricter inputs, solver outcomes,
+  media presentation settings, and export behavior.
 - [Development](development.md): local verification and documentation builds.
 
 These outputs describe sequence arrangements. They do not establish binding,

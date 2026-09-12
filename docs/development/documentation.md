@@ -52,7 +52,8 @@ Give a fresh reader or agent a task, not the answer's file path:
 
 1. “Create a six-base array from three motifs using CBC and explain the offsets.”
 2. “Require two entries from one motif group and one from another group.”
-3. “Render saved placements and determine whether the order was solver-recorded.”
+3. “Render saved placements as a PNG, find the MP4 export command, and
+   determine whether the order was solver-recorded.”
 4. From `src/dense_arrays/playback/`: “Find the owner and tests for rejecting a
    malformed serialized placement before rendering.”
 

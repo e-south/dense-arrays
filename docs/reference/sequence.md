@@ -11,5 +11,7 @@ These lower-level helpers support motif packing and terminal display. Use
 those input checks.
 
 ::: dense_arrays.sequence
+    options:
+      show_root_heading: false
 
 Return to the [API index](../api.md).
