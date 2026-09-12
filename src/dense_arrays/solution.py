@@ -1,12 +1,7 @@
-"""
---------------------------------------------------------------------------------
-<dense-array project>
-
-Solution representation for dense-arrays.
+"""Immutable, contiguous motif-placement results for dense arrays.
 
 Module Author(s): Virgile Andreani, Eric J. South
 Dunlop Lab
---------------------------------------------------------------------------------
 """
 
 from __future__ import annotations
@@ -14,18 +9,41 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Self
 
+from .problem import discrete_integer, motif_library
 from .sequence import COMPLEMENT, dispatch_labels, reverse_complement
 
 
-@dataclass
+@dataclass(frozen=True)
 class DenseArray:
-    """Representation of a solution."""
+    """An immutable, contiguous collection of compatible motif placements.
 
-    library: list[str]
+    Parameters
+    ----------
+    library
+        Nonempty uppercase A/C/G/T motif entries, copied on construction.
+    sequence_length
+        Positive integer maximum sequence length, excluding booleans.
+    offsets_fwd, offsets_rev
+        One nonnegative integer offset or None per library entry. An entry may
+        select at most one orientation. Public views return defensive copies.
+
+    Notes
+    -----
+    Compatible contained and non-maximal overlaps are allowed. This representation
+    describes placements; it does not itself assert an exact solver path.
+
+    Raises
+    ------
+    ValueError
+        If motifs, lengths, offsets, or orientation choices are invalid, or if
+        placements conflict, leave gaps, exceed the bound, or select no entries.
+    """
+
+    _library: tuple[str, ...]
     sequence_length: int
     sequence: str
-    offsets_fwd: list[int | None]
-    offsets_rev: list[int | None]
+    _offsets_fwd: tuple[int | None, ...]
+    _offsets_rev: tuple[int | None, ...]
 
     def __init__(  # noqa: C901, PLR0912
         self: Self,
@@ -34,17 +52,31 @@ class DenseArray:
         offsets_fwd: list[int | None],
         offsets_rev: list[int | None],
     ) -> None:
-        if sequence_length <= 0:
-            msg = "sequence_length must be > 0"
-            raise ValueError(msg)
+        sequence_length = discrete_integer(
+            sequence_length, "sequence_length", minimum=1
+        )
+        library = list(motif_library(library))
         if len(offsets_fwd) != len(library) or len(offsets_rev) != len(library):
             msg = "offsets_fwd and offsets_rev must match library length"
             raise ValueError(msg)
 
-        self.library = list(library)
-        self.sequence_length = sequence_length
-        self.offsets_fwd = list(offsets_fwd)
-        self.offsets_rev = list(offsets_rev)
+        normalized_fwd = tuple(
+            None if o is None else discrete_integer(o, "offsets", minimum=0)
+            for o in offsets_fwd
+        )
+        normalized_rev = tuple(
+            None if o is None else discrete_integer(o, "offsets", minimum=0)
+            for o in offsets_rev
+        )
+        object.__setattr__(self, "_library", tuple(library))
+        object.__setattr__(self, "sequence_length", sequence_length)
+        object.__setattr__(self, "_offsets_fwd", normalized_fwd)
+        object.__setattr__(self, "_offsets_rev", normalized_rev)
+
+        for fwd, rev in zip(offsets_fwd, offsets_rev, strict=True):
+            if fwd is not None and rev is not None:
+                msg = "A library entry can have only one selected orientation"
+                raise ValueError(msg)
 
         placements: list[tuple[int, str]] = []
         for i, offset in enumerate(self.offsets_fwd):
@@ -62,12 +94,6 @@ class DenseArray:
 
         max_end = 0
         for offset, motif in placements:
-            if not isinstance(offset, int):
-                msg = "offsets must be integers or None"
-                raise TypeError(msg)
-            if offset < 0:
-                msg = "offsets must be >= 0"
-                raise ValueError(msg)
             end = offset + len(motif)
             if end > sequence_length:
                 msg = "motif extends beyond sequence_length"
@@ -89,7 +115,22 @@ class DenseArray:
             msg = "Offsets leave gaps; sequence must be contiguous"
             raise ValueError(msg)
 
-        self.sequence = "".join(sequence_chars)
+        object.__setattr__(self, "sequence", "".join(sequence_chars))
+
+    @property
+    def library(self) -> list[str]:
+        """A defensive copy of the original motif library."""
+        return list(self._library)
+
+    @property
+    def offsets_fwd(self) -> list[int | None]:
+        """A defensive copy of selected forward offsets."""
+        return list(self._offsets_fwd)
+
+    @property
+    def offsets_rev(self) -> list[int | None]:
+        """A defensive copy of selected reverse-complement offsets."""
+        return list(self._offsets_rev)
 
     def offset_indices_in_order(self: Self) -> list[tuple[int, int]]:
         """

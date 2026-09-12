@@ -1,12 +1,7 @@
-"""
---------------------------------------------------------------------------------
-<dense-array project>
-
-Sequence utilities for dense-arrays.
+"""Sequence and overlap utilities for dense arrays.
 
 Module Author(s): Virgile Andreani, Eric J. South
 Dunlop Lab
---------------------------------------------------------------------------------
 """
 
 from __future__ import annotations

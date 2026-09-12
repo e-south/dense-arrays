@@ -1,12 +1,7 @@
-"""
---------------------------------------------------------------------------------
-<dense-array project>
-
-Command-line interface for dense-arrays.
+"""Design motif arrays and report solver outcomes from the command line.
 
 Module Author(s): Virgile Andreani, Eric J. South
 Dunlop Lab
---------------------------------------------------------------------------------
 """
 
 from __future__ import annotations
@@ -22,6 +17,7 @@ from rich.panel import Panel
 from rich.rule import Rule
 from rich.text import Text
 
+from .errors import OptimizationError
 from .optimizer import Optimizer
 
 if TYPE_CHECKING:
@@ -69,7 +65,8 @@ def _load_motifs(motif: list[str] | None, motifs_file: Path | None) -> list[str]
 
 def _print_solution(title: str, solution: DenseArray) -> None:
     header = Text(
-        f"{title} | score {solution.nb_motifs} | length {solution.sequence_length} | "
+        f"{title} | score {solution.nb_motifs} | length {len(solution.sequence)} / "
+        f"{solution.sequence_length} limit | "
         f"compression {solution.compression_ratio:.3f}",
         style="bold green",
     )
@@ -116,14 +113,14 @@ def optimize(
     Raises
     ------
     typer.Exit
-        If the solver fails to find a feasible solution.
+        If input cannot be read or validated, or optimization fails.
     """
-    motifs = _load_motifs(motif, motifs_file)
     try:
+        motifs = _load_motifs(motif, motifs_file)
         opt = Optimizer(motifs, sequence_length=length, strands=strands.value)
         best = opt.optimal(solver=solver)
-    except ValueError as exc:
-        console.print(f"[red]Error:[/red] {exc}")
+    except (OSError, ValueError, OptimizationError) as exc:
+        typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(code=1) from exc
 
     _print_solution("Optimal solution", best)
@@ -176,10 +173,10 @@ def solutions(  # noqa: PLR0913, PLR0917
     Raises
     ------
     typer.Exit
-        If the solver fails to find a feasible solution.
+        If input cannot be read or validated, or optimization fails.
     """
-    motifs = _load_motifs(motif, motifs_file)
     try:
+        motifs = _load_motifs(motif, motifs_file)
         opt = Optimizer(motifs, sequence_length=length, strands=strands.value)
         iterator = (
             opt.solutions_diverse(solver=solver)
@@ -194,10 +191,10 @@ def solutions(  # noqa: PLR0913, PLR0917
             _print_solution(f"Solution {idx}", sol)
             any_solution = True
         if not any_solution:
-            console.print("[red]No feasible solution was found.[/red]")
+            typer.echo("No feasible solution was found.", err=True)
             raise typer.Exit(code=1)
-    except ValueError as exc:
-        console.print(f"[red]Error:[/red] {exc}")
+    except (OSError, ValueError, OptimizationError) as exc:
+        typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(code=1) from exc
 
 

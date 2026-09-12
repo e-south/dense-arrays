@@ -7,6 +7,7 @@ import pytest
 
 import dense_arrays as da
 import dense_arrays.sequence as seq
+from dense_arrays.errors import InfeasibleError
 
 
 def _assert_promoter_constraint(
@@ -155,7 +156,7 @@ def test_invalid_motif_inputs():
 
 def test_no_empty_solution():
     opt = da.Optimizer(["AAAA"], sequence_length=2, strands="single")
-    with pytest.raises(ValueError, match="No feasible solution"):
+    with pytest.raises(InfeasibleError, match="No feasible solution"):
         opt.optimal()
 
 
@@ -531,7 +532,7 @@ def test_regulator_constraints_required_infeasible():
     regulators = ["R1", "R2"]
     opt = da.Optimizer(motifs, sequence_length=3, strands="single")
     opt.add_regulator_constraints(regulators, required={"R1", "R2"})
-    with pytest.raises(ValueError, match="feasible"):
+    with pytest.raises(InfeasibleError, match="feasible"):
         opt.optimal()
 
 
@@ -547,7 +548,7 @@ def test_regulator_constraints_k_of_n():
 
     opt2 = da.Optimizer(motifs, sequence_length=3, strands="single")
     opt2.add_regulator_constraints(regulators, min_required_regulators=2)
-    with pytest.raises(ValueError, match="feasible"):
+    with pytest.raises(InfeasibleError, match="feasible"):
         opt2.optimal()
 
 
