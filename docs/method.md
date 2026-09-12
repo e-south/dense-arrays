@@ -1,3 +1,8 @@
+---
+title: Packing method
+description: Understand compatible overlaps and the integer optimization formulation.
+---
+
 # How motifs share sequence space
 
 Dense Arrays formulates motif packing as an integer optimization problem.
@@ -18,6 +23,14 @@ Problem: motifs become oriented graph nodes and transitions account for the
 sequence span needed to place successive motifs. The optimizer chooses a
 feasible arrangement within the requested length. The Python result retains
 the realized sequence and motif offsets.
+
+The exact model counts selected entries along this path. It does not count
+every motif that happens to occur as a substring: an entry wholly contained
+inside another does not get an additional placement through the overlap metric.
+Repeated identical strings also require distinct path placements. For example,
+`ACGTA` and `CGT` with a five-base limit yield one selected entry in the exact
+model. Distinguish selected entries from all sequence matches when reporting a
+motif count.
 
 See the [associated paper](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1012276)
 for the formulation and scientific context. When citing software results,

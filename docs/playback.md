@@ -1,7 +1,12 @@
+---
+title: Saved-placement playback
+description: Build a realized-array record and export an explanation of its placements.
+---
+
 # Render saved feature placements
 
 Playback explains an existing sequence and its persisted feature placements.
-The public seam is `RealizedArray` → `PlaybackPlan` → renderer. It does not
+The data flow is `RealizedArray` → `PlaybackPlan` → renderer. It does not
 rerun optimization. Producer adapters translate their own records into this
 contract; the optimizer's `DenseArray` result is a separate interface.
 
@@ -9,7 +14,7 @@ contract; the optimizer's `DenseArray` result is a separate interface.
 
 Run this Python example in the [installed checkout](quickstart.md#install-from-source).
 It describes the same three synthetic placements as the first-array example,
-without depending on a solver or an external data file. Outputs go to a new
+without running a solver or reading an external data file. Outputs go to a new
 temporary directory whose path is printed:
 
 ```python
@@ -69,7 +74,7 @@ source .venv/bin/activate
 ```
 
 Then change to the output directory printed by the Python example. Render
-either strict `RealizedArray` or `PlaybackPlan` JSON:
+either `RealizedArray` or `PlaybackPlan` JSON:
 
 ```bash
 dense-arrays-playback realized.json --html rendered.html
@@ -77,8 +82,9 @@ dense-arrays-playback realized.json --html rendered.html
 
 For saved files, the Python entrypoints are `loads_realized_array()` and
 `loads_playback_plan()`; both accept the file's JSON text. The matching
-`dumps_*()` functions return JSON text. Unknown schema fields are rejected.
-See the [playback API](api.md#realized-arrays-and-playback).
+`dumps_*()` functions return JSON text. Schema and semantic checks differ;
+read the [current validation limits](reference/playback.md#interpretation-and-validation)
+before accepting saved plans from another source.
 
 ## Export a still or video
 
@@ -100,18 +106,25 @@ MP4 export additionally requires a local FFmpeg executable on `PATH`:
 dense-arrays-playback realized.json --html rendered.html --mp4 playback.mp4
 ```
 
+Use a fresh output directory: existing output paths are overwritten. HTML is
+written first and can remain if an optional export fails.
 Run these render commands from the input directory as above, or pass explicit
 input and output paths. `dense-arrays-playback --help` lists all export options.
 
 ## Interpret the result
 
 Reconstruction checks placement bounds, identities, sequence agreement, and
-constraint references. Declared distance constraints are evaluated in the plan.
-The plan always reports `placement_reconstructed` authority. Its ordering status
+constraint references. Declared distance constraints are evaluated in the plan;
+a failed distance requirement produces a failed result, not an
+exception. Inspect `plan.constraint_results` when checking requirements.
+A reconstructed plan reports `placement_reconstructed` authority. Its ordering status
 distinguishes a unique coordinate order, an ambiguous order requiring a
 deterministic tie-break, and a layout with internal uncovered spans.
 
-The displayed order is a coordinate explanation. It is not the optimizer's
+The current renderers do not display all ordering qualifications or constraint
+failures. Inspect `plan.ordering_status` and `plan.notices`, and include relevant
+qualifications in the caption. The displayed order is a coordinate explanation.
+It is not the optimizer's
 recorded search or selected path. `solver_selected` authority is reserved for
 future exact traces. Preserve these distinctions when adding captions or
 adapting producer data; the [playback contract](architecture/solution-playback.md)

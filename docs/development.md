@@ -1,9 +1,19 @@
+---
+title: Development checks
+description: Find focused checks, run the full local gate, and preview documentation.
+---
+
 # Develop Dense Arrays
 
 Start from the [source checkout](quickstart.md#install-from-source). Read the
 [architecture map](architecture/README.md) before changing module boundaries,
 and the [playback contract](architecture/solution-playback.md) before changing
 serialized placements, reconstruction, or rendering.
+
+Choose a focused test from the [task-to-file map](architecture/README.md#find-the-files-for-a-change).
+For documentation, use the [writing and routing guide](development/documentation.md).
+The [audit](development/audit.md) records confirmed gaps; the
+[improvement plan](development/improvement-plan.md) sequences the remaining work.
 
 ## Local verification
 

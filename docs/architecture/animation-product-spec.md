@@ -1,4 +1,14 @@
-# Dense-array playback product brief
+---
+title: Playback product brief
+description: Visual and accessibility goals for publication playback, with implementation status kept separate.
+---
+
+# Playback product brief
+
+This brief records presentation goals. Some remain unimplemented, including
+consistent visible authority and failed-constraint qualification. Use the
+[playback contract](solution-playback.md) for current behavior and the
+[audit](../development/audit.md) for observed gaps.
 
 ## Purpose
 
@@ -42,8 +52,9 @@ Three presentation tiers exercise the same public surface:
 3. **Study application** uses study-owned identities and labels to explain a
    specific promoter architecture.
 
-The first two recipes belong to DenseGen. Study selection, biological labels,
-and interpretation belong to the owning study repository.
+DenseGen can supply the first two recipes. Study selection, biological labels,
+and interpretation belong to the owning study repository. These are caller
+examples, not package dependencies or prerequisites for generic playback.
 
 ## Visual contract
 
@@ -84,5 +95,5 @@ Each endpoint publishes a digest-addressed bundle containing:
 - poster PNG.
 
 Generated media remains producer-owned output and is not committed to this
-repository. Renderers consume only validated playback plans and must not import
-solver or OR-Tools internals.
+repository. The target contract requires renderers to consume validated playback
+plans without importing solver or OR-Tools internals.

@@ -1,43 +1,35 @@
-# API Reference
+---
+title: Python API
+description: Choose the interface for solving, reading a result, or rendering saved placements.
+---
 
-For a runnable introduction, use [the quickstart](quickstart.md) or
-[playback guide](playback.md). The top-level facade exports `Optimizer` and
-`DenseArray`. Realized-array contracts and playback are explicit submodules.
+# Python API
+
+Start with the interface needed for your task. Each reference combines current
+behavior and generated signatures; the [first-array tutorial](quickstart.md)
+and [playback guide](playback.md) provide runnable examples.
 
 ## Optimization
 
-::: dense_arrays.optimizer
+[Optimizer](reference/optimizer.md): construct a problem, add requirements,
+solve with CBC, or enumerate arrangements.
 
 ## Dense-array results
 
-::: dense_arrays.solution
+[DenseArray](reference/results.md): read the sequence, offsets, motif count,
+and compression ratio. `Optimizer` and `DenseArray` are exported by
+`dense_arrays`.
 
 ## Sequence utilities
 
-::: dense_arrays.sequence
+[Sequence utilities](reference/sequence.md): complements, pairwise overlaps,
+and sequence-display helpers.
 
 ## Realized arrays and playback
 
-These contracts accept persisted sequence placements independently of the
-optimizer. Producer adapters supply the translation from their own records.
-See [playback authority](architecture/solution-playback.md) before interpreting
-ordering or adding a renderer.
+- [Realized arrays](reference/realized.md): describe an existing sequence and
+  its persisted placements.
+- [Playback](reference/playback.md): reconstruct, serialize, and render those
+  placements. These interfaces live in explicit submodules.
 
-::: dense_arrays.realized
-
-::: dense_arrays.playback
-    options:
-      members:
-        - PlaybackPlan
-        - PlaybackStep
-        - PlaybackAuthority
-        - OrderingStatus
-        - ConstraintResult
-        - PlaybackDocument
-        - reconstruct_playback
-        - dumps_realized_array
-        - loads_realized_array
-        - dumps_playback_plan
-        - loads_playback_plan
-        - render_playback_html
-        - render_playback_collection_html
+For command-line use, see [CLI options and failures](reference/cli.md).

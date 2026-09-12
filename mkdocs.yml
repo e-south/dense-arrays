@@ -9,12 +9,23 @@ nav:
   - Constraints: constraints.md
   - Playback: playback.md
   - Method: method.md
-  - API reference: api.md
+  - Reference:
+      - Choose an interface: api.md
+      - Optimizer: reference/optimizer.md
+      - DenseArray results: reference/results.md
+      - Sequence utilities: reference/sequence.md
+      - Realized arrays: reference/realized.md
+      - Playback API: reference/playback.md
+      - Command-line options: reference/cli.md
   - Architecture:
       - Module boundaries: architecture/README.md
       - Playback contract: architecture/solution-playback.md
       - Playback product brief: architecture/animation-product-spec.md
-  - Development: development.md
+  - Contribute:
+      - Development checks: development.md
+      - Write documentation: development/documentation.md
+      - Audit findings: development/audit.md
+      - Improvement plan: development/improvement-plan.md
 
 theme:
   name: material

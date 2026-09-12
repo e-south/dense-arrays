@@ -1,9 +1,16 @@
+---
+title: Constraints
+description: Set positional requirements, regulator coverage, and side preferences before solving.
+---
+
 # Constrain an array
 
 Configure constraints on a fresh `Optimizer`, then solve. Each example below
 is independent and can be run with `uv run python`. Once a model has been
 built, adding constraints raises `RuntimeError`; create a new optimizer to
-try another specification.
+try another specification. Use `optimal()`, `solutions()`, or
+`solutions_diverse()` for constrained problems. `approximate()` does not apply
+these requirements.
 
 ## Position two motifs
 
@@ -31,6 +38,8 @@ Positions are zero-based start coordinates. A two-element range includes its
 endpoints; a single integer fixes the value. `spacer_length` measures bases
 between the end of the upstream motif and the start of the downstream motif.
 `downstream_pos` can constrain the downstream start separately.
+Use integers with the minimum no greater than the maximum; malformed ranges
+are not consistently rejected until model construction.
 
 Both motifs must occur in the supplied library. Reusing a motif in another
 pair requires another copy of that motif in the library. Positional
@@ -40,7 +49,8 @@ arrangement functions as a promoter.
 
 ## Require regulator coverage
 
-Map every motif entry to a regulator label. Use `required` for named labels,
+Motif groups are represented by regulator labels in this API. Map every motif
+entry to a label. Use `required` for named labels,
 `min_required_regulators` for a minimum number of different labels, and
 `min_count_by_regulator` for minimum counts of motif entries assigned to a label.
 
@@ -62,6 +72,9 @@ Here both motif entries labeled `R1` must appear, together with at least one
 other regulator label. These are hard coverage requirements over the supplied
 mapping. They do not measure binding or simultaneous occupancy.
 Declare the regulator requirements together in one call.
+Supply positive integers for minimum counts. Fractional values are currently
+coerced rather than rejected, so validate externally sourced counts before
+passing them to the API.
 
 ## Prefer a side
 

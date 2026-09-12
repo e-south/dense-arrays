@@ -1,3 +1,8 @@
+---
+title: First array
+description: Install from source, solve a small CBC example, and read its sequence and offsets.
+---
+
 # Create your first array
 
 Dense Arrays takes non-empty uppercase `A/C/G/T` motifs and a positive length
@@ -39,7 +44,8 @@ starting with `#` are ignored. The two input forms cannot be combined.
 
 Use `uv run dense-arrays optimize --help` to see all options. CBC is the
 default OR-Tools backend. `--solver` selects another backend only if the local
-OR-Tools installation can create it; an unsupported backend fails explicitly.
+OR-Tools installation can create it. An unavailable backend raises an error
+and may display a traceback. See [CLI failures](reference/cli.md).
 
 ## Solve from Python
 
@@ -65,11 +71,15 @@ interface.
 Configure every [constraint](constraints.md) before solving. Solving builds
 the model; to change constraints afterward, create a new `Optimizer`.
 If no motif can fit or the declared constraints are infeasible, `optimal()`
-raises `ValueError`. The CLI reports an unsuccessful solve with a nonzero exit.
+raises `ValueError`. Other unsuccessful solver statuses currently reach the
+same message; see [solver limitations](reference/optimizer.md#current-solver-limitations)
+before interpreting that error. The `optimize` command exits nonzero when it
+cannot return a result.
 
 ## Request further solutions
 
-Limit enumeration to the number of results you intend to inspect:
+Limit enumeration to the number of results you intend to inspect. This bounds
+the result count, not the time needed to solve each result:
 
 ```bash
 uv run dense-arrays solutions \
