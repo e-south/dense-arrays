@@ -1,4 +1,4 @@
-# ![Dense Arrays — overlapping motifs within a sequence-length limit](docs/assets/dense-arrays-banner.svg)
+# ![Dense Arrays — overlapping motifs within a sequence-length limit](https://raw.githubusercontent.com/e-south/dense-arrays/main/docs/assets/dense-arrays-banner.svg)
 
 [![CI](https://github.com/e-south/dense-arrays/actions/workflows/ci.yml/badge.svg)](https://github.com/e-south/dense-arrays/actions/workflows/ci.yml)
 [![docs](https://img.shields.io/badge/docs-gitlab_pages-blue)](https://dunloplab.gitlab.io/dense-arrays)
@@ -25,24 +25,24 @@ uv run dense-arrays optimize \
 ```
 
 This synthetic example packs three motifs into `CAGCGT`. The
-[quickstart](docs/quickstart.md) covers installation, Python use, and bounded
+[quickstart](https://github.com/e-south/dense-arrays/blob/main/docs/quickstart.md) covers installation, Python use, and bounded
 enumeration of further solutions.
 
 ## Choose a task
 
-- [Create and read your first array](docs/quickstart.md).
-- [Set positional and regulator constraints](docs/constraints.md).
-- [Render saved feature placements](docs/playback.md).
-- [Look up Python interfaces](docs/api.md).
+- [Create and read your first array](https://github.com/e-south/dense-arrays/blob/main/docs/quickstart.md).
+- [Set positional and regulator constraints](https://github.com/e-south/dense-arrays/blob/main/docs/constraints.md).
+- [Render saved feature placements](https://github.com/e-south/dense-arrays/blob/main/docs/playback.md).
+- [Look up Python interfaces](https://github.com/e-south/dense-arrays/blob/main/docs/api.md).
 
-For the formulation and associated paper, see [the method](docs/method.md).
-The [documentation index](docs/index.md) also routes integrators and
+For the formulation and associated paper, see [the method](https://github.com/e-south/dense-arrays/blob/main/docs/method.md).
+The [documentation index](https://github.com/e-south/dense-arrays/blob/main/docs/index.md) also routes integrators and
 contributors to the relevant contracts.
 
 ## Contribute
 
-[Development](docs/development.md) covers local checks and documentation builds.
+[Development](https://github.com/e-south/dense-arrays/blob/main/docs/development.md) covers local checks and documentation builds.
 [Report bugs](https://github.com/e-south/dense-arrays/issues), follow the
-[security policy](SECURITY.md) for vulnerabilities, and read
-[AGENTS.md](AGENTS.md) when working with a coding agent.
-Dense Arrays is available under the [MIT license](LICENSE).
+[security policy](https://github.com/e-south/dense-arrays/blob/main/SECURITY.md) for vulnerabilities, and read
+[AGENTS.md](https://github.com/e-south/dense-arrays/blob/main/AGENTS.md) when working with a coding agent.
+Dense Arrays is available under the [MIT license](https://github.com/e-south/dense-arrays/blob/main/LICENSE).

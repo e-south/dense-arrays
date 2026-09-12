@@ -47,9 +47,7 @@ Map every motif entry to a regulator label. Use `required` for named labels,
 ```python
 from dense_arrays import Optimizer
 
-optimizer = Optimizer(
-    ["AAA", "CCC", "GGG", "TTT"], sequence_length=9, strands="single"
-)
+optimizer = Optimizer(["AAA", "CCC", "GGG", "TTT"], sequence_length=9, strands="single")
 optimizer.add_regulator_constraints(
     ["R1", "R1", "R2", "R3"],
     required={"R1"},

@@ -50,9 +50,9 @@ from dense_arrays import Optimizer
 
 optimizer = Optimizer(["CAG", "AGC", "CGT"], sequence_length=6, strands="single")
 best = optimizer.optimal()
-print(best.sequence)       # CAGCGT
-print(best.nb_motifs)      # 3
-print(best.offsets_fwd)    # [0, 1, 3]
+print(best.sequence)  # CAGCGT
+print(best.nb_motifs)  # 3
+print(best.offsets_fwd)  # [0, 1, 3]
 ```
 
 `optimal()` returns a `DenseArray`. `sequence_length` is the requested limit;

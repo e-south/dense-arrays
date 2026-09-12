@@ -12,6 +12,8 @@ Run the full gate from the repository root before handoff:
 ```bash
 uv sync --frozen --extra dev --extra playback --extra docs
 uv run pre-commit run --all-files
+uv run ruff check .
+uv run ruff format --check .
 uv run pytest -q
 uv run mkdocs build --strict
 uv export --frozen --all-extras --no-hashes --no-emit-project | uv run pip-audit -r /dev/stdin --progress-spinner off
