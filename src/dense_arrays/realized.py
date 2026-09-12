@@ -1,14 +1,28 @@
-"""Public contracts for a persisted, realized dense array."""
+"""Public contracts for a persisted, realized dense array.
+
+Module Author(s): Eric J. South
+"""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
-from types import MappingProxyType
+from typing import TYPE_CHECKING
+
+from ._record_validation import (
+    digest,
+    enum_value,
+    immutable_json_mapping,
+    normalized_dna,
+    records,
+    required_text,
+    validate_placement_sequence,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 REALIZED_ARRAY_SCHEMA_VERSION = "dense_arrays.realized_array.v1"
-_IUPAC_DNA = frozenset("ACGTRYSWKMBDHVN")
 
 
 class PlacementKind(StrEnum):
@@ -27,27 +41,6 @@ class Orientation(StrEnum):
     UNSPECIFIED = "unspecified"
 
 
-def _required_text(value: str, *, field_name: str) -> str:
-    text = str(value).strip()
-    if not text:
-        msg = f"{field_name} must be a non-empty string"
-        raise ValueError(msg)
-    return text
-
-
-def _normalized_dna(value: str, *, field_name: str) -> str:
-    sequence = _required_text(value, field_name=field_name).upper()
-    invalid = sorted(set(sequence) - _IUPAC_DNA)
-    if invalid:
-        msg = f"{field_name} contains non-IUPAC DNA symbols: {invalid}"
-        raise ValueError(msg)
-    return sequence
-
-
-def _immutable_mapping(value: Mapping[str, object]) -> Mapping[str, object]:
-    return MappingProxyType({str(key): item for key, item in value.items()})
-
-
 @dataclass(frozen=True, slots=True)
 class Placement:
     """One feature placement in zero-based, half-open coordinates."""
@@ -62,20 +55,33 @@ class Placement:
     metadata: Mapping[str, object] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        """Validate placement identity and freeze caller metadata."""
         object.__setattr__(
             self,
             "placement_id",
-            _required_text(self.placement_id, field_name="placement_id"),
+            required_text(self.placement_id, field_name="placement_id"),
         )
         object.__setattr__(
             self,
             "feature_id",
-            _required_text(self.feature_id, field_name="feature_id"),
+            required_text(self.feature_id, field_name="feature_id"),
         )
         object.__setattr__(
             self,
             "sequence",
-            _normalized_dna(self.sequence, field_name="placement.sequence"),
+            normalized_dna(self.sequence, field_name="placement.sequence"),
+        )
+        object.__setattr__(
+            self,
+            "kind",
+            enum_value(self.kind, PlacementKind, field_name="placement.kind"),
+        )
+        object.__setattr__(
+            self,
+            "orientation",
+            enum_value(
+                self.orientation, Orientation, field_name="placement.orientation"
+            ),
         )
         if (
             isinstance(self.start, bool)
@@ -86,9 +92,9 @@ class Placement:
             raise ValueError(msg)
         if self.label is not None:
             object.__setattr__(
-                self, "label", _required_text(self.label, field_name="label")
+                self, "label", required_text(self.label, field_name="label")
             )
-        object.__setattr__(self, "metadata", _immutable_mapping(self.metadata))
+        object.__setattr__(self, "metadata", immutable_json_mapping(self.metadata))
 
     @property
     def end(self) -> int:
@@ -109,6 +115,7 @@ class DeclaredConstraint:
     metadata: Mapping[str, object] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        """Validate the referenced pair and allowed distance interval."""
         for field_name in (
             "constraint_id",
             "upstream_placement_id",
@@ -117,7 +124,7 @@ class DeclaredConstraint:
             object.__setattr__(
                 self,
                 field_name,
-                _required_text(getattr(self, field_name), field_name=field_name),
+                required_text(getattr(self, field_name), field_name=field_name),
             )
         for field_name in ("min_distance_bp", "max_distance_bp"):
             value = getattr(self, field_name)
@@ -132,9 +139,9 @@ class DeclaredConstraint:
             raise ValueError(msg)
         if self.label is not None:
             object.__setattr__(
-                self, "label", _required_text(self.label, field_name="label")
+                self, "label", required_text(self.label, field_name="label")
             )
-        object.__setattr__(self, "metadata", _immutable_mapping(self.metadata))
+        object.__setattr__(self, "metadata", immutable_json_mapping(self.metadata))
 
 
 @dataclass(frozen=True, slots=True)
@@ -151,20 +158,29 @@ class RealizedArray:
     schema_version: str = field(default=REALIZED_ARRAY_SCHEMA_VERSION, init=False)
 
     def __post_init__(self) -> None:
+        """Validate the sequence, placement alignment, and constraint references."""
         object.__setattr__(
-            self, "source_id", _required_text(self.source_id, field_name="source_id")
+            self, "source_id", required_text(self.source_id, field_name="source_id")
         )
         object.__setattr__(
             self,
             "sequence",
-            _normalized_dna(self.sequence, field_name="realized_array.sequence"),
+            normalized_dna(self.sequence, field_name="realized_array.sequence"),
         )
-        object.__setattr__(self, "placements", tuple(self.placements))
-        object.__setattr__(self, "constraints", tuple(self.constraints))
+        object.__setattr__(
+            self,
+            "placements",
+            records(self.placements, Placement, field_name="placements"),
+        )
+        object.__setattr__(
+            self,
+            "constraints",
+            records(self.constraints, DeclaredConstraint, field_name="constraints"),
+        )
         object.__setattr__(
             self,
             "coordinate_space",
-            _required_text(self.coordinate_space, field_name="coordinate_space"),
+            required_text(self.coordinate_space, field_name="coordinate_space"),
         )
         if not self.placements:
             msg = "a realized array must contain at least one placement"
@@ -177,12 +193,29 @@ class RealizedArray:
         if len(constraint_ids) != len(set(constraint_ids)):
             msg = "constraint_id values must be unique within a realized array"
             raise ValueError(msg)
-        if self.source_digest is not None:
-            digest = self.source_digest.lower().strip()
-            if len(digest) != 64 or any(
-                char not in "0123456789abcdef" for char in digest
-            ):
-                msg = "source_digest must be a lowercase SHA-256 hex digest"
+        for placement in self.placements:
+            validate_placement_sequence(
+                placement_id=placement.placement_id,
+                start=placement.start,
+                end=placement.end,
+                sequence=placement.sequence,
+                realized_sequence=self.sequence,
+            )
+        for constraint in self.constraints:
+            missing = {
+                constraint.upstream_placement_id,
+                constraint.downstream_placement_id,
+            } - set(placement_ids)
+            if missing:
+                msg = (
+                    f"constraint {constraint.constraint_id!r} references unknown "
+                    f"placements: {sorted(missing)}"
+                )
                 raise ValueError(msg)
-            object.__setattr__(self, "source_digest", digest)
-        object.__setattr__(self, "provenance", _immutable_mapping(self.provenance))
+        if self.source_digest is not None:
+            object.__setattr__(
+                self,
+                "source_digest",
+                digest(self.source_digest, field_name="source_digest"),
+            )
+        object.__setattr__(self, "provenance", immutable_json_mapping(self.provenance))

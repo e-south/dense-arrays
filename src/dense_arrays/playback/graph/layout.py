@@ -1,13 +1,16 @@
-"""Deterministic point-space graph layout and terminal bracketing."""
+"""Deterministic point-space graph layout and terminal bracketing.
+
+Module Author(s): Eric J. South
+"""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from functools import lru_cache
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
-from ..models import PlaybackPlan
 from .geometry import default_layout_spec
+from .isotropic_layout import NetworkXIsotropicLayout
 from .model import (
     END_NODE_ID,
     START_NODE_ID,
@@ -22,11 +25,15 @@ from .projection import project_explanation_graph
 
 
 class GraphLayoutEngine(Protocol):
+    """Map a semantic graph into positions within a measured viewport."""
+
     name: str
 
     def layout(
         self, graph: ExplanationGraph, spec: GraphLayoutSpec, *, seed: int
-    ) -> tuple[GraphPosition, ...]: ...
+    ) -> tuple[GraphPosition, ...]:
+        """Return point-space node positions for a measured graph."""
+        ...
 
 
 def _measured_graph(graph: ExplanationGraph, spec: GraphLayoutSpec) -> ExplanationGraph:
@@ -114,6 +121,16 @@ def _relax_internal_collisions(
                     )
         if not moved:
             return
+    _require_no_collisions(positions, nodes, spec)
+
+
+def _require_no_collisions(
+    positions: dict[str, list[float]],
+    nodes: tuple[GraphNode, ...],
+    spec: GraphLayoutSpec,
+) -> None:
+    ids = tuple(node.node_id for node in nodes)
+    by_id = {node.node_id: node for node in nodes}
     for left_index, left_id in enumerate(ids):
         for right_id in ids[left_index + 1 :]:
             overlap_x, overlap_y = _overlap(
@@ -124,9 +141,11 @@ def _relax_internal_collisions(
                 spec.node_clearance_pt,
             )
             if overlap_x > 0.0 and overlap_y > 0.0:
-                raise ValueError(
-                    f"graph layout could not resolve node collision: {left_id!r}, {right_id!r}"
+                msg = (
+                    f"graph layout could not resolve node collision: "
+                    f"{left_id!r}, {right_id!r}"
                 )
+                raise ValueError(msg)
 
 
 def _raw_to_point_positions(
@@ -139,7 +158,8 @@ def _raw_to_point_positions(
     available_w = viewport.width_pt - 2.0 * (viewport.padding_pt + reserve_x)
     available_h = viewport.height_pt - 2.0 * viewport.padding_pt
     if available_w <= 0.0 or available_h <= 0.0:
-        raise ValueError("graph viewport is too small for terminal geometry")
+        msg = "graph viewport is too small for terminal geometry"
+        raise ValueError(msg)
     max_w = max(node.width for node in nodes)
     max_h = max(node.height for node in nodes)
     best = None
@@ -159,7 +179,8 @@ def _raw_to_point_positions(
         if best is None or scale > best[0]:
             best = (scale, candidate)
     if best is None:
-        raise RuntimeError("graph layout did not produce a fitted candidate")
+        msg = "graph layout did not produce a fitted candidate"
+        raise RuntimeError(msg)
     scale, selected = best
     xs = [value[0] for value in selected.values()]
     ys = [value[1] for value in selected.values()]
@@ -176,6 +197,8 @@ def _raw_to_point_positions(
 
 @dataclass(frozen=True, slots=True)
 class NetworkXForceAtlas2Layout:
+    """Lay out measured nodes using a seeded ForceAtlas2 equilibrium."""
+
     name: str = "networkx_forceatlas2"
     max_iter: int = 400
     scaling_ratio: float = 2.8
@@ -184,15 +207,16 @@ class NetworkXForceAtlas2Layout:
     def layout(
         self, graph: ExplanationGraph, spec: GraphLayoutSpec, *, seed: int
     ) -> tuple[GraphPosition, ...]:
+        """Return point-space node positions for a measured graph."""
         try:
             import networkx as nx
         except ImportError as exc:
-            raise RuntimeError(
-                "ForceAtlas2 playback requires the 'dense-arrays[playback]' extra"
-            ) from exc
+            msg = "ForceAtlas2 playback requires the 'dense-arrays[playback]' extra"
+            raise RuntimeError(msg) from exc
         internal = tuple(node for node in graph.nodes if not node.terminal)
         if not internal:
-            raise ValueError("graph layout requires at least one non-terminal node")
+            msg = "graph layout requires at least one non-terminal node"
+            raise ValueError(msg)
         internal_ids = {node.node_id for node in internal}
         layout_graph = nx.Graph()
         layout_graph.add_nodes_from(internal_ids)
@@ -251,9 +275,8 @@ class NetworkXForceAtlas2Layout:
         available_left = spec.viewport.padding_pt
         available_right = spec.viewport.width_pt - spec.viewport.padding_pt
         if occupied_right - occupied_left > available_right - available_left + 1e-6:
-            raise ValueError(
-                "graph viewport cannot contain measured nodes and terminal gaps"
-            )
+            msg = "graph viewport cannot contain measured nodes and terminal gaps"
+            raise ValueError(msg)
         shift_x = (available_left + available_right) / 2.0 - (
             occupied_left + occupied_right
         ) / 2.0
@@ -267,7 +290,8 @@ class NetworkXForceAtlas2Layout:
         )
 
 
-from .isotropic_layout import NetworkXIsotropicLayout
+if TYPE_CHECKING:
+    from ..models import PlaybackPlan
 
 _DEFAULT_LAYOUT_ENGINE = NetworkXIsotropicLayout()
 
@@ -284,11 +308,11 @@ def _default_graph_scene(
     display_context = select_context_edges(
         measured_graph, max_per_source=max_context_edges_per_source
     )
-    replace(measured_graph, context_edges=display_context)
+    display_graph = replace(measured_graph, context_edges=display_context)
     return GraphScene(
         measured_graph,
         display_context,
-        _DEFAULT_LAYOUT_ENGINE.layout(measured_graph, spec, seed=seed),
+        _DEFAULT_LAYOUT_ENGINE.layout(display_graph, spec, seed=seed),
         spec,
         _DEFAULT_LAYOUT_ENGINE.name,
         seed,
@@ -303,6 +327,7 @@ def build_graph_scene(
     layout_spec: GraphLayoutSpec | None = None,
     max_context_edges_per_source: int = 2,
 ) -> GraphScene:
+    """Apply context selection equally to default and injected layout engines."""
     semantic_graph = project_explanation_graph(plan)
     spec = layout_spec or default_layout_spec(semantic_graph)
     if engine is None:

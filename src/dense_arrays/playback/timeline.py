@@ -1,10 +1,16 @@
-"""Shared reveal and complement semantics for playback renderers."""
+"""Shared reveal and complement semantics for playback renderers.
+
+Module Author(s): Eric J. South
+"""
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
-from .models import PlaybackStep
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from .models import PlaybackStep
 
 _IUPAC_COMPLEMENTS = str.maketrans("ATCGRYSWKMBDHVN", "TAGCYRSWMKVHDBN")
 

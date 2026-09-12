@@ -1,4 +1,7 @@
-"""Publication typography shared by dense-array playback projections."""
+"""Publication typography shared by dense-array playback projections.
+
+Module Author(s): Eric J. South
+"""
 
 from __future__ import annotations
 
@@ -16,17 +19,21 @@ class NucleotideTypography:
     target_cap_height_px: float
 
     def __post_init__(self) -> None:
+        """Validate nonempty font names and positive sizing values."""
         if not self.family.strip():
-            raise ValueError("nucleotide font family must not be empty")
+            msg = "nucleotide font family must not be empty"
+            raise ValueError(msg)
         if not self.weight.strip():
-            raise ValueError("nucleotide font weight must not be empty")
+            msg = "nucleotide font weight must not be empty"
+            raise ValueError(msg)
         for field_name in (
             "graph_font_size_pt",
             "duplex_font_size_pt",
             "target_cap_height_px",
         ):
             if float(getattr(self, field_name)) <= 0:
-                raise ValueError(f"{field_name} must be positive")
+                msg = f"{field_name} must be positive"
+                raise ValueError(msg)
 
 
 PUBLICATION_NUCLEOTIDE_TYPOGRAPHY = NucleotideTypography(

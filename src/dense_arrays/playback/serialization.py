@@ -1,16 +1,18 @@
-"""Strict JSON serialization for realized arrays and playback plans."""
+"""Strict JSON serialization for realized arrays and playback plans.
+
+Module Author(s): Eric J. South
+"""
 
 from __future__ import annotations
 
 import json
 from collections.abc import Mapping
 
+from dense_arrays._record_validation import integer, mutable_json
 from dense_arrays.realized import (
     REALIZED_ARRAY_SCHEMA_VERSION,
     DeclaredConstraint,
-    Orientation,
     Placement,
-    PlacementKind,
     RealizedArray,
 )
 
@@ -18,13 +20,20 @@ from .models import (
     PLAYBACK_PLAN_SCHEMA_VERSION,
     ConstraintResult,
     CoordinateSpan,
-    NoticeLevel,
-    OrderingStatus,
-    PlaybackAuthority,
     PlaybackNotice,
     PlaybackPlan,
     PlaybackStep,
 )
+
+
+def _unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            msg = f"duplicate JSON object key: {key!r}"
+            raise ValueError(msg)
+        result[key] = value
+    return result
 
 
 def _object(value: object, *, context: str) -> Mapping[str, object]:
@@ -69,7 +78,7 @@ def realized_array_to_dict(realized: RealizedArray) -> dict[str, object]:
                 "end": item.end,
                 "orientation": item.orientation.value,
                 "label": item.label,
-                "metadata": dict(item.metadata),
+                "metadata": mutable_json(item.metadata),
             }
             for item in realized.placements
         ],
@@ -81,11 +90,11 @@ def realized_array_to_dict(realized: RealizedArray) -> dict[str, object]:
                 "min_distance_bp": item.min_distance_bp,
                 "max_distance_bp": item.max_distance_bp,
                 "label": item.label,
-                "metadata": dict(item.metadata),
+                "metadata": mutable_json(item.metadata),
             }
             for item in realized.constraints
         ],
-        "provenance": dict(realized.provenance),
+        "provenance": mutable_json(realized.provenance),
     }
 
 
@@ -101,6 +110,7 @@ def realized_array_from_dict(value: Mapping[str, object]) -> RealizedArray:
         "constraints",
         "provenance",
     }
+    value = _object(value, context="realized_array")
     _exact_keys(value, expected=expected, context="realized_array")
     if value["schema_version"] != REALIZED_ARRAY_SCHEMA_VERSION:
         msg = f"unsupported realized-array schema: {value['schema_version']!r}"
@@ -121,15 +131,16 @@ def realized_array_from_dict(value: Mapping[str, object]) -> RealizedArray:
         item = _object(raw, context=f"placements[{index}]")
         _exact_keys(item, expected=placement_keys, context=f"placements[{index}]")
         placement = Placement(
-            placement_id=str(item["placement_id"]),
-            feature_id=str(item["feature_id"]),
-            kind=PlacementKind(str(item["kind"])),
-            sequence=str(item["sequence"]),
-            start=int(item["start"]),
-            orientation=Orientation(str(item["orientation"])),
-            label=None if item["label"] is None else str(item["label"]),
+            placement_id=item["placement_id"],
+            feature_id=item["feature_id"],
+            kind=item["kind"],
+            sequence=item["sequence"],
+            start=item["start"],
+            orientation=item["orientation"],
+            label=None if item["label"] is None else item["label"],
             metadata=_object(item["metadata"], context=f"placements[{index}].metadata"),
         )
+        integer(item["end"], field_name=f"placements[{index}].end", minimum=0)
         if item["end"] != placement.end:
             msg = f"placements[{index}].end does not match start + sequence length"
             raise ValueError(msg)
@@ -149,12 +160,12 @@ def realized_array_from_dict(value: Mapping[str, object]) -> RealizedArray:
         _exact_keys(item, expected=constraint_keys, context=f"constraints[{index}]")
         constraints.append(
             DeclaredConstraint(
-                constraint_id=str(item["constraint_id"]),
-                upstream_placement_id=str(item["upstream_placement_id"]),
-                downstream_placement_id=str(item["downstream_placement_id"]),
-                min_distance_bp=int(item["min_distance_bp"]),
-                max_distance_bp=int(item["max_distance_bp"]),
-                label=None if item["label"] is None else str(item["label"]),
+                constraint_id=item["constraint_id"],
+                upstream_placement_id=item["upstream_placement_id"],
+                downstream_placement_id=item["downstream_placement_id"],
+                min_distance_bp=item["min_distance_bp"],
+                max_distance_bp=item["max_distance_bp"],
+                label=None if item["label"] is None else item["label"],
                 metadata=_object(
                     item["metadata"], context=f"constraints[{index}].metadata"
                 ),
@@ -162,10 +173,10 @@ def realized_array_from_dict(value: Mapping[str, object]) -> RealizedArray:
         )
     source_digest = value["source_digest"]
     return RealizedArray(
-        source_id=str(value["source_id"]),
-        source_digest=None if source_digest is None else str(source_digest),
-        coordinate_space=str(value["coordinate_space"]),
-        sequence=str(value["sequence"]),
+        source_id=value["source_id"],
+        source_digest=None if source_digest is None else source_digest,
+        coordinate_space=value["coordinate_space"],
+        sequence=value["sequence"],
         placements=tuple(placements),
         constraints=tuple(constraints),
         provenance=_object(value["provenance"], context="provenance"),
@@ -235,6 +246,7 @@ def playback_plan_from_dict(value: Mapping[str, object]) -> PlaybackPlan:
         "constraint_results",
         "notices",
     }
+    value = _object(value, context="playback_plan")
     _exact_keys(value, expected=expected, context="playback_plan")
     if value["schema_version"] != PLAYBACK_PLAN_SCHEMA_VERSION:
         msg = f"unsupported playback-plan schema: {value['schema_version']!r}"
@@ -257,32 +269,29 @@ def playback_plan_from_dict(value: Mapping[str, object]) -> PlaybackPlan:
     for index, raw in enumerate(_list(value["steps"], context="steps")):
         item = _object(raw, context=f"steps[{index}]")
         _exact_keys(item, expected=step_keys, context=f"steps[{index}]")
-        spans = tuple(
-            CoordinateSpan(
-                start=int(_object(span, context="added_span")["start"]),
-                end=int(_object(span, context="added_span")["end"]),
-            )
-            for span in _list(
-                item["added_spans"], context=f"steps[{index}].added_spans"
-            )
-        )
+        spans = []
+        for span_index, raw_span in enumerate(
+            _list(item["added_spans"], context=f"steps[{index}].added_spans")
+        ):
+            context = f"steps[{index}].added_spans[{span_index}]"
+            span = _object(raw_span, context=context)
+            _exact_keys(span, expected={"start", "end"}, context=context)
+            spans.append(CoordinateSpan(start=span["start"], end=span["end"]))
         predecessor = item["predecessor_placement_id"]
         steps.append(
             PlaybackStep(
-                index=int(item["index"]),
-                placement_id=str(item["placement_id"]),
-                feature_id=str(item["feature_id"]),
-                start=int(item["start"]),
-                end=int(item["end"]),
-                placement_kind=str(item["placement_kind"]),
-                orientation=str(item["orientation"]),
-                placement_sequence=str(item["placement_sequence"]),
+                index=item["index"],
+                placement_id=item["placement_id"],
+                feature_id=item["feature_id"],
+                start=item["start"],
+                end=item["end"],
+                placement_kind=item["placement_kind"],
+                orientation=item["orientation"],
+                placement_sequence=item["placement_sequence"],
                 added_spans=spans,
-                predecessor_placement_id=None
-                if predecessor is None
-                else str(predecessor),
-                relation_kind=str(item["relation_kind"]),
-                label=None if item["label"] is None else str(item["label"]),
+                predecessor_placement_id=None if predecessor is None else predecessor,
+                relation_kind=item["relation_kind"],
+                label=None if item["label"] is None else item["label"],
             )
         )
     results: list[ConstraintResult] = []
@@ -307,14 +316,14 @@ def playback_plan_from_dict(value: Mapping[str, object]) -> PlaybackPlan:
             raise TypeError(msg)
         results.append(
             ConstraintResult(
-                constraint_id=str(item["constraint_id"]),
-                upstream_placement_id=str(item["upstream_placement_id"]),
-                downstream_placement_id=str(item["downstream_placement_id"]),
-                actual_distance_bp=int(item["actual_distance_bp"]),
-                min_distance_bp=int(item["min_distance_bp"]),
-                max_distance_bp=int(item["max_distance_bp"]),
+                constraint_id=item["constraint_id"],
+                upstream_placement_id=item["upstream_placement_id"],
+                downstream_placement_id=item["downstream_placement_id"],
+                actual_distance_bp=item["actual_distance_bp"],
+                min_distance_bp=item["min_distance_bp"],
+                max_distance_bp=item["max_distance_bp"],
                 passed=passed,
-                label=None if item["label"] is None else str(item["label"]),
+                label=None if item["label"] is None else item["label"],
             )
         )
     notices: list[PlaybackNotice] = []
@@ -324,19 +333,19 @@ def playback_plan_from_dict(value: Mapping[str, object]) -> PlaybackPlan:
         _exact_keys(item, expected=notice_keys, context=f"notices[{index}]")
         notices.append(
             PlaybackNotice(
-                code=str(item["code"]),
-                message=str(item["message"]),
-                level=NoticeLevel(str(item["level"])),
+                code=item["code"],
+                message=item["message"],
+                level=item["level"],
             )
         )
     source_digest = value["source_digest"]
     return PlaybackPlan(
-        source_id=str(value["source_id"]),
-        source_digest=None if source_digest is None else str(source_digest),
-        realization_digest=str(value["realization_digest"]),
-        realized_sequence=str(value["realized_sequence"]),
-        authority=PlaybackAuthority(str(value["authority"])),
-        ordering_status=OrderingStatus(str(value["ordering_status"])),
+        source_id=value["source_id"],
+        source_digest=None if source_digest is None else source_digest,
+        realization_digest=value["realization_digest"],
+        realized_sequence=value["realized_sequence"],
+        authority=value["authority"],
+        ordering_status=value["ordering_status"],
         steps=tuple(steps),
         constraint_results=tuple(results),
         notices=tuple(notices),
@@ -347,6 +356,7 @@ def dumps_realized_array(realized: RealizedArray) -> str:
     """Serialize a realized array deterministically."""
     return json.dumps(
         realized_array_to_dict(realized),
+        allow_nan=False,
         ensure_ascii=True,
         separators=(",", ":"),
         sort_keys=True,
@@ -356,7 +366,10 @@ def dumps_realized_array(realized: RealizedArray) -> str:
 def loads_realized_array(payload: str) -> RealizedArray:
     """Deserialize a strict realized-array JSON document."""
     return realized_array_from_dict(
-        _object(json.loads(payload), context="realized_array")
+        _object(
+            json.loads(payload, object_pairs_hook=_unique_object),
+            context="realized_array",
+        )
     )
 
 
@@ -364,6 +377,7 @@ def dumps_playback_plan(plan: PlaybackPlan) -> str:
     """Serialize a playback plan deterministically."""
     return json.dumps(
         playback_plan_to_dict(plan),
+        allow_nan=False,
         ensure_ascii=True,
         separators=(",", ":"),
         sort_keys=True,
@@ -373,5 +387,8 @@ def dumps_playback_plan(plan: PlaybackPlan) -> str:
 def loads_playback_plan(payload: str) -> PlaybackPlan:
     """Deserialize a strict playback-plan JSON document."""
     return playback_plan_from_dict(
-        _object(json.loads(payload), context="playback_plan")
+        _object(
+            json.loads(payload, object_pairs_hook=_unique_object),
+            context="playback_plan",
+        )
     )

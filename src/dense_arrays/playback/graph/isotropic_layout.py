@@ -1,4 +1,7 @@
-"""Deterministic, symmetry-scored layout for publication playback graphs."""
+"""Deterministic, symmetry-scored layout for publication playback graphs.
+
+Module Author(s): Eric J. South
+"""
 
 from __future__ import annotations
 
@@ -18,9 +21,11 @@ from .model import (
     GraphScene,
 )
 
+_GEOMETRY_EPSILON = 1e-9
+
 
 def _rotate(
-    raw: dict[str, tuple[float, float]], angle: float, reflected: bool
+    raw: dict[str, tuple[float, float]], angle: float, *, reflected: bool
 ) -> dict[str, tuple[float, float]]:
     center_x = sum(point[0] for point in raw.values()) / len(raw)
     center_y = sum(point[1] for point in raw.values()) / len(raw)
@@ -62,7 +67,8 @@ def _fit_isotropic(
     center_left, center_right = left + max_half_width, right - max_half_width
     center_bottom, center_top = bottom + max_half_height, top - max_half_height
     if center_left >= center_right or center_bottom >= center_top:
-        raise ValueError("graph viewport is too small for measured node geometry")
+        msg = "graph viewport is too small for measured node geometry"
+        raise ValueError(msg)
 
     raw_left = min(point[0] for point in raw.values())
     raw_right = max(point[0] for point in raw.values())
@@ -115,14 +121,14 @@ def _symmetric_collision_relaxation(
                 moved = True
                 if overlap_x / required_x < overlap_y / required_y:
                     direction = 1.0 if delta_x > 0 else -1.0
-                    if abs(delta_x) < 1e-9:
+                    if abs(delta_x) < _GEOMETRY_EPSILON:
                         direction = 1.0 if first.node_id < second.node_id else -1.0
                     displacement = overlap_x / 2.0 + 0.05
                     first_position[0] -= direction * displacement
                     second_position[0] += direction * displacement
                 else:
                     direction = 1.0 if delta_y > 0 else -1.0
-                    if abs(delta_y) < 1e-9:
+                    if abs(delta_y) < _GEOMETRY_EPSILON:
                         direction = 1.0 if first.node_id < second.node_id else -1.0
                     displacement = overlap_y / 2.0 + 0.05
                     first_position[1] -= direction * displacement
@@ -320,6 +326,8 @@ def _add_terminals(
 
 @dataclass(frozen=True, slots=True)
 class NetworkXIsotropicLayout:
+    """Choose a compact isotropic layout using symmetry and route feasibility."""
+
     name: str = "networkx_isotropic_candidates"
     seed_count: int = 3
     orientation_count: int = 12
@@ -333,9 +341,11 @@ class NetworkXIsotropicLayout:
         *,
         seed: int,
     ) -> tuple[GraphPosition, ...]:
+        """Return measured point positions for all scene nodes."""
         internal = tuple(node for node in graph.nodes if not node.terminal)
         if not internal:
-            raise ValueError("graph layout requires at least one non-terminal node")
+            msg = "graph layout requires at least one non-terminal node"
+            raise ValueError(msg)
         candidates = generate_layout_candidates(
             graph,
             internal,
@@ -349,7 +359,7 @@ class NetworkXIsotropicLayout:
             for orientation in range(self.orientation_count):
                 angle = orientation * math.pi / self.orientation_count
                 for reflected in (False, True):
-                    raw = _rotate(candidate.positions, angle, reflected)
+                    raw = _rotate(candidate.positions, angle, reflected=reflected)
                     positions = _fit_isotropic(raw, internal, spec)
                     if not _symmetric_collision_relaxation(positions, internal, spec):
                         continue
@@ -365,7 +375,8 @@ class NetworkXIsotropicLayout:
                         )
                     )
         if not resolved:
-            raise ValueError("graph layout could not resolve measured node collisions")
+            msg = "graph layout could not resolve measured node collisions"
+            raise ValueError(msg)
         resolved.sort(key=operator.itemgetter(slice(5)))
         positions: dict[str, list[float]] | None = None
         from .presentation import select_context_edges
@@ -401,9 +412,8 @@ class NetworkXIsotropicLayout:
             positions = routed_positions
             break
         if positions is None:
-            raise ValueError(
-                "no isotropic graph-layout candidate supports collision-free routing"
-            )
+            msg = "no isotropic graph-layout candidate supports collision-free routing"
+            raise ValueError(msg)
         return tuple(
             GraphPosition(
                 node.node_id, positions[node.node_id][0], positions[node.node_id][1]

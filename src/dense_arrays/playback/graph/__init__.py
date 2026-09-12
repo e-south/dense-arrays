@@ -1,4 +1,7 @@
-"""Measured explanation-graph geometry for dense-array playback."""
+"""Measured explanation-graph geometry for dense-array playback.
+
+Module Author(s): Eric J. South
+"""
 
 from ..positions import journey_path_positions, radial_path_positions
 from .geometry import (

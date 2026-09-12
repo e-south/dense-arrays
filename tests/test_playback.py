@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import re
 from typing import TYPE_CHECKING, ClassVar, Self
 
 import matplotlib.animation as mpl_animation
@@ -16,15 +15,18 @@ from dense_arrays.playback import (
     PlaybackAuthority,
     dumps_playback_plan,
     dumps_realized_array,
+    export,
+    gif_writer,
     loads_playback_plan,
     loads_realized_array,
     matplotlib_renderer,
     reconstruct_playback,
-    render_playback_html,
 )
+from dense_arrays.playback.duplex_drawing import draw_duplex
+from dense_arrays.playback.graph_drawing import draw_graph
 from dense_arrays.playback.graph_layout import journey_path_positions
-from dense_arrays.playback.html import PlaybackDocument
 from dense_arrays.playback.models import ConstraintResult
+from dense_arrays.playback.presentation import PlaybackDocument
 from dense_arrays.playback.theme import PlaybackPresentation
 from dense_arrays.playback.timeline import complement_sequence, revealed_indices
 from dense_arrays.realized import (
@@ -153,14 +155,12 @@ def test_direct_constraint_result_rejects_non_boolean_passed() -> None:
 
 
 def test_reconstruction_rejects_sequence_inconsistency() -> None:
-    realized = RealizedArray(
-        source_id="fixture#invalid",
-        sequence="AAAAAA",
-        placements=(_placement("p1", "AAAC", 0),),
-    )
-
     with pytest.raises(ValueError, match="sequence-inconsistent"):
-        reconstruct_playback(realized)
+        RealizedArray(
+            source_id="fixture#invalid",
+            sequence="AAAAAA",
+            placements=(_placement("p1", "AAAC", 0),),
+        )
 
 
 def test_reconstruction_marks_equal_starts_ambiguous() -> None:
@@ -196,24 +196,6 @@ def test_reconstruction_marks_internal_gaps_layout_only() -> None:
     assert any(notice.code == "layout_only" for notice in plan.notices)
 
 
-def test_html_is_self_contained_and_preserves_authority() -> None:
-    plan = reconstruct_playback(_realized_array())
-
-    artifact = render_playback_html(
-        plan,
-        title="Packing explanation",
-        label_overrides={"upstream": "fixed upstream element"},
-    )
-
-    assert "Packing explanation" in artifact
-    assert "dense_arrays.playback_plan.v1" in artifact
-    assert "placement_reconstructed" in artifact
-    assert '<script id="playback-data" type="application/json">' in artifact
-    assert "https://" not in artifact
-    assert "revealed_indices" in artifact
-    assert "timeline_frames" in artifact
-
-
 def test_full_graph_draws_declared_constraint_relation() -> None:
     document = PlaybackDocument(
         plan=reconstruct_playback(_realized_array()),
@@ -224,9 +206,7 @@ def test_full_graph_draws_declared_constraint_relation() -> None:
     )
     figure, axis = plt.subplots()
 
-    matplotlib_renderer._draw_graph(  # noqa: SLF001
-        axis, document, transition_index=0, progress=0.0
-    )
+    draw_graph(axis, document, transition_index=0, progress=0.0)
 
     assert any(
         isinstance(patch, FancyArrowPatch) and patch.get_linewidth() == 1.7
@@ -265,42 +245,18 @@ def test_overlap_reveal_mask_preserves_complete_placement_bars() -> None:
     document = matplotlib_renderer.PlaybackDocument(plan=plan, title="fixture")
     figure, axis = plt.subplots()
 
-    matplotlib_renderer._draw_fallback_duplex(axis, document, 1)  # noqa: SLF001
+    draw_duplex(axis, document, 1)
     bar_widths = [patch.get_width() for patch in axis.patches]
     bar_labels = {text.get_text() for text in axis.texts}
-    artifact = render_playback_html(plan, title="Overlap fixture")
 
     assert revealed_indices(plan.steps, 1) == (0, 1, 2, 3)
     assert bar_widths == [3, 3]
     assert {"AAA", "AAT"} <= bar_labels
-    assert "step.added_spans.map" not in artifact
-    assert "esc(step.placement_sequence)" in artifact
     plt.close(figure)
 
 
 def test_iupac_complement_is_complete() -> None:
     assert complement_sequence("ATCGRYSWKMBDHVN") == "TAGCYRSWMKVHDBN"
-
-
-def test_html_payload_uses_python_owned_iupac_complement() -> None:
-    alphabet = "ATCGRYSWKMBDHVN"
-    plan = reconstruct_playback(
-        RealizedArray(
-            source_id="fixture#iupac",
-            sequence=alphabet,
-            placements=(_placement("iupac", alphabet, 0),),
-        )
-    )
-
-    artifact = render_playback_html(plan, title="IUPAC fixture")
-    match = re.search(
-        r'<script id="playback-data" type="application/json">(.*?)</script>',
-        artifact,
-    )
-
-    assert match is not None
-    payload = json.loads(match.group(1))
-    assert payload[0]["complement_sequence"] == "TAGCYRSWMKVHDBN"
 
 
 class _FrameCountingWriter:
@@ -309,6 +265,10 @@ class _FrameCountingWriter:
     def __init__(self, **_kwargs: object) -> None:
         self.frame_count = 0
         self.instances.append(self)
+
+    @classmethod
+    def isAvailable(cls) -> bool:  # noqa: N802 - Matplotlib writer interface
+        return True
 
     def saving(self, *_args: object, **_kwargs: object) -> _FrameCountingWriter:
         return self
@@ -326,10 +286,10 @@ class _FrameCountingWriter:
 @pytest.mark.parametrize(
     "renderer_name,writer_name,transition_seconds,expected_frames",
     [
-        ("render_collection_gif", "PillowWriter", 0.0, 20),
-        ("render_collection_gif", "PillowWriter", 1.0, 24),
-        ("render_collection_mp4", "FFMpegWriter", 0.0, 20),
-        ("render_collection_mp4", "FFMpegWriter", 1.0, 24),
+        ("render_collection_gif", "EvidencePillowWriter", 0.0, 16),
+        ("render_collection_gif", "EvidencePillowWriter", 1.0, 20),
+        ("render_collection_mp4", "FFMpegWriter", 0.0, 16),
+        ("render_collection_mp4", "FFMpegWriter", 1.0, 20),
     ],
 )
 def test_collection_renderers_honor_scene_transition_seconds(  # noqa: PLR0913, PLR0917
@@ -341,13 +301,14 @@ def test_collection_renderers_honor_scene_transition_seconds(  # noqa: PLR0913, 
     expected_frames: int,
 ) -> None:
     _FrameCountingWriter.instances.clear()
-    monkeypatch.setattr(mpl_animation, writer_name, _FrameCountingWriter)
-    monkeypatch.setattr(
-        matplotlib_renderer, "_draw_document", lambda *_args, **_kwargs: None
+    writer_module = (
+        gif_writer if renderer_name == "render_collection_gif" else mpl_animation
     )
+    monkeypatch.setattr(writer_module, writer_name, _FrameCountingWriter)
+    monkeypatch.setattr(export, "draw_document", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(
-        matplotlib_renderer,
-        "_transition_frame_counts",
+        export,
+        "transition_frame_counts",
         lambda *_args, **_kwargs: (3, 5),
     )
     plan = reconstruct_playback(_realized_array())

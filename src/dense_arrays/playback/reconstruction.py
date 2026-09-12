@@ -1,10 +1,14 @@
-"""Compile persisted placements into a truthful semantic playback plan."""
+"""Compile persisted placements into a truthful semantic playback plan.
+
+Module Author(s): Eric J. South
+"""
 
 from __future__ import annotations
 
 import hashlib
 import json
 
+from dense_arrays._record_validation import records
 from dense_arrays.realized import RealizedArray
 
 from .models import (
@@ -17,32 +21,7 @@ from .models import (
     PlaybackPlan,
     PlaybackStep,
 )
-
-
-def _validate_realization(realized: RealizedArray) -> None:
-    placement_ids = {placement.placement_id for placement in realized.placements}
-    for placement in realized.placements:
-        if placement.end > len(realized.sequence):
-            msg = (
-                f"placement {placement.placement_id!r} ends at {placement.end}, "
-                f"beyond sequence length {len(realized.sequence)}"
-            )
-            raise ValueError(msg)
-        observed = realized.sequence[placement.start : placement.end]
-        if observed != placement.sequence:
-            msg = (
-                f"placement {placement.placement_id!r} is sequence-inconsistent: "
-                f"expected {placement.sequence!r}, observed {observed!r}"
-            )
-            raise ValueError(msg)
-    for constraint in realized.constraints:
-        missing = {
-            constraint.upstream_placement_id,
-            constraint.downstream_placement_id,
-        } - placement_ids
-        if missing:
-            msg = f"constraint {constraint.constraint_id!r} references unknown placements: {sorted(missing)}"
-            raise ValueError(msg)
+from .validation import coordinate_order, inferred_ordering, reveal_intervals
 
 
 def _realization_digest(realized: RealizedArray) -> str:
@@ -78,55 +57,37 @@ def _realization_digest(realized: RealizedArray) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
-def _ordering_status(realized: RealizedArray) -> OrderingStatus:
-    ordered = sorted(
-        realized.placements,
-        key=lambda item: (item.start, len(item.sequence), item.placement_id),
-    )
-    cursor = ordered[0].end
-    ambiguous = False
-    layout_gap = False
-    previous_start = ordered[0].start
-    for placement in ordered[1:]:
-        if placement.start > cursor:
-            layout_gap = True
-        if placement.start == previous_start or placement.end <= cursor:
-            ambiguous = True
-        cursor = max(cursor, placement.end)
-        previous_start = placement.start
-    if layout_gap:
-        return OrderingStatus.LAYOUT_ONLY
-    if ambiguous:
-        return OrderingStatus.AMBIGUOUS
-    return OrderingStatus.UNIQUE
+def reconstruct_playback(
+    realized: RealizedArray, *, notices: tuple[PlaybackNotice, ...] = ()
+) -> PlaybackPlan:
+    """Build deterministic placement playback without claiming solver path authority.
 
+    Parameters
+    ----------
+    realized
+        Validated persisted sequence, placements, and declared constraints.
+    notices
+        Explicit caller-owned evidence qualifications to preserve in the plan.
+        Metadata names do not imply recovery methods or other process claims.
 
-def _added_spans(
-    *, start: int, end: int, revealed: list[bool]
-) -> tuple[CoordinateSpan, ...]:
-    spans: list[CoordinateSpan] = []
-    run_start: int | None = None
-    for coordinate in range(start, end):
-        if not revealed[coordinate] and run_start is None:
-            run_start = coordinate
-        if revealed[coordinate] and run_start is not None:
-            spans.append(CoordinateSpan(start=run_start, end=coordinate))
-            run_start = None
-    if run_start is not None:
-        spans.append(CoordinateSpan(start=run_start, end=end))
-    for coordinate in range(start, end):
-        revealed[coordinate] = True
-    return tuple(spans)
+    Returns
+    -------
+    PlaybackPlan
+        A validated placement-reconstructed plan with evaluated constraints.
 
-
-def reconstruct_playback(realized: RealizedArray) -> PlaybackPlan:
-    """Build deterministic placement playback without claiming solver path authority."""
-    _validate_realization(realized)
-    ordered = sorted(
-        realized.placements,
-        key=lambda item: (item.start, len(item.sequence), item.placement_id),
-    )
-    ordering_status = _ordering_status(realized)
+    Raises
+    ------
+    TypeError
+        If the input or notice records have invalid types.
+    ValueError
+        If caller notices contradict reserved v1 evidence codes.
+    """
+    if not isinstance(realized, RealizedArray):
+        msg = "realized must be a RealizedArray record"
+        raise TypeError(msg)
+    caller_notices = records(notices, PlaybackNotice, field_name="notices")
+    ordered = coordinate_order(realized.placements)
+    ordering_status = OrderingStatus(inferred_ordering(realized.placements))
     revealed = [False] * len(realized.sequence)
     steps: list[PlaybackStep] = []
     predecessor_id: str | None = None
@@ -141,10 +102,13 @@ def reconstruct_playback(realized: RealizedArray) -> PlaybackPlan:
                 placement_kind=placement.kind.value,
                 orientation=placement.orientation.value,
                 placement_sequence=placement.sequence,
-                added_spans=_added_spans(
-                    start=placement.start,
-                    end=placement.end,
-                    revealed=revealed,
+                added_spans=tuple(
+                    CoordinateSpan(start=start, end=end)
+                    for start, end in reveal_intervals(
+                        start=placement.start,
+                        end=placement.end,
+                        revealed=revealed,
+                    )
                 ),
                 predecessor_placement_id=predecessor_id,
                 label=placement.label,
@@ -175,7 +139,7 @@ def reconstruct_playback(realized: RealizedArray) -> PlaybackPlan:
             )
         )
 
-    notices = [
+    plan_notices = [
         PlaybackNotice(
             code="placement_reconstructed",
             message=(
@@ -184,24 +148,8 @@ def reconstruct_playback(realized: RealizedArray) -> PlaybackPlan:
             ),
         )
     ]
-    recovered_coordinates = [
-        placement
-        for placement in realized.placements
-        if placement.metadata.get("coordinate_source") == "offset_raw"
-    ]
-    if recovered_coordinates:
-        notices.append(
-            PlaybackNotice(
-                code="coordinate_recovered",
-                message=(
-                    f"{len(recovered_coordinates)} placement coordinate(s) were recovered "
-                    "from offset_raw by exact realized-sequence agreement."
-                ),
-                level=NoticeLevel.WARNING,
-            )
-        )
     if ordering_status is OrderingStatus.AMBIGUOUS:
-        notices.append(
+        plan_notices.append(
             PlaybackNotice(
                 code="ambiguous_order",
                 message=(
@@ -212,7 +160,7 @@ def reconstruct_playback(realized: RealizedArray) -> PlaybackPlan:
             )
         )
     elif ordering_status is OrderingStatus.LAYOUT_ONLY:
-        notices.append(
+        plan_notices.append(
             PlaybackNotice(
                 code="layout_only",
                 message=(
@@ -224,10 +172,13 @@ def reconstruct_playback(realized: RealizedArray) -> PlaybackPlan:
         )
     unrevealed_count = revealed.count(False)
     if unrevealed_count:
-        notices.append(
+        plan_notices.append(
             PlaybackNotice(
                 code="unannotated_sequence",
-                message=f"{unrevealed_count} realized bases are not covered by persisted placements.",
+                message=(
+                    f"{unrevealed_count} realized bases are not covered "
+                    "by persisted placements."
+                ),
             )
         )
 
@@ -240,5 +191,5 @@ def reconstruct_playback(realized: RealizedArray) -> PlaybackPlan:
         ordering_status=ordering_status,
         steps=tuple(steps),
         constraint_results=tuple(constraint_results),
-        notices=tuple(notices),
+        notices=(*plan_notices, *caller_notices),
     )

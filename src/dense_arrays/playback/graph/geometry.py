@@ -1,7 +1,11 @@
-"""Matplotlib-faithful point-space node measurement."""
+"""Matplotlib-faithful point-space node measurement.
 
-from matplotlib.font_manager import FontProperties
-from matplotlib.textpath import TextPath
+Module Author(s): Eric J. South
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from ..typography import PUBLICATION_NUCLEOTIDE_TYPOGRAPHY
 from .model import (
@@ -12,6 +16,9 @@ from .model import (
     NodeGeometry,
 )
 
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+
 KMER_FONT_FAMILY = PUBLICATION_NUCLEOTIDE_TYPOGRAPHY.family
 KMER_FONT_SIZE_PT = PUBLICATION_NUCLEOTIDE_TYPOGRAPHY.graph_font_size_pt
 KMER_FONT_WEIGHT = PUBLICATION_NUCLEOTIDE_TYPOGRAPHY.weight
@@ -20,6 +27,9 @@ KMER_PADDING_Y_PT = 2.8
 
 
 def _text_path_extent(text: str) -> tuple[float, float]:
+    from matplotlib.font_manager import FontProperties
+    from matplotlib.textpath import TextPath
+
     prop = FontProperties(
         family=KMER_FONT_FAMILY, size=KMER_FONT_SIZE_PT, weight=KMER_FONT_WEIGHT
     )
@@ -28,16 +38,20 @@ def _text_path_extent(text: str) -> tuple[float, float]:
 
 
 def node_box_width(sequence: str) -> float:
+    """Measure nucleotide text width with horizontal node padding."""
     width, _height = _text_path_extent(sequence)
     return width + (2.0 * KMER_PADDING_X_PT)
 
 
 def matplotlib_layout_spec(
-    axis,
+    axis: Axes,
     graph: ExplanationGraph,
     *,
     kmer_font_size_pt: float = KMER_FONT_SIZE_PT,
 ) -> GraphLayoutSpec:
+    """Measure nodes and viewport using the destination axis renderer."""
+    from matplotlib.font_manager import FontProperties
+
     renderer = axis.figure.canvas.get_renderer()
     bbox = axis.get_window_extent(renderer=renderer)
     dpi = float(axis.figure.dpi)
@@ -69,6 +83,7 @@ def matplotlib_layout_spec(
 
 
 def default_layout_spec(graph: ExplanationGraph) -> GraphLayoutSpec:
+    """Measure node text in the default point-space viewport."""
     geometries: list[NodeGeometry] = []
     for node in graph.nodes:
         if node.terminal:
