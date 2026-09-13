@@ -21,6 +21,8 @@ if TYPE_CHECKING:
 
 _ACTIVE = "#167a70"
 _INK = "#4b5563"
+_TRACK_PITCH = 1.1
+_FEATURE_HEIGHT = 0.56
 
 
 def _placement_tracks(steps: Sequence[PlaybackStep]) -> tuple[float, ...]:
@@ -37,7 +39,9 @@ def _placement_tracks(steps: Sequence[PlaybackStep]) -> tuple[float, ...]:
             ends.append(step.end)
         else:
             ends[lane] = step.end
-        positions.append(-1.30 - lane * 0.48 if reverse else 1.05 + lane * 0.48)
+        positions.append(
+            -1.45 - lane * _TRACK_PITCH if reverse else 1.05 + lane * _TRACK_PITCH
+        )
     return tuple(positions)
 
 
@@ -51,9 +55,10 @@ def draw_duplex(
     sequence = plan.realized_sequence
     complement = complement_sequence(sequence)
     length = len(sequence)
+    font_size = max(5.2, min(10.5, 830 / max(1, length)))
     axis.set_xlim(-4, length + 3)
     tracks = _placement_tracks(plan.steps)
-    axis.set_ylim(min(-2.2, min(tracks) - 0.2), max(2.2, max(tracks) + 0.86))
+    axis.set_ylim(min(-2.2, min(tracks) - 0.65), max(2.2, max(tracks) + 1.15))
     axis.axis("off")
     for index, step in enumerate(plan.steps):
         y = tracks[index]
@@ -63,7 +68,7 @@ def draw_duplex(
             FancyBboxPatch(
                 (step.start, y),
                 step.end - step.start,
-                0.38,
+                _FEATURE_HEIGHT,
                 boxstyle="round,pad=0.01,rounding_size=0.08",
                 facecolor=color,
                 edgecolor=blend_color(RESTING_COLOR, _ACTIVE, emphasis)
@@ -72,26 +77,33 @@ def draw_duplex(
                 linewidth=1.2,
             )
         )
-        axis.text(
-            (step.start + step.end) / 2,
-            y + 0.19,
-            step.placement_sequence,
-            ha="center",
-            va="center",
-            color=blend_color(RESTING_TEXT_COLOR, "#FFFFFF", emphasis),
-            fontsize=5.8,
-            family=KMER_FONT_FAMILY,
+        feature_sequence = (
+            complement_sequence(step.placement_sequence)
+            if step.orientation == "rev"
+            else step.placement_sequence
         )
-        axis.text(
-            (step.start + step.end) / 2,
-            y + 0.48,
-            document.step_label(index),
-            ha="center",
-            va="bottom",
-            color=blend_color(RESTING_TEXT_COLOR, _INK, emphasis),
-            fontsize=7,
-        )
-    font_size = max(5.2, min(10.5, 830 / max(1, length)))
+        for offset, base in enumerate(feature_sequence):
+            axis.text(
+                step.start + offset + 0.5,
+                y + _FEATURE_HEIGHT / 2,
+                base,
+                ha="center",
+                va="center",
+                color=blend_color(RESTING_TEXT_COLOR, "#FFFFFF", emphasis),
+                fontsize=font_size,
+                family=KMER_FONT_FAMILY,
+            )
+        if step.placement_id in document.label_overrides:
+            reverse = step.orientation == "rev"
+            axis.text(
+                (step.start + step.end) / 2,
+                y - 0.1 if reverse else y + _FEATURE_HEIGHT + 0.1,
+                document.label_overrides[step.placement_id],
+                ha="center",
+                va="top" if reverse else "bottom",
+                color=blend_color(RESTING_TEXT_COLOR, _INK, emphasis),
+                fontsize=7,
+            )
     coordinate_steps = {
         coordinate: index
         for index, step in enumerate(plan.steps)

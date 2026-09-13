@@ -40,6 +40,13 @@ Labels and colors are keyed by **placement ID**. Unknown IDs are rejected;
 colors use opaque `#RRGGBB` notation. Mappings are immutable snapshots, so
 later changes to caller dictionaries cannot change the document.
 
+The native duplex shows placement captions only for explicit `label_overrides`
+entries. Omitting the map leaves motif tracks free of identifier captions.
+Every motif nucleotide uses the duplex's font size and per-base coordinate
+grid. Reverse tracks display the coordinate-aligned complement of their stored
+sequence to match the lower strand, without reversing coordinate order. The
+stored placement sequence and graph labels remain unchanged.
+
 ## Scene settings
 
 The scene preserves resolved labels and a compact evidence summary. Authority,

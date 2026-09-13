@@ -79,7 +79,17 @@ def test_native_rest_preserves_full_scene_geometry_and_neutral_artists() -> None
             for text in axis.texts
         ]
         graph, duplex, _legend = figure.axes
-        assert len([text for text in duplex.texts if text.get_text() in "ACGT"]) == 74
+        assert (
+            len(
+                [
+                    text
+                    for text in duplex.texts
+                    if text.get_position()[1] in (-0.30, 0.30)
+                    and text.get_text() in "ACGT"
+                ]
+            )
+            == 74
+        )
         boxes = [
             patch
             for axis in (graph, duplex)
@@ -163,6 +173,127 @@ def test_long_native_placement_tracks_do_not_overlap_or_leave_axes() -> None:
         plt.close(figure)
 
 
+@pytest.mark.parametrize("orientation", [Orientation.FORWARD, Orientation.REVERSE])
+@pytest.mark.parametrize("with_legend", [False, True])
+def test_native_captions_clear_bars_and_remain_in_fixed_scene_bounds(
+    orientation: Orientation, with_legend: bool
+) -> None:
+    document = longer_document()
+    document = replace(
+        document,
+        plan=replace(
+            document.plan,
+            steps=tuple(
+                replace(step, orientation=orientation) for step in document.plan.steps
+            ),
+        ),
+        label_overrides={str(index): f"Motif {index + 1}" for index in range(4)},
+        presentation=replace(
+            document.presentation,
+            legend_entries=document.presentation.legend_entries if with_legend else (),
+        ),
+    )
+    figure = plt.figure(figsize=(16, 2.4))
+    states = []
+    try:
+        for transition, progress in ((0, 0), (4, 1)):
+            draw_document(
+                document, transition_index=transition, progress=progress, figure=figure
+            )
+            figure.canvas.draw()
+            axis = figure.axes[1]
+            renderer = figure.canvas.get_renderer()
+            labels = [
+                text.get_window_extent(renderer)
+                for text in axis.texts
+                if text.get_text().startswith("Motif ")
+            ]
+            bars = [patch.get_window_extent(renderer) for patch in axis.patches]
+            bases = [
+                text.get_window_extent(renderer)
+                for text in axis.texts
+                if text.get_text() in "ACGT"
+            ]
+            assert len(labels) == 4
+            assert not any(label.overlaps(bar) for label in labels for bar in bars)
+            assert not any(label.overlaps(base) for label in labels for base in bases)
+            bounds = axis.get_window_extent(renderer)
+            assert all(
+                bounds.contains(label.x0, label.y0)
+                and bounds.contains(label.x1, label.y1)
+                for label in labels
+            )
+            states.append([tuple(label.bounds) for label in labels])
+        assert states[0] == states[1]
+    finally:
+        plt.close(figure)
+
+
+@pytest.mark.parametrize("orientation", [Orientation.FORWARD, Orientation.REVERSE])
+@pytest.mark.parametrize("with_legend", [False, True])
+def test_native_motif_glyphs_share_duplex_grid_font_and_fit_their_bars(
+    orientation: Orientation, with_legend: bool
+) -> None:
+    document = longer_document()
+    document = replace(
+        document,
+        plan=replace(
+            document.plan,
+            steps=tuple(
+                replace(step, orientation=orientation) for step in document.plan.steps
+            ),
+        ),
+        presentation=replace(
+            document.presentation,
+            legend_entries=document.presentation.legend_entries if with_legend else (),
+        ),
+    )
+    figure = plt.figure(figsize=(16, 2.4))
+    try:
+        for transition, progress in ((0, 0), (4, 1)):
+            draw_document(
+                document, transition_index=transition, progress=progress, figure=figure
+            )
+            figure.canvas.draw()
+            renderer = figure.canvas.get_renderer()
+            axis = figure.axes[1]
+            strand_y = -0.30 if orientation == Orientation.REVERSE else 0.30
+            strand = {
+                text.get_position()[0]: text
+                for text in axis.texts
+                if text.get_position()[1] == strand_y and text.get_text() in "ACGT"
+            }
+            for step, patch in zip(document.plan.steps, axis.patches, strict=True):
+                bar = patch.get_window_extent(renderer)
+                glyphs = [
+                    text
+                    for text in axis.texts
+                    if text.get_text() in "ACGT"
+                    and abs(
+                        text.get_position()[1]
+                        - (patch.get_y() + patch.get_height() / 2)
+                    )
+                    < 1e-9
+                    and step.start <= text.get_position()[0] < step.end
+                ]
+                assert len(glyphs) == 16
+                for offset, text in enumerate(glyphs):
+                    reference = strand[step.start + offset + 0.5]
+                    assert text.get_text() == reference.get_text()
+                    assert text.get_position()[0] == reference.get_position()[0]
+                    assert text.get_fontsize() == reference.get_fontsize()
+                    assert text.get_fontfamily() == reference.get_fontfamily()
+                    glyph = text.get_window_extent(renderer)
+                    expected = reference.get_window_extent(renderer)
+                    assert glyph.x0 == pytest.approx(expected.x0)
+                    assert glyph.x1 == pytest.approx(expected.x1)
+                    assert bar.contains(glyph.x0, glyph.y0)
+                    assert bar.contains(glyph.x1, glyph.y1)
+            assert not any(text.get_text().isdigit() for text in axis.texts)
+    finally:
+        plt.close(figure)
+
+
 def test_progress_colors_only_completed_and_current_graph_placements() -> None:
     document = longer_document()
     figure = plt.figure(figsize=(16, 2.4))
@@ -196,7 +327,11 @@ def test_uncovered_bases_remain_visible_gray_without_fabricated_traversal() -> N
     try:
         draw_document(document, transition_index=2, progress=1, figure=figure)
         duplex = figure.axes[1]
-        bases = [text for text in duplex.texts if text.get_text() in "ACGT"]
+        bases = [
+            text
+            for text in duplex.texts
+            if text.get_text() in "ACGT" and text.get_position()[1] in (-0.30, 0.30)
+        ]
         assert len(bases) == 74
         assert all(
             to_rgb(text.get_color()) == to_rgb("#D2D2D2")
