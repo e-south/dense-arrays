@@ -67,7 +67,6 @@ realized = RealizedArray(
             sequence=motif,
             start=start,
             orientation=Orientation.FORWARD,
-            label=motif,
         )
         for identifier, motif, start in (
             ("motif-1", "ACGTTGCAAGTCCTGA", 0),

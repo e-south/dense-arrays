@@ -69,6 +69,24 @@ and check the built site at narrow and wide widths. Review plain Markdown as
 well as the site. Keep the banner's accessible description; use text labels
 alongside color. Complete the [development gate](../development.md).
 
+## Maintain the teaching media
+
+The playback guide maintains one MP4, its opening PNG, and its completed
+poster in `docs/assets/`. Regenerate them from the guide's Python example
+using `render_collection_mp4((document,), output / "playback.mp4")` with the
+default timing. Use the guide's `poster.png` for the completed still, and
+decode the first video frame for the opening image:
+
+```bash
+ffmpeg -i playback.mp4 -frames:v 1 playback-opening.png
+```
+
+Review the encoded opening, middle, and final frames before replacing the
+three assets. Keep transient producer runs outside tracked source. The
+editable process figure is `docs/assets/motif-packing-process.svg`; its
+graph uses start-to-start shifts and a final-motif cost, while playback
+labels count newly covered bases.
+
 The reader/task separation follows [Diátaxis](https://diataxis.fr/start-here/).
 The focus on reader benefit is informed by McEnerney's
 [writing workshop on value](https://calendar.fsu.edu/event/invited-speaker-scholarly-writing-meeting-the-demand-for-value-graduate-student-workshop-gsrc).

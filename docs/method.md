@@ -33,7 +33,9 @@ The process figure follows the same library through four stages: specify the
 motifs and length limit, compute directional overlap costs, select a path,
 and read the packed sequence.
 
-![Four-stage motif packing: a library of four 16-base motifs, directional overlap costs, a path within 37 bases, and the resulting DNA array](assets/motif-packing-process.svg)
+[![Four-stage motif packing: a library of four 16-base motifs, directional overlap costs, a path within 37 bases, and the resulting DNA array](assets/motif-packing-process.svg)](assets/motif-packing-process.svg)
+
+[Open the full-size figure](assets/motif-packing-process.svg) to read the sequence labels.
 
 *Motif packing from inputs to sequence.* Process figure adapted by Eric J.
 South for this worked example. The [paper](https://doi.org/10.1371/journal.pcbi.1012276)
@@ -45,6 +47,8 @@ reports Gurobi experiments packing 20–100 binding sites into 50–300 bp in
 Dense Arrays formulates the nucleotide String Packing Problem as an
 Orienteering Problem. Motifs become graph nodes, and directed transitions
 account for the sequence span needed to place one motif after another.
+Each edge records the shift between motif starts; the final edge accounts
+for the last motif's length.
 Reversing their order can change the overlap and therefore the cost. An
 integer optimization solver selects a path within the length limit.
 Double-strand optimization includes reverse-complement orientations as well.
