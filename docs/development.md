@@ -12,9 +12,9 @@ serialized placements, reconstruction, or rendering.
 
 Choose a focused test from the [task-to-file map](architecture/README.md#find-the-files-for-a-change).
 For documentation, use the [writing and routing guide](development/documentation.md).
-The [audit](development/audit.md) records the original findings; the
-[improvement plan](development/improvement-plan.md) tracks implementation and
-verification status.
+The [baseline audit](development/audit.md) and
+[completed hardening record](development/improvement-plan.md) preserve the
+September 2026 findings, repairs, and verification.
 
 ## Local verification
 

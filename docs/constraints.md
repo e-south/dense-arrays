@@ -5,18 +5,21 @@ description: Set positional requirements, regulator coverage, and side preferenc
 
 # Constrain an array
 
-Configure constraints on a fresh `Optimizer`, then solve. Each example below
-is independent and can be run with `uv run python`. Once a model has been
-built, adding constraints raises `RuntimeError`; create a new optimizer to
-try another specification. Use `optimal()`, `solutions()`, or
-`solutions_diverse()` for constrained problems. `approximate()` rejects
-configured constraints and side biases because it cannot honor them.
+Require motifs at particular positions, require coverage of motif groups, or
+favor one side of the array. Positional and group constraints are hard
+requirements; side biases are preferences.
+
+Run each independent example with `uv run python` from the
+[installed checkout](quickstart.md#install-from-source). Configure a fresh
+`Optimizer` before solving: adding constraints after the model is built raises
+`RuntimeError`. Use `optimal()`, `solutions()`, or `solutions_diverse()`;
+`approximate()` rejects configured constraints and side biases.
 
 ## Position two motifs
 
-`add_promoter_constraints()` requires two library entries in a declared
-upstream/downstream relationship. Despite the method name, the positional
-contract can be illustrated with synthetic motifs:
+Use `add_promoter_constraints()` to require one motif upstream of another.
+This example places `ATGC` at start 0, 1, or 2, followed by `CCC` with zero to
+three intervening bases:
 
 ```python
 from dense_arrays import Optimizer
@@ -53,10 +56,9 @@ arrangement functions as a promoter.
 
 ## Require regulator coverage
 
-Motif groups are represented by regulator labels in this API. Map every motif
-entry to a label. Use `required` for named labels,
-`min_required_regulators` for a minimum number of different labels, and
-`min_count_by_regulator` for minimum counts of motif entries assigned to a label.
+Map each motif entry to a regulator label to specify which groups must appear.
+This example requires both entries labeled `R1` and at least one entry from
+another group:
 
 ```python
 from dense_arrays import Optimizer
@@ -74,13 +76,15 @@ assert best.offsets_fwd[0] is not None and best.offsets_fwd[1] is not None
 assert best.nb_motifs == 3
 ```
 
-Here both motif entries labeled `R1` must appear, together with at least one
-other regulator label. These are hard coverage requirements over the supplied
-mapping. They do not measure binding or simultaneous occupancy.
-Declare the regulator requirements together in one call.
+Use `required` for named labels, `min_required_regulators` for a minimum number
+of different labels, and `min_count_by_regulator` for minimum counts of entries
+assigned to a label. Declare the regulator requirements together in one call.
 Supply positive integers for minimum counts and nonempty regulator labels
 without surrounding whitespace. Fractional and boolean counts are rejected;
 the library must contain enough entries to meet every declared minimum.
+
+These requirements count entries in the supplied mapping. They do not measure
+binding or simultaneous occupancy.
 
 ## Prefer a side
 

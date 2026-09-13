@@ -18,7 +18,7 @@ Choose the route for the task; do not load every reference:
 | Change implementation or tests | `docs/architecture/README.md` task-to-file map |
 | Change placement JSON or interpretation | `docs/architecture/solution-playback.md` → serialization row in the code map |
 | Revise documentation | `docs/development/documentation.md` |
-| Plan hardening work | `docs/development/improvement-plan.md` and its linked findings |
+| Review completed hardening | `docs/development/improvement-plan.md` and its linked baseline audit |
 
 `pyproject.toml` owns supported Python and extras. Nested source and test
 directories inherit this router unless a closer instruction file applies.

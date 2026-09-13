@@ -77,5 +77,6 @@ that can change without editing unrelated solver or renderer code.
 - [Playback guide](../playback.md): runnable entrypoints.
 - [API reference](../api.md): inputs, results, and failures.
 - [Caller migrations](../migration.md): deliberate input and integration changes.
-- [Development](../development.md): verification; the [audit](../development/audit.md)
-  and [improvement plan](../development/improvement-plan.md) retain implementation history and status.
+- [Development](../development.md): verification; the
+  [baseline audit](../development/audit.md) and
+  [hardening record](../development/improvement-plan.md) preserve completed work.

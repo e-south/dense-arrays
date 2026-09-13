@@ -74,7 +74,7 @@ weights, and nonfinite values are rejected before model mutation.
 
 ## Signatures
 
-The main calls are readable here as well as in the generated reference:
+Create an optimizer, then choose a solving method:
 
 ```text
 Optimizer(library, sequence_length, strands="double")

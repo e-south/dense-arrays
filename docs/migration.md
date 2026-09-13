@@ -6,10 +6,10 @@ author: Eric J. South
 
 # Update an existing caller
 
-Review these contracts before updating an existing integration. Use the
-documented optimization, realization, serialization, and media interfaces.
-Inputs that relied on coercion, mutable state, unsupported claims, or ignored
-presentation settings need explicit changes.
+Before upgrading, check the interfaces your integration uses: optimization,
+saved placements, or media export. Stricter validation can reject inputs and
+settings that older versions accepted. The sections below identify what to
+change and which failures to handle.
 
 ## Optimization callers
 
@@ -28,8 +28,8 @@ Catch `InfeasibleError` for absence of a feasible result. Catch
 `OptimizationError` for backend execution, unproven optimality, or malformed
 solver-output failures; its subclasses distinguish these cases. Both names are
 exported from `dense_arrays`. Iteration now propagates execution failures,
-including a failure after an earlier result. An empty iterator is no longer a
-generic failure channel. See the [outcome table](reference/optimizer.md#solver-outcomes).
+including a failure after an earlier result. Do not treat every failure as an
+empty iterator. See the [outcome table](reference/optimizer.md#solver-outcomes).
 
 `approximate()` rejects constraints, side biases, and model weight/forbid
 changes. Use exact methods for those requirements. Counts follow selected
@@ -60,7 +60,7 @@ recovery occurred. Pass explicit `PlaybackNotice` records with `notices=` when
 that qualification is justified. Producers also retain responsibility for
 verifying source bytes and digests.
 
-## Presentation and exports
+## Presentation
 
 Import `PlaybackDocument` from `dense_arrays.playback` or
 `dense_arrays.playback.presentation`. Use public render functions; private
@@ -80,6 +80,8 @@ Titles, subtitles, and full evidence are stored in
 A producer callback can be evaluated lazily, so it must
 return valid frames throughout the requested render.
 
+## Export handling
+
 The CLI requires at least one of `--poster`, `--mp4`, or `--gif`, and
 `--replace` to overwrite existing files. It rejects aliases
 and collisions, renders all requested outputs before publication, and publishes
@@ -89,13 +91,14 @@ an existing artifact or earlier terminal output.
 
 ## External consumer checklist
 
-Producer and recipe repositories should verify their adapters, saved fixtures,
-public imports, palettes, callback frames, and output handling against these
-contracts. Reconstruct plans from the pinned realized placements when saved
-plans fail semantic validation, preserving any legitimate failed requirements.
-Then review one successful case and relevant invalid/failure cases in each
-consumer environment.
+Verify the migration in each consumer's environment:
 
-These are requirements for consumer owners. This package update does not
-establish that external adapters, notebooks, recipes, or published artifacts
-have been migrated.
+1. Pin the Dense Arrays version or commit being adopted.
+2. Check public imports, adapters, saved fixtures, palettes, and callback frames
+   against that version. If an old plan fails validation, reconstruct it from
+   the pinned realized placements, preserving legitimate failed requirements.
+3. Run one successful case and relevant invalid-input and export-failure cases.
+4. Inspect the exported media and its evidence before publishing recipe outputs.
+
+Consumer owners perform these checks in their repositories. Updating Dense
+Arrays alone does not migrate external adapters, notebooks, recipes, or artifacts.

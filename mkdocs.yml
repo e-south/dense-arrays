@@ -26,8 +26,9 @@ nav:
   - Contribute:
       - Development checks: development.md
       - Write documentation: development/documentation.md
-      - Audit findings: development/audit.md
-      - Improvement plan: development/improvement-plan.md
+      - Hardening history:
+          - Baseline audit: development/audit.md
+          - Completed work: development/improvement-plan.md
 
 theme:
   name: material

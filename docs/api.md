@@ -5,9 +5,8 @@ description: Choose the interface for solving, reading a result, or rendering sa
 
 # Python API
 
-Start with the interface needed for your task. Each reference combines current
-behavior and generated signatures; the [first-array tutorial](quickstart.md)
-and [playback guide](playback.md) provide runnable examples.
+Choose the interface needed for your task. For a runnable example, start with
+the [first-array tutorial](quickstart.md) or [playback guide](playback.md).
 
 ## Optimization
 
@@ -30,7 +29,7 @@ and sequence-display helpers.
 - [Realized arrays](reference/realized.md): describe an existing sequence and
   its persisted placements.
 - [Playback](reference/playback.md): reconstruct, serialize, and render those
-  placements. These interfaces live in explicit submodules.
+  placements through `dense_arrays.playback` and its rendering module.
 
 For command-line use, see [CLI options and failures](reference/cli.md).
 Existing integrators should review [caller migrations](migration.md).

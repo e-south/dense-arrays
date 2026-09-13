@@ -27,8 +27,9 @@ and `result.sequence_length`, respectively.
 When constructing a result directly, the offset lists must match the library
 length. Motifs must be nonempty uppercase `A/C/G/T` strings, and offsets must
 be non-negative integers or `None`. Booleans and fractional offsets are
-rejected. Each library entry can use at most one orientation. Placed motifs must agree where they overlap, stay within the length
-limit, and cover a contiguous sequence from coordinate zero. The constructor
+rejected. Each library entry can use at most one orientation. Placed motifs
+must agree where they overlap, stay within the length limit, and cover a
+contiguous sequence from coordinate zero. The constructor
 rejects missing placements, conflicting bases, gaps, and out-of-bounds offsets.
 Direct construction can describe compatible contained placements; exact and
 greedy packing select entries under the [path-entry rules](../method.md).

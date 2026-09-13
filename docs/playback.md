@@ -5,11 +5,9 @@ description: Build a realized-array record and render its placements as a PNG, M
 
 # Render saved feature placements
 
-Playback explains an existing sequence and its persisted feature placements.
-The data flow is `RealizedArray` → `PlaybackPlan` → NetworkX layout and
-Matplotlib rendering. It does not rerun optimization. Producer adapters
-translate their own records into this contract; the optimizer's `DenseArray`
-result is a separate interface.
+Turn saved feature placements into a PNG, MP4, or GIF to inspect their positions
+and overlaps. Playback uses the supplied sequence and coordinates. It does not
+rerun optimization or show the solver's search history.
 
 ## Create a PNG example
 
@@ -71,11 +69,28 @@ assert plan.ordering_status.value == "unique"
 assert tuple((span.start, span.end) for span in plan.steps[1].added_spans) == ((3, 4),)
 ```
 
-Open `poster.png` to inspect the completed placement layout. The poster uses
-the same graph and scene renderer as video exports. Coordinates are zero-based
-and half-open: `CAG` occupies
-`[0, 3)`, `AGC` occupies `[1, 4)`, and `CGT` occupies `[3, 6)`.
-Each placement sequence is already oriented to the realized sequence.
+Open `poster.png` to inspect the three overlapping motifs. Coordinates are
+zero-based and half-open: `CAG` occupies `[0, 3)`, `AGC` occupies `[1, 4)`, and
+`CGT` occupies `[3, 6)`. Each placement sequence is already oriented to the
+realized sequence. The poster and video exports share the NetworkX layout and
+Matplotlib renderer.
+
+## Interpret the result
+
+Every v1 plan uses `placement_reconstructed` authority: its order comes from
+coordinates. The order can be:
+
+- `unique`: a strict coordinate order.
+- `ambiguous`: equal starts or containment require a deterministic tie-break.
+- `layout_only`: internal uncovered spans prevent a complete placement chain;
+  the renderer shows the layout without an active traversal chain.
+
+Reconstruction also checks declared distances. A layout that violates a
+requirement retains that result as `passed=False`; rendering it does not make
+the requirement pass. Media keeps the reconstructed authority, ordering
+qualifications, and failed requirements visible. Long failure details are
+retained in native media metadata. See
+[how to read the full evidence](reference/playback-presentation.md#read-the-evidence).
 
 ## Render serialized input
 
@@ -123,30 +138,19 @@ reports which files were already written. See [CLI export behavior](reference/cl
 Run these render commands from the input directory as above, or pass explicit
 input and output paths. `dense-arrays-playback --help` lists all export options.
 
-## Interpret the result
+## Adapt your own records
 
-Record construction validates placement bounds, identities, sequence agreement,
-and constraint references. Reconstruction evaluates declared distances and
-retains valid failed results as `passed=False`. Rendered media preserves
-reconstructed authority, ordering qualifications, and failed requirements.
-Long failure details are retained in native media metadata. Enable optional
-notice summaries with `show_authority_notice=True`; see
-[how to read the full evidence](reference/playback-presentation.md#read-the-evidence).
+Supply the sequence and placements as a `RealizedArray`, then call
+`reconstruct_playback()` to build the `PlaybackPlan` used by the renderer.
+The optimizer's `DenseArray` result is a separate interface; producer adapters
+own the translation to saved placements.
 
-Every v1 plan uses `placement_reconstructed` authority. Its order is derived
-from coordinates, with these qualifications:
+If an adapter recovered coordinates, pass evidence of that procedure through
+`reconstruct_playback(realized, notices=(notice,))`. Metadata names alone do not
+establish how coordinates were obtained. The
+[playback reference](reference/playback.md) defines accepted records and notices.
 
-- `unique`: a strict coordinate order.
-- `ambiguous`: equal starts or containment require a deterministic tie-break.
-- `layout_only`: internal uncovered spans prevent a complete placement chain;
-  the renderer shows the layout without an active traversal chain.
-
-These views do not establish a recorded optimizer path. The reserved
-`solver_selected` authority is rejected by the v1 contract. Producer metadata
-does not imply a recovery procedure; an adapter can supply explicit evidence
-through `reconstruct_playback(realized, notices=(notice,))`.
-
-Use [media presentation settings](reference/playback-presentation.md) to choose labels,
-colors, graph detail, and optional notices. Preserve the
+Use [media presentation settings](reference/playback-presentation.md) to choose
+labels, colors, graph detail, and optional notice summaries. Follow the
 [ownership and evidence rules](architecture/solution-playback.md) when adapting
 producer data or adding publication captions.

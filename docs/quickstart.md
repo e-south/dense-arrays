@@ -5,9 +5,9 @@ description: Install from source, solve a small CBC example, and read its sequen
 
 # Create your first array
 
-Dense Arrays takes non-empty uppercase `A/C/G/T` motifs and a positive length
-limit. It searches for an arrangement that packs as many supplied motifs as
-possible into that space. The result may include only a subset of the library.
+Pack three overlapping motifs into a six-base sequence, then read where each
+motif starts. For your own library, Dense Arrays searches for an arrangement
+within a length limit; the result may include only a subset of the motifs.
 
 ## Install from source
 
@@ -27,6 +27,8 @@ contracts. Rendering requires the extra dependencies described in
 
 ## Solve from the terminal
 
+Supply non-empty uppercase `A/C/G/T` motifs and a positive integer length limit:
+
 ```bash
 uv run dense-arrays optimize \
   --motif CAG --motif AGC --motif CGT --length 6 --strands single
@@ -44,8 +46,8 @@ starting with `#` are ignored. The two input forms cannot be combined.
 
 Use `uv run dense-arrays optimize --help` to see all options. CBC is the
 default OR-Tools backend. `--solver` selects another backend only if the local
-OR-Tools installation can create it. An unavailable backend produces a concise error and a nonzero exit.
-See [CLI failures](reference/cli.md).
+OR-Tools installation can create it. An unavailable backend produces an error
+and a nonzero exit. See [CLI failures](reference/cli.md).
 
 ## Solve from Python
 
@@ -75,9 +77,7 @@ the model; to change constraints afterward, create a new `Optimizer`.
 If no motif can fit or the declared constraints are infeasible, `optimal()`
 raises `InfeasibleError`, a `ValueError` subclass. Backend failure, an unproven
 feasible result, and invalid solver output have distinct exceptions; see
-[solver outcomes](reference/optimizer.md#solver-outcomes). Both commands exit
-nonzero on a solver failure, including one that occurs after an earlier result
-was printed.
+[solver outcomes](reference/optimizer.md#solver-outcomes).
 
 ## Request further solutions
 
@@ -89,6 +89,9 @@ uv run dense-arrays solutions \
   --motif CAG --motif AGC --motif CGT --length 6 --strands single \
   --max-solutions 3 --diverse
 ```
+
+Check the command's exit status: a solver failure exits nonzero even if an
+earlier result was printed.
 
 The equivalent bounded Python iteration is:
 

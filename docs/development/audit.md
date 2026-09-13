@@ -1,15 +1,15 @@
 ---
-title: Documentation and contract audit
-description: Source-backed findings and local dogfood evidence for the September 2026 hardening plan.
+title: September 2026 baseline audit
+description: Historical findings from before the September 2026 contract and playback repairs.
 ---
 
-# Documentation and contract audit
+# September 2026 baseline audit
 
 Author: Eric J. South. Audited 12 September 2026 against
 [`006b361e`](https://github.com/e-south/dense-arrays/tree/006b361e462c460d9fc398bd55ed7be174790f76).
 This records the baseline findings, before runtime repairs. The
-[improvement plan](improvement-plan.md) owns the implementation sequence and the
-subsequent decision to remove the separate HTML playback renderer.
+[completed hardening record](improvement-plan.md) describes the repairs and
+verification, including removal of the separate HTML playback renderer.
 
 The package has useful ownership boundaries and working small examples. Its
 largest risks are incomplete input contracts and output that can hide a failure

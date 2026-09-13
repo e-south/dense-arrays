@@ -1,9 +1,9 @@
 ---
-title: Dense Arrays hardening plan
+title: September 2026 hardening record
 description: Completed contract, usability, and module-boundary work with verification evidence.
 ---
 
-# Dense Arrays hardening plan
+# September 2026 hardening record
 
 Author: Eric J. South. Status: implemented and locally verified on
 12 September 2026, following the [audit](audit.md).
