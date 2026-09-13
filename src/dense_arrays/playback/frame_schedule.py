@@ -22,7 +22,7 @@ def positive_integer(value: int, name: str) -> None:
 
 @dataclass(frozen=True, slots=True)
 class PlaybackTiming:
-    """Requested seconds per media phase; zero lead/hold means zero frames."""
+    """Finite durations; every scene retains at least one complete resting frame."""
 
     fps: int = 30
     seconds_per_step: float = 0.70
@@ -58,11 +58,10 @@ class PlaybackTiming:
 
 @dataclass(frozen=True, slots=True)
 class PlaybackFrame:
-    """One requested scene state and optional white transition overlay."""
+    """One requested resting or progressive scene state."""
 
     transition_index: int
     progress: float
-    fade_alpha: float = 0.0
 
 
 def scene_frame_schedule(
@@ -70,15 +69,13 @@ def scene_frame_schedule(
     timing: PlaybackTiming,
     *,
     first: bool,
-    last: bool,
 ) -> Iterator[PlaybackFrame]:
-    """Yield the same lead, traversal, hold, and fade schedule for every encoder."""
+    """Yield rest, traversal, and hold without blanking context between scenes."""
     _validate_transition_counts(transition_counts)
-    fade_frames = round(timing.fps * timing.scene_transition_seconds)
+    resting_frames = max(1, round(timing.fps * timing.lead_seconds))
     if not first:
-        for index in range(fade_frames):
-            yield PlaybackFrame(0, 0.0, 1.0 - (index + 1) / fade_frames)
-    for _ in range(round(timing.fps * timing.lead_seconds)):
+        resting_frames += round(timing.fps * timing.scene_transition_seconds)
+    for _ in range(resting_frames):
         yield PlaybackFrame(0, 0.0)
     for transition, count in enumerate(transition_counts):
         for index in range(count):
@@ -86,9 +83,6 @@ def scene_frame_schedule(
     final_transition = len(transition_counts) - 1
     for _ in range(round(timing.fps * timing.hold_seconds)):
         yield PlaybackFrame(final_transition, 1.0)
-    if not last:
-        for index in range(fade_frames):
-            yield PlaybackFrame(final_transition, 1.0, (index + 1) / fade_frames)
 
 
 def _validate_transition_counts(counts: tuple[int, ...]) -> None:

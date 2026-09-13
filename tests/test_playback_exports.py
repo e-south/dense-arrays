@@ -100,7 +100,7 @@ def test_callback_shape_changes_are_rejected_during_animation(tmp_path: Path) ->
             tmp_path / "out.gif",
             fps=2,
             duplex_frame_renderer=lambda _doc, step: np.zeros(
-                (10 + step, 10, 3), dtype=np.uint8
+                (10 if step is None else 10 + step, 10, 3), dtype=np.uint8
             ),
         )
     assert list(tmp_path.iterdir()) == []
@@ -121,7 +121,7 @@ def test_failed_callback_leaves_no_figure_or_partial_output(tmp_path: Path) -> N
     assert list(tmp_path.iterdir()) == []
 
 
-def test_zero_lead_hold_schedule_has_only_transition_frames() -> None:
+def test_zero_lead_hold_schedule_retains_one_resting_frame() -> None:
 
     timing = PlaybackTiming(
         fps=2,
@@ -130,8 +130,8 @@ def test_zero_lead_hold_schedule_has_only_transition_frames() -> None:
         hold_seconds=0,
         scene_transition_seconds=0,
     )
-    frames = tuple(scene_frame_schedule((3, 5), timing, first=True, last=True))
-    assert len(frames) == 8
+    frames = tuple(scene_frame_schedule((3, 5), timing, first=True))
+    assert len(frames) == 9
     assert frames[0].transition_index == 0
     assert frames[-1].transition_index == 1
     assert frames[-1].progress == 1
@@ -219,15 +219,15 @@ def test_poster_preserves_producer_figure_size(tmp_path: Path) -> None:
         assert image.size == (1600, 240)
 
 
-@pytest.mark.parametrize("invalid_from", [0, 1])
+@pytest.mark.parametrize("invalid_from", [None, 0, 1])
 def test_invalid_producer_metric_preserves_primary_error_and_prior_output(
-    tmp_path: Path, invalid_from: int
+    tmp_path: Path, invalid_from: int | None
 ) -> None:
     class Producer:
         native_nucleotide_cap_height_px = 10.0
 
-        def render(self, _document: PlaybackDocument, index: int) -> np.ndarray:
-            if index >= invalid_from:
+        def render(self, _document: PlaybackDocument, index: int | None) -> np.ndarray:
+            if invalid_from is None or (index is not None and index >= invalid_from):
                 self.native_nucleotide_cap_height_px = float("nan")
             return np.zeros((10, 10, 3), dtype=np.uint8)
 

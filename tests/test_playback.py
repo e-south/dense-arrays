@@ -286,9 +286,9 @@ class _FrameCountingWriter:
 @pytest.mark.parametrize(
     "renderer_name,writer_name,transition_seconds,expected_frames",
     [
-        ("render_collection_gif", "EvidencePillowWriter", 0.0, 16),
+        ("render_collection_gif", "EvidencePillowWriter", 0.0, 18),
         ("render_collection_gif", "EvidencePillowWriter", 1.0, 20),
-        ("render_collection_mp4", "FFMpegWriter", 0.0, 16),
+        ("render_collection_mp4", "FFMpegWriter", 0.0, 18),
         ("render_collection_mp4", "FFMpegWriter", 1.0, 20),
     ],
 )

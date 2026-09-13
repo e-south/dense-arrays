@@ -26,7 +26,7 @@ presentation = PlaybackPresentation(
 )
 document = PlaybackDocument(
     plan=plan,
-    title="Three overlapping motifs",
+    title="Four overlapping motifs",
     subtitle="Coordinate reconstruction from persisted placements",
     label_overrides={"motif-1": "First selected motif"},
     color_overrides={"motif-1": "#365E80"},
@@ -105,27 +105,46 @@ render_collection_mp4(documents, output_path, ...)
 render_collection_gif(documents, output_path, ...)
 ```
 
-The PNG poster shows the completed first scene. MP4 and GIF render the
+The PNG poster shows the completed first scene. MP4 and GIF start every scene
+with the complete gray graph, duplex, placement tracks, and annotations.
+Color and active emphasis advance while coordinates and text sizes stay fixed;
+uncovered sequence remains visible in gray. A resting frame shows the known
+realized arrangement before any placement receives active emphasis.
+
+MP4 and GIF render the
 collection in order. All formats require the `playback` extra; MP4 also
 requires FFmpeg on `PATH`.
 
 Media timing requires a positive integer `fps` and finite positive
 `seconds_per_step`. Lead, hold, and scene-transition durations are finite and
-non-negative. Zero lead or hold means zero frames for that phase. MP4 and GIF
-use the same frame schedule. Writers stage their output and close figures on
+non-negative. Every scene has at least one resting frame, including when lead
+time is zero. A positive lead requests `round(fps * lead_seconds)` resting
+frames, with the same one-frame minimum. `scene_transition_seconds` adds a
+stationary gray orientation interval at the beginning of each subsequent scene;
+scene boundaries do not fade through white. Zero hold means zero completed hold
+frames. MP4 and GIF use the same frame schedule. Writers stage their output and close figures on
 failure. The CLI adds destination preflight and stages every requested format;
 see [publication behavior](cli.md#render-saved-placements).
 
 ## Producer-owned duplex frames
 
 A caller can supply `duplex_frame_renderer(document, step_index)` to the media
-functions. It returns a nonempty NumPy `uint8` RGB or RGBA image for every
-step, with constant image shape within each scene. Frames are validated as they
+functions. `step_index` is `int | None`: **`None` requests the complete gray
+pre-placement state**, and integers `0..len(plan.steps)-1` request the state
+after that placement. Negative indices are rejected. The callback must draw
+the full sequence, placement tracks, and relevant annotations in every state,
+leaving future or uncovered context neutral. It returns a nonempty NumPy
+`uint8` RGB or RGBA image with constant shape, crop, geometry, and text size
+within each scene. Dense Arrays crossfades adjacent frames in place; it does
+not slide nucleotide glyphs. Frames are validated as they
 are requested during rendering, with at most two images cached for transitions.
-The callback must support every requested step;
+The callback must support the explicit resting state and every requested step;
 a poster requests the completed first scene. A late invalid frame fails the
 staged export and leaves any existing destination file untouched.
 The graph geometry, routing, and playback timing remain Dense Arrays-owned.
+Existing callbacks that accept only integer indices must add `None` handling
+before upgrading. Dense Arrays does not synthesize a white fallback or infer a
+neutral scene by recoloring the producer's final image.
 
 For a bound callback, its owner may declare `native_nucleotide_cap_height_px`
 and `preferred_figure_height_inches` as finite positive values. These metrics

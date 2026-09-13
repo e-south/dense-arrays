@@ -124,8 +124,6 @@ def _draw_frame(
     figure: Figure,
     duplex_frames: DuplexFrames | None,
 ) -> None:
-    from matplotlib.patches import Rectangle
-
     draw_document(
         document,
         transition_index=frame.transition_index,
@@ -133,19 +131,6 @@ def _draw_frame(
         figure=figure,
         duplex_frames=duplex_frames,
     )
-    if frame.fade_alpha:
-        figure.add_artist(
-            Rectangle(
-                (0.0, 0.0),
-                1.0,
-                1.0,
-                transform=figure.transFigure,
-                facecolor=_PAPER,
-                edgecolor="none",
-                alpha=frame.fade_alpha,
-                zorder=1000,
-            )
-        )
 
 
 def render_animation(
@@ -179,11 +164,7 @@ def render_animation(
             if duplex_frame_renderer is not None
             else None
         )
-        first_schedule = iter(
-            scene_frame_schedule(
-                counts[0], timing, first=True, last=len(documents) == 1
-            )
-        )
+        first_schedule = iter(scene_frame_schedule(counts[0], timing, first=True))
         _draw_frame(documents[0], next(first_schedule), figure, first_frames)
         figure.canvas.draw()
         with (
@@ -209,7 +190,6 @@ def render_animation(
                         counts[index],
                         timing,
                         first=False,
-                        last=index == len(documents) - 1,
                     )
                 )
                 for frame in schedule:
