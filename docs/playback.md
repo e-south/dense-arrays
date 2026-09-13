@@ -6,8 +6,28 @@ description: Build a realized-array record and render its placements as a PNG, M
 # Render saved feature placements
 
 Turn saved feature placements into a PNG, MP4, or GIF to inspect their positions
-and overlaps. Playback uses the supplied sequence and coordinates. It does not
-rerun optimization or show the solver's search history.
+and overlaps. This guide follows the four 16-base motifs from the
+[first-array example](quickstart.md) across their 37-base sequence.
+
+## Watch four overlapping motifs
+
+<p id="playback-example-description">The opening frame shows the complete graph
+and DNA duplex in gray. Color then follows the four placements in coordinate
+order: the first motif covers 16 bases, and each later motif adds seven.
+Overlapping portions share the same sequence positions throughout.</p>
+
+<video controls preload="metadata" poster="../assets/playback-opening.png"
+       aria-describedby="playback-example-description" style="width: 100%; height: auto;">
+  <source src="../assets/playback-example.mp4" type="video/mp4">
+  Your browser cannot display this video. Use the download link below.
+</video>
+
+[Download the MP4](assets/playback-example.mp4),
+[view the opening frame](assets/playback-opening.png), or
+[inspect the completed poster](assets/playback-poster.png).
+
+The video explains saved coordinates; it does not rerun optimization or show
+the solver's search history. Reproduce the placements and exports below.
 
 ## Create a PNG example
 
@@ -18,7 +38,7 @@ playback dependencies:
 uv sync --frozen --extra playback
 ```
 
-Then run this Python example with `uv run python`. It describes the same three
+Then run this Python example with `uv run python`. It describes the same four
 synthetic placements as the first-array example, without running a solver or
 reading an external data file. Outputs go to a new temporary directory whose
 path is printed:
@@ -38,7 +58,7 @@ from dense_arrays.realized import Orientation, Placement, PlacementKind, Realize
 
 realized = RealizedArray(
     source_id="synthetic:first-array",
-    sequence="CAGCGT",
+    sequence="ACGTTGCAAGTCCTGATCGTACCGATGCTTAGGACGT",
     placements=tuple(
         Placement(
             placement_id=identifier,
@@ -47,12 +67,12 @@ realized = RealizedArray(
             sequence=motif,
             start=start,
             orientation=Orientation.FORWARD,
-            label=motif,
         )
         for identifier, motif, start in (
-            ("motif-1", "CAG", 0),
-            ("motif-2", "AGC", 1),
-            ("motif-3", "CGT", 3),
+            ("motif-1", "ACGTTGCAAGTCCTGA", 0),
+            ("motif-2", "AAGTCCTGATCGTACC", 7),
+            ("motif-3", "GATCGTACCGATGCTT", 14),
+            ("motif-4", "CCGATGCTTAGGACGT", 21),
         )
     ),
 )
@@ -60,20 +80,29 @@ plan = reconstruct_playback(realized)
 output = Path(mkdtemp(prefix="dense-arrays-playback-"))
 (output / "realized.json").write_text(dumps_realized_array(realized), encoding="utf-8")
 (output / "plan.json").write_text(dumps_playback_plan(plan), encoding="utf-8")
-document = PlaybackDocument(plan=plan, title="Three overlapping motifs")
+document = PlaybackDocument(plan=plan, title="Four overlapping motifs")
 poster = render_collection_poster_png((document,), output / "poster.png")
 assert poster.is_file() and poster.stat().st_size > 0
 print(output)
 print(plan.authority.value)  # placement_reconstructed
 assert plan.ordering_status.value == "unique"
-assert tuple((span.start, span.end) for span in plan.steps[1].added_spans) == ((3, 4),)
+assert tuple((span.start, span.end) for span in plan.steps[1].added_spans) == (
+    (16, 23),
+)
 ```
 
-Open `poster.png` to inspect the three overlapping motifs. Coordinates are
-zero-based and half-open: `CAG` occupies `[0, 3)`, `AGC` occupies `[1, 4)`, and
-`CGT` occupies `[3, 6)`. Each placement sequence is already oriented to the
-realized sequence. The poster and video exports share the NetworkX layout and
-Matplotlib renderer.
+Open `poster.png` to inspect the four overlapping motifs. Coordinates are
+zero-based and half-open:
+
+| Placement | Sequence | Occupied span |
+| --- | --- | --- |
+| motif-1 | `ACGTTGCAAGTCCTGA` | `[0, 16)` |
+| motif-2 | `AAGTCCTGATCGTACC` | `[7, 23)` |
+| motif-3 | `GATCGTACCGATGCTT` | `[14, 30)` |
+| motif-4 | `CCGATGCTTAGGACGT` | `[21, 37)` |
+
+Each placement sequence is already oriented to the realized sequence. The
+poster and video exports share the NetworkX layout and Matplotlib renderer.
 
 ## Interpret the result
 

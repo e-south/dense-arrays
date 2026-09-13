@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING, Protocol
 
 import numpy as np
 
+from .timeline import placement_progress
+
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from numpy.typing import NDArray
@@ -21,16 +23,15 @@ _DUPLEX_RASTER_OVERSAMPLE = 2.0
 _IMAGE_DIMENSIONS = 3
 _FRAME_CACHE_SIZE = 2
 _SETTLED_PROGRESS = 0.999
-_PIXEL_DIFFERENCE_THRESHOLD = 1.5
 
 
 class DuplexFrameRenderer(Protocol):
-    """Return one uint8 RGB/RGBA image per placement, with a fixed scene shape."""
+    """Return fixed-shape uint8 RGB/RGBA scenes; None requests complete gray rest."""
 
     def __call__(
-        self, document: PlaybackDocument, step_index: int
+        self, document: PlaybackDocument, step_index: int | None
     ) -> NDArray[np.uint8]:
-        """Return the exact image for the requested placement index."""
+        """Return the complete resting scene or state after an integer placement."""
         ...
 
 
@@ -45,7 +46,7 @@ class DuplexFrames:
             raise TypeError(msg)
         self.renderer = renderer
         self.document = document
-        self._images: OrderedDict[int, NDArray[np.uint8]] = OrderedDict()
+        self._images: OrderedDict[int | None, NDArray[np.uint8]] = OrderedDict()
         self._shape: tuple[int, ...] | None = None
         owner = getattr(renderer, "__self__", renderer)
         capability = getattr(owner, "renders_distance_brackets", False)
@@ -59,9 +60,9 @@ class DuplexFrames:
         """Read the producer's current nucleotide sizing metric."""
         return _duplex_native_cap_height_px(self.renderer)
 
-    def frame(self, index: int) -> NDArray[np.uint8]:
+    def frame(self, index: int | None) -> NDArray[np.uint8]:
         """Validate the requested image and retain only two snapshots."""
-        if (
+        if index is not None and (
             isinstance(index, bool)
             or not isinstance(index, int)
             or not 0 <= index < len(self.document.plan.steps)
@@ -92,11 +93,6 @@ class DuplexFrames:
         while len(self._images) > _FRAME_CACHE_SIZE:
             self._images.popitem(last=False)
         return snapshot
-
-
-def _smoothstep(progress: float) -> float:
-    progress = max(0.0, min(1.0, progress))
-    return progress * progress * (3.0 - (2.0 * progress))
 
 
 def duplex_frame_for_axis(
@@ -168,48 +164,18 @@ def duplex_transition_frame(
     transition_index: int,
     progress: float,
 ) -> NDArray[np.uint8]:
-    """Blend validated adjacent frames with the placement orientation."""
+    """Crossfade emphasis between complete scenes without translating glyphs."""
     import numpy as np
 
     final_index = len(document.plan.steps) - 1
     if transition_index > final_index:
         return frames.frame(final_index)
-    current = np.asarray(frames.frame(transition_index), dtype=np.float32)
-    previous = (
-        np.full_like(current, 255.0)
-        if transition_index == 0
-        else np.asarray(frames.frame(transition_index - 1), dtype=np.float32)
-    )
+    previous_index = None if transition_index == 0 else transition_index - 1
+    if progress <= 0:
+        return frames.frame(previous_index)
     if progress >= _SETTLED_PROGRESS:
-        return current.astype(np.uint8)
-    difference = np.max(np.abs(current[..., :3] - previous[..., :3]), axis=2)
-    content_mask = (difference > _PIXEL_DIFFERENCE_THRESHOLD).astype(np.float32)
-    if not np.any(content_mask):
-        return current.astype(np.uint8)
-    step = document.plan.steps[transition_index]
-    orientation = getattr(step.orientation, "value", step.orientation)
-    direction = 1 if str(orientation) == "rev" else -1
-    settle_start = 0.42
-    if progress <= settle_start:
-        return previous.astype(np.uint8)
-    local_progress = min(1.0, (progress - settle_start) / (1.0 - settle_start))
-    overshoot = 1.4
-    shifted = local_progress - 1.0
-    settled = 1.0 + (overshoot + 1.0) * shifted**3 + overshoot * shifted**2
-    offset = round(direction * 28.0 * (1.0 - settled))
-    opacity = _smoothstep(min(1.0, local_progress / 0.55))
-    output = previous.copy()
-    height = current.shape[0]
-    source_start = max(0, -offset)
-    source_end = min(height, height - offset)
-    destination_start = source_start + offset
-    destination_end = source_end + offset
-    if source_start >= source_end:
-        return output.astype(np.uint8)
-    incoming = current[source_start:source_end]
-    alpha = content_mask[source_start:source_end, :, None] * opacity
-    destination = output[destination_start:destination_end]
-    output[destination_start:destination_end] = (destination * (1.0 - alpha)) + (
-        incoming * alpha
-    )
-    return np.clip(output, 0, 255).astype(np.uint8)
+        return frames.frame(transition_index)
+    previous = np.asarray(frames.frame(previous_index), dtype=np.float32)
+    current = np.asarray(frames.frame(transition_index), dtype=np.float32)
+    alpha = placement_progress(transition_index, transition_index, progress)
+    return np.rint(previous * (1 - alpha) + current * alpha).astype(np.uint8)

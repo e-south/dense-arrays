@@ -23,6 +23,8 @@ DEFAULT_STEP_COLORS = (
     "#74C0CB",
     "#86A5D8",
 )
+RESTING_COLOR = "#D2D2D2"
+RESTING_TEXT_COLOR = "#969696"
 _MAX_GRAPH_FRACTION = 0.5
 _PROFILES = {"categorical", "uniform", "constraints"}
 
@@ -32,6 +34,18 @@ def validate_color(color: str) -> None:
     if not isinstance(color, str) or re.fullmatch(r"#[0-9a-fA-F]{6}", color) is None:
         msg = "colors must use #RRGGBB notation"
         raise ValueError(msg)
+
+
+def blend_color(start: str, end: str, progress: float) -> str:
+    """Interpolate opaque colors without changing artist geometry."""
+    channels = (
+        round(
+            int(start[index : index + 2], 16) * (1 - progress)
+            + int(end[index : index + 2], 16) * progress
+        )
+        for index in (1, 3, 5)
+    )
+    return "#" + "".join(f"{channel:02x}" for channel in channels)
 
 
 @dataclass(frozen=True, slots=True)

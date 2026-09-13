@@ -247,11 +247,19 @@ def test_overlap_reveal_mask_preserves_complete_placement_bars() -> None:
 
     draw_duplex(axis, document, 1)
     bar_widths = [patch.get_width() for patch in axis.patches]
-    bar_labels = {text.get_text() for text in axis.texts}
+    bar_labels = [
+        "".join(
+            text.get_text()
+            for text in axis.texts
+            if text.get_position()[1]
+            == pytest.approx(patch.get_y() + patch.get_height() / 2)
+        )
+        for patch in axis.patches
+    ]
 
     assert revealed_indices(plan.steps, 1) == (0, 1, 2, 3)
     assert bar_widths == [3, 3]
-    assert {"AAA", "AAT"} <= bar_labels
+    assert bar_labels == ["AAA", "AAT"]
     plt.close(figure)
 
 
@@ -286,9 +294,9 @@ class _FrameCountingWriter:
 @pytest.mark.parametrize(
     "renderer_name,writer_name,transition_seconds,expected_frames",
     [
-        ("render_collection_gif", "EvidencePillowWriter", 0.0, 16),
+        ("render_collection_gif", "EvidencePillowWriter", 0.0, 18),
         ("render_collection_gif", "EvidencePillowWriter", 1.0, 20),
-        ("render_collection_mp4", "FFMpegWriter", 0.0, 16),
+        ("render_collection_mp4", "FFMpegWriter", 0.0, 18),
         ("render_collection_mp4", "FFMpegWriter", 1.0, 20),
     ],
 )

@@ -74,6 +74,19 @@ failed requirements. Full evidence is stored in native media metadata;
 notices are an optional addition. Presentation settings and evidence retrieval
 belong in the [presentation reference](../reference/playback-presentation.md).
 
+Every animated scene begins with its complete configured graph and duplex in
+neutral gray. Placement order controls progressive color and active emphasis,
+not whether known sequence coordinates exist on the canvas. Uncovered bases
+remain gray, and `layout_only` still suppresses active traversal. Geometry and
+font sizes remain fixed across resting, intermediate, and completed states.
+Scene changes preserve visible context instead of fading through white.
+
+A producer frame callback receives `step_index: int | None`. `None` explicitly
+means the complete pre-placement scene; integers identify the state after a
+placement. Both use the same fixed image shape and two-frame validation/cache
+contract. The producer owns its neutral annotations and fixed crop; Dense
+Arrays blends successive images in place without moving nucleotide glyphs.
+
 Adapters can supply `PlaybackNotice` records through
 `reconstruct_playback(realized, notices=...)`. Dense Arrays preserves explicit
 caller evidence and rejects conflicting reserved authority/order codes. It

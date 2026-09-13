@@ -20,9 +20,9 @@ dashboard and not a visualization of optimizer search.
 The animation has two synchronized representations:
 
 - a compact explanation graph showing the ordered feature relations;
-- a linear duplex showing each feature settle into its realized coordinates.
+- a linear duplex emphasizing each feature at its fixed realized coordinates.
 
-Every completed frame must also work as a legible still in a presentation.
+Resting and completed frames must also work as legible stills in a presentation.
 
 ## Authority
 
@@ -59,6 +59,8 @@ examples, not package dependencies or prerequisites for generic playback.
 ## Visual contract
 
 - Keep the duplex visually dominant; the graph is an explanation scaffold.
+- Begin with the complete graph, duplex, and placement context in neutral gray;
+  progressively color the represented placements without moving nucleotide glyphs.
 - Reveal one causal event at a time: traverse, place, settle, hold.
 - Use one canonical curve for the visible route, progressive stroke, and point.
 - Freeze layout for the full scene and keep Start and End as compact horizontal
@@ -94,7 +96,10 @@ Each endpoint publishes a digest-addressed bundle containing:
 - MP4 playback;
 - poster PNG.
 
-Generated media remains producer-owned output and is not committed to this
-repository. Renderers consume validated playback plans without importing solver
+Transient producer runs and dogfood media remain outside tracked source. The
+maintained teaching assets `docs/assets/playback-example.mp4`,
+`docs/assets/playback-opening.png`, and `docs/assets/playback-poster.png` are
+reviewed documentation outputs and may be committed with their reproduction
+instructions. Renderers consume validated playback plans without importing solver
 or OR-Tools internals. Recipe owners provide the manifest and publication step;
 the package CLI renders the requested files.

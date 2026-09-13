@@ -5,9 +5,9 @@ description: Install from source, solve a small CBC example, and read its sequen
 
 # Create your first array
 
-Pack three overlapping motifs into a six-base sequence, then read where each
-motif starts. For your own library, Dense Arrays searches for an arrangement
-within a length limit; the result may include only a subset of the motifs.
+Pack four 16-base motifs into a 37-base sequence, then read where each motif
+starts. The compatible overlaps let the motifs share bases. For your own
+library, the length limit may allow only a subset of the motifs to be placed.
 
 ## Install from source
 
@@ -31,12 +31,24 @@ Supply non-empty uppercase `A/C/G/T` motifs and a positive integer length limit:
 
 ```bash
 uv run dense-arrays optimize \
-  --motif CAG --motif AGC --motif CGT --length 6 --strands single
+  --motif ACGTTGCAAGTCCTGA \
+  --motif AAGTCCTGATCGTACC \
+  --motif GATCGTACCGATGCTT \
+  --motif CCGATGCTTAGGACGT \
+  --length 37 --strands single
 ```
 
-The synthetic motifs `CAG`, `AGC`, and `CGT` fit into `CAGCGT`, with starts at
-0, 1, and 3. Its overlapping bases count once toward the six-base limit.
-The terminal displays the sequence, its complement, and the placed motifs.
+The terminal displays the sequence, its complement, and the placed motifs:
+
+```text
+ACGTTGCAAGTCCTGATCGTACCGATGCTTAGGACGT
+```
+
+The four input motifs start at 0, 7, 14, and 21. Each consecutive pair shares
+nine bases, so the first motif contributes 16 bases and each later motif adds
+seven: `16 + 7 + 7 + 7 = 37`. Read the [packing method](method.md) for the
+overlap calculation and its graph interpretation.
+
 `--strands single` permits motifs only in their supplied orientation;
 `--strands double` also permits reverse complements and is the default.
 
@@ -56,14 +68,26 @@ Run this code with `uv run python` in the checkout environment:
 ```python
 from dense_arrays import Optimizer
 
-optimizer = Optimizer(["CAG", "AGC", "CGT"], sequence_length=6, strands="single")
+motifs = [
+    "ACGTTGCAAGTCCTGA",
+    "AAGTCCTGATCGTACC",
+    "GATCGTACCGATGCTT",
+    "CCGATGCTTAGGACGT",
+]
+optimizer = Optimizer(motifs, sequence_length=37, strands="single")
 best = optimizer.optimal()
-print(best.sequence)  # CAGCGT
-print(best.nb_motifs)  # 3
-print(best.offsets_fwd)  # [0, 1, 3]
-assert best.sequence == "CAGCGT"
-assert best.nb_motifs == 3
+print(best.sequence)  # ACGTTGCAAGTCCTGATCGTACCGATGCTTAGGACGT
+print(best.nb_motifs)  # 4
+print(best.offsets_fwd)  # [0, 7, 14, 21]
+assert best.sequence == "ACGTTGCAAGTCCTGATCGTACCGATGCTTAGGACGT"
+assert best.nb_motifs == 4
+assert best.offsets_fwd == [0, 7, 14, 21]
 ```
+
+Offsets are zero-based starts in input order: the first entry occupies
+`[0, 16)`, the second `[7, 23)`, the third `[14, 30)`, and the fourth `[21, 37)`.
+The right endpoint is excluded. Use these positions to recover each motif
+from the sequence.
 
 `optimal()` returns a `DenseArray`. `sequence_length` is the requested limit;
 `len(best.sequence)` is the realized length and may be shorter. Terminal
@@ -86,21 +110,25 @@ the result count, not the time needed to solve each result:
 
 ```bash
 uv run dense-arrays solutions \
-  --motif CAG --motif AGC --motif CGT --length 6 --strands single \
+  --motif ACGTTGCAAGTCCTGA \
+  --motif AAGTCCTGATCGTACC \
+  --motif GATCGTACCGATGCTT \
+  --motif CCGATGCTTAGGACGT \
+  --length 37 --strands single \
   --max-solutions 3 --diverse
 ```
 
 Check the command's exit status: a solver failure exits nonzero even if an
 earlier result was printed.
 
-The equivalent bounded Python iteration is:
+In Python, reuse the `motifs` library defined above with a fresh optimizer:
 
 ```python
 from itertools import islice
 
 from dense_arrays import Optimizer
 
-optimizer = Optimizer(["CAG", "AGC", "CGT"], sequence_length=6, strands="single")
+optimizer = Optimizer(motifs, sequence_length=37, strands="single")
 for solution in islice(optimizer.solutions_diverse(), 3):
     print(solution.sequence, solution.nb_motifs)
 ```

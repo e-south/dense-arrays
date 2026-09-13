@@ -50,7 +50,8 @@ what the implementation and tests establish.
 
 Give a fresh reader or agent a task, not the answer's file path:
 
-1. “Create a six-base array from three motifs using CBC and explain the offsets.”
+1. “Create the tutorial's 37-base array from four 16-base motifs using CBC,
+   explain an overlap and the returned offsets, and find the associated paper.”
 2. “Require two entries from one motif group and one from another group.”
 3. “Render saved placements as a PNG, find the MP4 export command, and
    determine whether the order was solver-recorded.”
@@ -67,6 +68,24 @@ Run changed examples, build docs strictly, inspect internal links and anchors,
 and check the built site at narrow and wide widths. Review plain Markdown as
 well as the site. Keep the banner's accessible description; use text labels
 alongside color. Complete the [development gate](../development.md).
+
+## Maintain the teaching media
+
+The playback guide maintains one MP4, its opening PNG, and its completed
+poster in `docs/assets/`. Regenerate them from the guide's Python example
+using `render_collection_mp4((document,), output / "playback.mp4")` with the
+default timing. Use the guide's `poster.png` for the completed still, and
+decode the first video frame for the opening image:
+
+```bash
+ffmpeg -i playback.mp4 -frames:v 1 playback-opening.png
+```
+
+Review the encoded opening, middle, and final frames before replacing the
+three assets. Keep transient producer runs outside tracked source. The
+editable process figure is `docs/assets/motif-packing-process.svg`; its
+graph uses start-to-start shifts and a final-motif cost, while playback
+labels count newly covered bases.
 
 The reader/task separation follows [Diátaxis](https://diataxis.fr/start-here/).
 The focus on reader benefit is informed by McEnerney's

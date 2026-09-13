@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .frame_schedule import PlaybackFrame
 from .graph.geometry import (
     KMER_FONT_FAMILY,
     KMER_FONT_SIZE_PT,
@@ -23,7 +24,13 @@ from .graph.routing import (
     quadratic_segment,
     route_graph_scene,
 )
-from .theme import constraint_relation_color
+from .theme import (
+    RESTING_COLOR,
+    RESTING_TEXT_COLOR,
+    blend_color,
+    constraint_relation_color,
+)
+from .timeline import placement_progress
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -34,7 +41,7 @@ if TYPE_CHECKING:
 
 _PAPER = "#ffffff"
 _INK = "#4b5563"
-_LINE = "#9cc9c1"
+_LINE = RESTING_COLOR
 _TRAVERSED = "#50635f"
 _ACTIVE = "#167a70"
 _GRAPH_TEXT = "#1F2423"
@@ -83,17 +90,27 @@ def draw_graph(
     axis.set_aspect("equal", adjustable="box")
     axis.axis("off")
 
-    _draw_context_edges(axis, document, routes)
+    _draw_context_edges(axis, document, routes, transition_index, progress)
     active_geometry = _draw_traversal_edges(
         axis, document, routes, transition_index, progress
     )
-    _draw_nodes(axis, document, scene, kmer_font_size_pt=kmer_font_size_pt)
-    _draw_terminals(axis, scene)
+    _draw_nodes(
+        axis,
+        document,
+        scene,
+        PlaybackFrame(transition_index, progress),
+        kmer_font_size_pt=kmer_font_size_pt,
+    )
+    _draw_terminals(axis, scene, transition_index, progress)
     _draw_active_marker(axis, active_geometry)
 
 
 def _draw_context_edges(
-    axis: Axes, document: PlaybackDocument, routes: GraphRoutes
+    axis: Axes,
+    document: PlaybackDocument,
+    routes: GraphRoutes,
+    transition_index: int,
+    progress: float,
 ) -> None:
     from matplotlib.patches import FancyArrowPatch
 
@@ -105,6 +122,11 @@ def _draw_context_edges(
     for routed in visible_context:
         curve = routed.curve
         declared_constraint = routed.edge.relation_kind == "declared_constraint"
+        emphasis = min(
+            placement_progress(index, transition_index, progress)
+            for index, step in enumerate(document.plan.steps)
+            if step.placement_id in (routed.edge.source_id, routed.edge.target_id)
+        )
         axis.add_patch(
             FancyArrowPatch(
                 path=_matplotlib_path(curve),
@@ -112,11 +134,15 @@ def _draw_context_edges(
                 mutation_scale=5.4,
                 linewidth=1.7 if declared_constraint else 0.85,
                 color=(
-                    constraint_relation_color(document.presentation.color_profile)
+                    blend_color(
+                        RESTING_COLOR,
+                        constraint_relation_color(document.presentation.color_profile),
+                        emphasis,
+                    )
                     if declared_constraint
                     else _LINE
                 ),
-                alpha=0.82 if declared_constraint else 0.34,
+                alpha=1.0,
                 zorder=0,
             )
         )
@@ -141,7 +167,7 @@ def _draw_traversal_edges(
         completed = edge_index < transition_index or (
             edge_index == transition_index and progress >= _SETTLED_PROGRESS
         )
-        active = edge_index == transition_index and progress < _SETTLED_PROGRESS
+        active = edge_index == transition_index and 0 < progress < _SETTLED_PROGRESS
         color = _TRAVERSED if completed else _LINE
         width = 2.4 if completed else 1.45
         curve = routed.curve
@@ -152,7 +178,7 @@ def _draw_traversal_edges(
                 mutation_scale=7.8,
                 linewidth=width,
                 color=color,
-                alpha=1.0 if completed or active else 0.72,
+                alpha=1.0,
                 zorder=1,
             )
         )
@@ -189,7 +215,11 @@ def _draw_traversal_edges(
                 str(edge.added_bases),
                 ha="center",
                 va="center",
-                color=_GRAPH_TEXT,
+                color=blend_color(
+                    RESTING_TEXT_COLOR,
+                    _GRAPH_TEXT,
+                    placement_progress(edge_index, transition_index, progress),
+                ),
                 fontsize=routed.label_font_size or EDGE_LABEL_FONT_SIZE_PT,
                 family=KMER_FONT_FAMILY,
                 bbox={
@@ -211,6 +241,7 @@ def _draw_nodes(
     axis: Axes,
     document: PlaybackDocument,
     scene: GraphScene,
+    frame: PlaybackFrame,
     *,
     kmer_font_size_pt: float,
 ) -> None:
@@ -220,7 +251,8 @@ def _draw_nodes(
     for index, step in enumerate(steps):
         geometry = scene.geometry(step.placement_id)
         x, y = scene.position(step.placement_id)
-        color = document.step_color(index)
+        emphasis = placement_progress(index, frame.transition_index, frame.progress)
+        color = blend_color(RESTING_COLOR, document.step_color(index), emphasis)
         axis.add_patch(
             FancyBboxPatch(
                 (x - geometry.width_pt / 2, y - geometry.height_pt / 2),
@@ -240,7 +272,7 @@ def _draw_nodes(
             step.placement_sequence,
             ha="center",
             va="center",
-            color="#FFFFFF",
+            color=blend_color(RESTING_TEXT_COLOR, "#FFFFFF", emphasis),
             fontsize=kmer_font_size_pt,
             family=KMER_FONT_FAMILY,
             fontweight=KMER_FONT_WEIGHT,
@@ -248,7 +280,9 @@ def _draw_nodes(
         )
 
 
-def _draw_terminals(axis: Axes, scene: GraphScene) -> None:
+def _draw_terminals(
+    axis: Axes, scene: GraphScene, transition_index: int, progress: float
+) -> None:
     from matplotlib.patches import Circle
 
     terminals = (
@@ -257,6 +291,8 @@ def _draw_terminals(axis: Axes, scene: GraphScene) -> None:
         else ()
     )
     for label, node_id in terminals:
+        index = 0 if node_id == START_NODE_ID else len(scene.graph.traversal_edges) - 1
+        emphasis = placement_progress(index, transition_index, progress)
         x, y = scene.position(node_id)
         geometry = scene.geometry(node_id)
         radius = geometry.width_pt / 2.0
@@ -265,7 +301,7 @@ def _draw_terminals(axis: Axes, scene: GraphScene) -> None:
                 (x, y),
                 radius=radius,
                 facecolor=_PAPER,
-                edgecolor=_INK,
+                edgecolor=blend_color(RESTING_COLOR, _INK, emphasis),
                 linewidth=1.25,
                 zorder=4,
             )
@@ -276,7 +312,7 @@ def _draw_terminals(axis: Axes, scene: GraphScene) -> None:
             label,
             ha="center",
             va="bottom",
-            color=_GRAPH_TEXT,
+            color=blend_color(RESTING_TEXT_COLOR, _GRAPH_TEXT, emphasis),
             fontsize=_TERMINAL_FONT_SIZE_PT,
             family=KMER_FONT_FAMILY,
             zorder=4,

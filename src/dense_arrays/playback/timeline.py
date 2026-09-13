@@ -15,6 +15,16 @@ if TYPE_CHECKING:
 _IUPAC_COMPLEMENTS = str.maketrans("ATCGRYSWKMBDHVN", "TAGCYRSWMKVHDBN")
 
 
+def placement_progress(index: int, transition_index: int, progress: float) -> float:
+    """Return smooth emphasis from neutral context through a placed step."""
+    if index < transition_index:
+        return 1.0
+    if index > transition_index:
+        return 0.0
+    progress = max(0.0, min(progress, 1.0))
+    return progress * progress * (3.0 - 2.0 * progress)
+
+
 def revealed_indices(steps: Sequence[PlaybackStep], step_index: int) -> tuple[int, ...]:
     """Return every coordinate revealed through ``step_index``."""
     return tuple(

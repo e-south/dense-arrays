@@ -21,6 +21,8 @@ from .graph.projection import project_explanation_graph
 from .graph.routing import quadratic_arc_length, route_graph_scene
 from .graph_drawing import draw_graph
 from .presentation import PlaybackDocument, resolve_distance_brackets, resolve_evidence
+from .theme import RESTING_COLOR, RESTING_TEXT_COLOR, blend_color
+from .timeline import placement_progress
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -93,8 +95,7 @@ def draw_document(
             ),
         )
     if duplex_frames is None:
-        step_index = min(transition_index, len(document.plan.steps) - 1)
-        draw_duplex(duplex_axis, document, step_index)
+        draw_duplex(duplex_axis, document, transition_index, progress)
     else:
         duplex_axis.imshow(
             duplex_frame,
@@ -103,9 +104,9 @@ def draw_document(
         )
         duplex_axis.axis("off")
     if legend_axis is not None:
-        _draw_legend(legend_axis, document)
+        _draw_legend(legend_axis, document, transition_index, progress)
     if duplex_frames is None or not duplex_frames.renders_distance_brackets:
-        draw_distance_brackets(duplex_axis, document)
+        draw_distance_brackets(duplex_axis, document, transition_index, progress)
     lines = evidence_lines(document)
     line_height = min(
         11 / (72 * figure.get_figheight()),
@@ -144,7 +145,9 @@ def evidence_lines(document: PlaybackDocument) -> tuple[tuple[str, str], ...]:
     return tuple(lines)
 
 
-def draw_distance_brackets(axis: Axes, document: PlaybackDocument) -> None:
+def draw_distance_brackets(
+    axis: Axes, document: PlaybackDocument, transition_index: int, progress: float
+) -> None:
     """Draw declared distances below a native or producer-rendered duplex."""
     brackets = resolve_distance_brackets(document)
     if not brackets:
@@ -156,7 +159,11 @@ def draw_distance_brackets(axis: Axes, document: PlaybackDocument) -> None:
                 transform=axis.transAxes,
                 ha="center",
                 fontsize=8,
-                color="#59635f",
+                color=blend_color(
+                    RESTING_TEXT_COLOR,
+                    "#59635f",
+                    placement_progress(0, transition_index, progress),
+                ),
             )
         return
     if len(brackets) > _MAX_NATIVE_DISTANCE_BRACKETS or any(
@@ -170,9 +177,13 @@ def draw_distance_brackets(axis: Axes, document: PlaybackDocument) -> None:
             ha="center",
             va="bottom",
             fontsize=7,
-            color="#9d2525"
-            if any(bracket.failed for bracket in brackets)
-            else "#59635f",
+            color=blend_color(
+                RESTING_TEXT_COLOR,
+                "#9d2525" if any(bracket.failed for bracket in brackets) else "#59635f",
+                placement_progress(
+                    len(document.plan.steps) - 1, transition_index, progress
+                ),
+            ),
             clip_on=True,
         )
         return
@@ -183,7 +194,16 @@ def draw_distance_brackets(axis: Axes, document: PlaybackDocument) -> None:
             0.08 + bracket.start / length * 0.84,
             0.08 + bracket.end / length * 0.84,
         )
-        color = "#9d2525" if bracket.failed else "#59635f"
+        result = document.plan.constraint_results[index]
+        emphasis = min(
+            placement_progress(step_index, transition_index, progress)
+            for step_index, step in enumerate(document.plan.steps)
+            if step.placement_id
+            in (result.upstream_placement_id, result.downstream_placement_id)
+        )
+        color = blend_color(
+            RESTING_COLOR, "#9d2525" if bracket.failed else "#59635f", emphasis
+        )
         axis.plot(
             (x1, x1, x2, x2),
             (y + 0.025, y, y, y + 0.025),
@@ -266,7 +286,9 @@ def document_axes(
     return graph_axis, duplex_axis, legend_axis
 
 
-def _draw_legend(axis: Axes, document: PlaybackDocument) -> None:
+def _draw_legend(
+    axis: Axes, document: PlaybackDocument, transition_index: int, progress: float
+) -> None:
     entries = document.presentation.legend_entries
     axis.set_xlim(0.0, 1.0)
     axis.set_ylim(0.0, 1.0)
@@ -277,6 +299,7 @@ def _draw_legend(axis: Axes, document: PlaybackDocument) -> None:
     segment = group_span / len(entries)
     group_start = (1.0 - group_span) / 2.0
     for index, entry in enumerate(entries):
+        emphasis = placement_progress(0, transition_index, progress)
         center = group_start + segment * (index + 0.5)
         axis.scatter(
             (center - 0.070,),
@@ -284,7 +307,7 @@ def _draw_legend(axis: Axes, document: PlaybackDocument) -> None:
             transform=axis.transAxes,
             marker="s",
             s=112,
-            facecolor=entry.color,
+            facecolor=blend_color(RESTING_COLOR, entry.color, emphasis),
             edgecolor="none",
             linewidth=0.0,
         )
@@ -295,7 +318,7 @@ def _draw_legend(axis: Axes, document: PlaybackDocument) -> None:
             transform=axis.transAxes,
             ha="left",
             va="center",
-            color=_GRAPH_TEXT,
+            color=blend_color(RESTING_TEXT_COLOR, _GRAPH_TEXT, emphasis),
             fontsize=11.5,
             family=KMER_FONT_FAMILY,
             fontweight="normal",

@@ -18,25 +18,32 @@ Run each independent example with `uv run python` from the
 ## Position two motifs
 
 Use `add_promoter_constraints()` to require one motif upstream of another.
-This example places `ATGC` at start 0, 1, or 2, followed by `CCC` with zero to
-three intervening bases:
+With the four motifs from the first-array tutorial, require the first motif
+at start 0, 1, or 2 and the fourth motif four to six bases after its end:
 
 ```python
 from dense_arrays import Optimizer
 
-optimizer = Optimizer(
-    ["GCA", "CCC", "ATGC", "CATT"], sequence_length=10, strands="single"
-)
+motifs = [
+    "ACGTTGCAAGTCCTGA",
+    "AAGTCCTGATCGTACC",
+    "GATCGTACCGATGCTT",
+    "CCGATGCTTAGGACGT",
+]
+optimizer = Optimizer(motifs, sequence_length=37, strands="single")
 optimizer.add_promoter_constraints(
-    upstream="ATGC",
-    downstream="CCC",
+    upstream=motifs[0],
+    downstream=motifs[3],
     upstream_pos=(0, 2),
-    spacer_length=(0, 3),
+    spacer_length=(4, 6),
 )
 best = optimizer.optimal()
 print(best)
-assert best.offsets_fwd[2] in range(0, 3)
-assert 0 <= best.offsets_fwd[1] - (best.offsets_fwd[2] + 4) <= 3
+upstream_start = best.offsets_fwd[0]
+downstream_start = best.offsets_fwd[3]
+assert upstream_start in range(0, 3)
+assert downstream_start is not None
+assert 4 <= downstream_start - (upstream_start + len(motifs[0])) <= 6
 ```
 
 Positions are zero-based start coordinates. A two-element range includes its
@@ -51,19 +58,24 @@ fractional bounds, lists, and reversed ranges are rejected before model allocati
 Both motifs must occur in the supplied library. Reusing a motif in another
 pair requires another copy of that motif in the library. Positional
 requirements are enforced by the solver and can make a request infeasible.
-Using biological motif sequences does not establish that the resulting
-arrangement functions as a promoter.
 
 ## Require regulator coverage
 
 Map each motif entry to a regulator label to specify which groups must appear.
 This example requires both entries labeled `R1` and at least one entry from
-another group:
+another group. Reducing the length limit to 30 bases leaves room for three of
+the four motifs:
 
 ```python
 from dense_arrays import Optimizer
 
-optimizer = Optimizer(["AAA", "CCC", "GGG", "TTT"], sequence_length=9, strands="single")
+motifs = [
+    "ACGTTGCAAGTCCTGA",
+    "AAGTCCTGATCGTACC",
+    "GATCGTACCGATGCTT",
+    "CCGATGCTTAGGACGT",
+]
+optimizer = Optimizer(motifs, sequence_length=30, strands="single")
 optimizer.add_regulator_constraints(
     ["R1", "R1", "R2", "R3"],
     required={"R1"},
@@ -73,6 +85,7 @@ optimizer.add_regulator_constraints(
 best = optimizer.optimal()
 print(best)
 assert best.offsets_fwd[0] is not None and best.offsets_fwd[1] is not None
+assert any(offset is not None for offset in best.offsets_fwd[2:])
 assert best.nb_motifs == 3
 ```
 
@@ -83,8 +96,10 @@ Supply positive integers for minimum counts and nonempty regulator labels
 without surrounding whitespace. Fractional and boolean counts are rejected;
 the library must contain enough entries to meet every declared minimum.
 
-These requirements count entries in the supplied mapping. They do not measure
-binding or simultaneous occupancy.
+The example selects the first three entries, representing `R1` and `R2`.
+Minimum counts refer to entries in the supplied mapping; the minimum number
+of regulators refers to distinct labels. The length limit determines how many
+additional entries can fit.
 
 ## Prefer a side
 
@@ -95,11 +110,14 @@ is required.
 ```python
 from dense_arrays import Optimizer
 
-optimizer = Optimizer(["AAA", "CCC"], sequence_length=6, strands="single")
-optimizer.add_side_biases(left=["AAA"], right=["CCC"])
+left_motif = "ACGTTGCAAGTCCTGA"
+right_motif = "CCGATGCTTAGGACGT"
+optimizer = Optimizer([left_motif, right_motif], sequence_length=32, strands="single")
+optimizer.add_side_biases(left=[left_motif], right=[right_motif])
 best = optimizer.optimal()
-print(best.sequence)  # AAACCC
-assert best.sequence == "AAACCC"
+print(best.sequence)  # ACGTTGCAAGTCCTGACCGATGCTTAGGACGT
+assert best.sequence == left_motif + right_motif
+assert best.offsets_fwd == [0, 16]
 ```
 
 All preferred motifs must belong to the original library. Side biases can be

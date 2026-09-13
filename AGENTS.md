@@ -28,4 +28,5 @@ separate. Playback may explain persisted placements; it must not invent a
 solver-recorded order. Run the full local gate in `docs/development.md` before
 handoff. Preserve all existing author credits, including Virgile Andreani's.
 Attribute new work to Eric J. South; do not replace joint authorship with a
-single-author header. Keep generated dogfood media outside tracked source.
+single-author header. Keep generated dogfood media outside tracked source;
+the reviewed teaching example in `docs/assets/` is maintained with its guide.
