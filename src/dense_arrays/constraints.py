@@ -1,12 +1,7 @@
-"""
---------------------------------------------------------------------------------
-<dense-array project>
-
-Constraint helpers for dense-arrays.
+"""Validated promoter and regulator requirements for motif packing.
 
 Module Author(s): Virgile Andreani, Eric J. South
 Dunlop Lab
---------------------------------------------------------------------------------
 """
 
 from __future__ import annotations
@@ -15,8 +10,12 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Self
 
+from .problem import discrete_integer
 
-@dataclass
+_INTERVAL_ENDPOINTS = 2
+
+
+@dataclass(frozen=True)
 class PromoterConstraint:
     """Promoter constraint (up/downstream elements, positions and spacing)."""
 
@@ -35,23 +34,53 @@ class PromoterConstraint:
         downstream_pos: int | tuple[int | None, int | None] | None = None,
         spacer_length: int | tuple[int | None, int | None] | None = None,
     ) -> None:
-        self.upstream_index = upstream_index
-        self.downstream_index = downstream_index
-        self.upstream_pos = (
-            upstream_pos
-            if isinstance(upstream_pos, tuple)
-            else (upstream_pos, upstream_pos)
+        upstream_index = discrete_integer(upstream_index, "upstream_index", minimum=0)
+        downstream_index = discrete_integer(
+            downstream_index, "downstream_index", minimum=0
         )
-        self.downstream_pos = (
-            downstream_pos
-            if isinstance(downstream_pos, tuple)
-            else (downstream_pos, downstream_pos)
+        if upstream_index == downstream_index:
+            msg = "Promoter indices must identify distinct library entries"
+            raise ValueError(msg)
+        object.__setattr__(self, "upstream_index", upstream_index)
+        object.__setattr__(self, "downstream_index", downstream_index)
+        object.__setattr__(
+            self, "upstream_pos", _interval(upstream_pos, "upstream_pos", minimum=0)
         )
-        self.spacer_length = (
-            spacer_length
-            if isinstance(spacer_length, tuple)
-            else (spacer_length, spacer_length)
+        object.__setattr__(
+            self,
+            "downstream_pos",
+            _interval(downstream_pos, "downstream_pos", minimum=0),
         )
+        object.__setattr__(
+            self, "spacer_length", _interval(spacer_length, "spacer_length")
+        )
+
+
+@dataclass(frozen=True)
+class RegulatorRequirements:
+    """A caller-independent snapshot of entry labels and coverage requirements."""
+
+    mapping: tuple[tuple[int, str], ...]
+    min_counts: tuple[tuple[str, int], ...]
+    min_required: int | None
+
+
+def _interval(
+    value: object, name: str, *, minimum: int | None = None
+) -> tuple[int | None, int | None]:
+    if isinstance(value, tuple):
+        if len(value) != _INTERVAL_ENDPOINTS:
+            msg = f"{name} must be an integer, None, or a two-item tuple"
+            raise ValueError(msg)
+        lower, upper = value
+    else:
+        lower = upper = value
+    lower = None if lower is None else discrete_integer(lower, name, minimum=minimum)
+    upper = None if upper is None else discrete_integer(upper, name, minimum=minimum)
+    if lower is not None and upper is not None and lower > upper:
+        msg = f"{name} minimum must not exceed maximum"
+        raise ValueError(msg)
+    return lower, upper
 
 
 def _normalize_regulator_mapping(
@@ -62,18 +91,21 @@ def _normalize_regulator_mapping(
         if len(regulator_by_index) != nb_motifs:
             msg = "regulator_by_index list length must match number of motifs"
             raise ValueError(msg)
-        mapping = {i: str(label).strip() for i, label in enumerate(regulator_by_index)}
+        mapping = dict(enumerate(regulator_by_index))
     elif isinstance(regulator_by_index, dict):
+        for index in regulator_by_index:
+            discrete_integer(index, "regulator_by_index index", minimum=0)
         if set(regulator_by_index.keys()) != set(range(nb_motifs)):
             msg = "regulator_by_index dict must cover all motif indices"
             raise ValueError(msg)
-        mapping = {
-            int(i): str(label).strip() for i, label in regulator_by_index.items()
-        }
+        mapping = dict(regulator_by_index)
     else:
         msg = "regulator_by_index must be a list or dict"
         raise TypeError(msg)
-    if any(not label for label in mapping.values()):
+    if any(
+        not isinstance(label, str) or not label or label.strip() != label
+        for label in mapping.values()
+    ):
         msg = "regulator_by_index labels must be non-empty strings"
         raise ValueError(msg)
     return mapping
@@ -84,7 +116,10 @@ def _normalize_min_counts(
     required: set[str],
     min_count_by_regulator: dict[str, int] | None,
 ) -> dict[str, int]:
-    min_counts = {str(k): int(v) for k, v in (min_count_by_regulator or {}).items()}
+    min_counts = {
+        key: discrete_integer(value, "min_count_by_regulator")
+        for key, value in (min_count_by_regulator or {}).items()
+    }
     for regulator, count in min_counts.items():
         if count <= 0:
             msg = f"min_count_by_regulator must be > 0 (got {regulator}={count})"
@@ -112,6 +147,9 @@ def _normalize_min_required(
 ) -> int | None:
     if min_required_regulators is None:
         return None
+    min_required_regulators = discrete_integer(
+        min_required_regulators, "min_required_regulators"
+    )
     if min_required_regulators <= 0:
         msg = "min_required_regulators must be > 0 (use None to disable)."
         raise ValueError(msg)

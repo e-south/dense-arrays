@@ -1,8 +1,11 @@
-"""Truthful projection from playback placements to graph topology."""
+"""Truthful projection from playback placements to graph topology.
+
+Module Author(s): Eric J. South
+"""
 
 from __future__ import annotations
 
-from ..models import PlaybackPlan, PlaybackStep
+from ..models import OrderingStatus, PlaybackPlan, PlaybackStep
 from .model import END_NODE_ID, START_NODE_ID, ExplanationGraph, GraphEdge, GraphNode
 
 
@@ -28,12 +31,12 @@ def project_explanation_graph(plan: PlaybackPlan) -> ExplanationGraph:
     """Project all coordinate-compatible relations without display pruning."""
     placement_ids = tuple(step.placement_id for step in plan.steps)
     if len(placement_ids) != len(set(placement_ids)):
-        raise ValueError("playback placement ids must be unique for graph projection")
+        msg = "playback placement ids must be unique for graph projection"
+        raise ValueError(msg)
     reserved = {START_NODE_ID, END_NODE_ID}.intersection(placement_ids)
     if reserved:
-        raise ValueError(
-            f"playback placement ids use reserved graph ids: {sorted(reserved)}"
-        )
+        msg = f"playback placement ids use reserved graph ids: {sorted(reserved)}"
+        raise ValueError(msg)
 
     nodes = [GraphNode(START_NODE_ID, None, terminal=True)]
     nodes.extend(
@@ -61,24 +64,20 @@ def project_explanation_graph(plan: PlaybackPlan) -> ExplanationGraph:
             previous_id, END_NODE_ID, None, 0, "realized_traversal", len(plan.steps)
         )
     )
+    if plan.ordering_status == OrderingStatus.LAYOUT_ONLY:
+        traversal_edges = []
     traversal_pairs = {(edge.source_id, edge.target_id) for edge in traversal_edges}
 
-    context_edges: list[GraphEdge] = []
-    for result in plan.constraint_results:
-        if (
-            result.upstream_placement_id not in placement_ids
-            or result.downstream_placement_id not in placement_ids
-        ):
-            continue
-        context_edges.append(
-            GraphEdge(
-                result.upstream_placement_id,
-                result.downstream_placement_id,
-                None,
-                0,
-                "declared_constraint",
-            )
+    context_edges: list[GraphEdge] = [
+        GraphEdge(
+            result.upstream_placement_id,
+            result.downstream_placement_id,
+            None,
+            0,
+            "declared_constraint",
         )
+        for result in plan.constraint_results
+    ]
     for source in plan.steps:
         for target in plan.steps:
             pair = (source.placement_id, target.placement_id)

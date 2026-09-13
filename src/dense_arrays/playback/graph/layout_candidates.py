@@ -1,21 +1,33 @@
-"""Topology-derived NetworkX layout candidates for compact playback graphs."""
+"""Topology-derived NetworkX layout candidates for compact playback graphs.
+
+Module Author(s): Eric J. South
+"""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import numpy as np
+    from networkx import Graph
+    from numpy.typing import NDArray
 
 from .model import END_NODE_ID, START_NODE_ID, ExplanationGraph, GraphNode
 
 
 @dataclass(frozen=True, slots=True)
 class RawLayoutCandidate:
+    """Store one seeded force-layout equilibrium before scene fitting."""
+
     engine: str
     seed: int
     positions: dict[str, tuple[float, float]]
 
 
-def _layout_graph(nx: Any, graph: ExplanationGraph, internal_ids: set[str]) -> Any:
+def _layout_graph(graph: ExplanationGraph, internal_ids: set[str]) -> Graph:
+    import networkx as nx
+
     layout_graph = nx.Graph()
     layout_graph.add_nodes_from(sorted(internal_ids))
     for edge in graph.context_edges:
@@ -35,16 +47,19 @@ def _layout_graph(nx: Any, graph: ExplanationGraph, internal_ids: set[str]) -> A
     return layout_graph
 
 
-def _initial_positions(nx: Any, node_ids: tuple[str, ...], seed: int) -> dict[str, Any]:
+def _initial_positions(
+    node_ids: tuple[str, ...], seed: int
+) -> dict[str, NDArray[np.float64]]:
     import math
 
+    import networkx as nx
     import numpy as np
 
     base = nx.circular_layout(node_ids, scale=1.0)
     phase = (seed % 360) * math.pi / 180.0
     cosine, sine = math.cos(phase), math.sin(phase)
     rng = np.random.default_rng(seed)
-    positions: dict[str, Any] = {}
+    positions: dict[str, NDArray[np.float64]] = {}
     for node_id in node_ids:
         x, y = base[node_id]
         positions[node_id] = np.asarray(
@@ -57,7 +72,7 @@ def _initial_positions(nx: Any, node_ids: tuple[str, ...], seed: int) -> dict[st
     return positions
 
 
-def generate_layout_candidates(
+def generate_layout_candidates(  # noqa: PLR0913 - independent search controls
     graph: ExplanationGraph,
     internal: tuple[GraphNode, ...],
     *,
@@ -70,13 +85,12 @@ def generate_layout_candidates(
     try:
         import networkx as nx
     except ImportError as exc:
-        raise RuntimeError(
-            "isotropic playback requires the 'dense-arrays[playback]' extra"
-        ) from exc
+        msg = "isotropic playback requires the 'dense-arrays[playback]' extra"
+        raise RuntimeError(msg) from exc
 
     internal_ids = {node.node_id for node in internal}
     node_ids = tuple(sorted(internal_ids))
-    layout_graph = _layout_graph(nx, graph, internal_ids)
+    layout_graph = _layout_graph(graph, internal_ids)
     if len(node_ids) == 1:
         return (RawLayoutCandidate("singleton", seed, {node_ids[0]: (0.0, 0.0)}),)
 
@@ -94,7 +108,7 @@ def generate_layout_candidates(
     candidates: list[RawLayoutCandidate] = []
     for index in range(seed_count):
         candidate_seed = seed + index * 37
-        initial = _initial_positions(nx, node_ids, candidate_seed)
+        initial = _initial_positions(node_ids, candidate_seed)
         try:
             result = nx.arf_layout(
                 layout_graph,
@@ -146,11 +160,13 @@ def generate_layout_candidates(
         )
 
     if not candidates:
-        raise ValueError("no graph-layout candidate converged")
+        msg = "no graph-layout candidate converged"
+        raise ValueError(msg)
     return tuple(candidates)
 
 
 def internal_edge_pairs(graph: ExplanationGraph) -> tuple[tuple[str, str], ...]:
+    """Return unique undirected relations between placement nodes."""
     pairs: set[tuple[str, str]] = set()
     for edge in (*graph.context_edges, *graph.traversal_edges):
         if edge.source_id in {START_NODE_ID, END_NODE_ID}:

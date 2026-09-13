@@ -40,11 +40,11 @@ jobs:
         run: uv run ruff check .
       - name: Format
         run: uv run ruff format --check .
-      - name: Test
+      - name: Test code, guide examples, and built documentation links
         run: uv run pytest -q
       - name: Build docs
         run: uv run mkdocs build --strict
       - name: Audit dependencies
-        run: uv export --frozen --all-extras --no-hashes --no-emit-project | uv run pip-audit -r /dev/stdin --progress-spinner off
+        run: uv export --frozen --all-extras --no-emit-project | uv run pip-audit -r /dev/stdin --require-hashes --disable-pip --progress-spinner off
       - name: Build distributions
         run: uv build

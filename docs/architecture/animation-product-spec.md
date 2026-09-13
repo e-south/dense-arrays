@@ -1,4 +1,15 @@
-# Dense-array playback product brief
+---
+title: Playback product brief
+description: Visual and accessibility goals for publication playback, with implementation status kept separate.
+---
+
+# Playback product brief
+
+This brief records visual and publication goals. The runtime validates v1
+placement evidence and displays authority, ordering qualifications, and failed
+requirements. These checks do not certify every figure against the typography,
+contrast, and publication goals below. Use the [playback contract](solution-playback.md)
+for enforced semantics and the [development gate](../development.md) for review.
 
 ## Purpose
 
@@ -18,9 +29,8 @@ Every completed frame must also work as a legible still in a presentation.
 The serialized contracts and authority language in
 [`solution-playback.md`](solution-playback.md) are normative.
 
-Current historical DenseGen records produce
-`authority=placement_reconstructed`. Their order is recovered from persisted
-placements. Playback must not describe this as the solver search, candidate
+Version 1 plans use `authority=placement_reconstructed`. Their order is
+derived from persisted placements. Playback must not describe this as the solver search, candidate
 graph, or exact solver-selected path.
 
 A future solver-authoritative trace may use the same renderer once dense-arrays
@@ -42,8 +52,9 @@ Three presentation tiers exercise the same public surface:
 3. **Study application** uses study-owned identities and labels to explain a
    specific promoter architecture.
 
-The first two recipes belong to DenseGen. Study selection, biological labels,
-and interpretation belong to the owning study repository.
+DenseGen can supply the first two recipes. Study selection, biological labels,
+and interpretation belong to the owning study repository. These are caller
+examples, not package dependencies or prerequisites for generic playback.
 
 ## Visual contract
 
@@ -84,5 +95,6 @@ Each endpoint publishes a digest-addressed bundle containing:
 - poster PNG.
 
 Generated media remains producer-owned output and is not committed to this
-repository. Renderers consume only validated playback plans and must not import
-solver or OR-Tools internals.
+repository. Renderers consume validated playback plans without importing solver
+or OR-Tools internals. Recipe owners provide the manifest and publication step;
+the package CLI renders the requested files.

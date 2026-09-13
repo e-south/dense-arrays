@@ -1,17 +1,14 @@
-"""
---------------------------------------------------------------------------------
-<dense-array project>
-
-Optimization model and solver for dense-arrays.
+"""Optimization and enumeration of dense motif-packing paths.
 
 Module Author(s): Virgile Andreani, Eric J. South
 Dunlop Lab
---------------------------------------------------------------------------------
 """
 
 from __future__ import annotations
 
 import itertools as it
+import math
+from numbers import Real
 from typing import TYPE_CHECKING, Self
 
 if TYPE_CHECKING:
@@ -21,16 +18,44 @@ from ortools.linear_solver import pywraplp
 
 from .constraints import (
     PromoterConstraint,
+    RegulatorRequirements,
     _normalize_min_counts,
     _normalize_min_required,
     _normalize_regulator_mapping,
 )
-from .sequence import VALID_BASES, adjacency_matrix, reverse_complement, take_best_run
+from .errors import (
+    InfeasibleError,
+    InvalidSolverResultError,
+    SolverBackendError,
+    UnprovenSolutionError,
+)
+from .greedy import realize_greedy
+from .model import ModelConfiguration, build_solver_model
+from .problem import PackingProblem, discrete_integer
 from .solution import DenseArray
+
+_INTEGER_TOLERANCE = 1e-6
 
 
 class Optimizer:
-    """Optimizer."""
+    """Configure and solve a motif-packing problem.
+
+    Parameters
+    ----------
+    library
+        Nonempty uppercase A/C/G/T motifs. Repeated strings remain distinct
+        library entries. Caller collections and public views are copied.
+    sequence_length
+        Positive integer length bound; booleans and fractional values are invalid.
+    strands
+        ``single`` selects forward entries; ``double`` permits either orientation
+        of each entry, at most once. This problem configuration is immutable.
+
+    Raises
+    ------
+    ValueError
+        If a motif, length, or strand policy is invalid.
+    """
 
     def __init__(
         self: Self,
@@ -38,38 +63,49 @@ class Optimizer:
         sequence_length: int,
         strands: str = "double",
     ) -> None:
-        if sequence_length <= 0:
-            msg = "sequence_length must be > 0"
-            raise ValueError(msg)
-        if strands not in {"single", "double"}:
-            msg = "strands must be single or double"
-            raise ValueError(msg)
-        if not library:
-            msg = "library must contain at least one motif"
-            raise ValueError(msg)
-        for i, motif in enumerate(library):
-            if not isinstance(motif, str) or not motif:
-                msg = f"motif at index {i} must be a non-empty string"
-                raise ValueError(msg)
-            invalid = set(motif) - VALID_BASES
-            if invalid:
-                msg = (
-                    f"motif at index {i} contains invalid bases: {sorted(invalid)}. "
-                    "Use uppercase A/C/G/T only."
-                )
-                raise ValueError(msg)
-
-        self.library = list(library)
-        self.sequence_length = sequence_length
-        self.strands = strands
-        self.promoters: list[PromoterConstraint] = []
-        self._regulator_constraints: dict | None = None
-        if strands == "double":
-            library = library + [reverse_complement(motif) for motif in library]
-        self.adjacency_matrix = adjacency_matrix(library)
+        self._problem = PackingProblem.create(library, sequence_length, strands)
+        self._adjacency = self._problem.adjacency
+        self._promoters: tuple[PromoterConstraint, ...] = ()
+        self._regulator_constraints: RegulatorRequirements | None = None
         self.model = None
-        self.ilefts: list[int] = []
-        self.irights: list[int] = []
+        self._model_modified = False
+        self._ilefts: tuple[int, ...] = ()
+        self._irights: tuple[int, ...] = ()
+
+    @property
+    def library(self) -> list[str]:
+        """A defensive copy of the immutable motif library."""
+        return list(self._problem.library)
+
+    @property
+    def sequence_length(self) -> int:
+        """The immutable maximum array length."""
+        return self._problem.sequence_length
+
+    @property
+    def strands(self) -> str:
+        """The immutable strand policy."""
+        return self._problem.strands
+
+    @property
+    def adjacency_matrix(self) -> list[list[int]]:
+        """A defensive view of cached path-entry shifts."""
+        return [list(row) for row in self._adjacency]
+
+    @property
+    def promoters(self) -> list[PromoterConstraint]:
+        """A defensive view of immutable promoter requirements."""
+        return list(self._promoters)
+
+    @property
+    def ilefts(self) -> list[int]:
+        """A defensive view of entries with left-side preference."""
+        return list(self._ilefts)
+
+    @property
+    def irights(self) -> list[int]:
+        """A defensive view of entries with right-side preference."""
+        return list(self._irights)
 
     def _ensure_model_not_built(self: Self, action: str) -> None:
         if self.model is not None:
@@ -102,7 +138,16 @@ class Optimizer:
         downstream_pos
             Position for the downstream element, or tuple (min, max).
         spacer_length
-            Length of the spacer between both elements, or tuple (min, max).
+            Integer spacer or ordered two-bound tuple. Negative spacers permit
+            intentional overlap. Position bounds must be nonnegative integers;
+            a None bound leaves that side unbounded. Booleans are invalid.
+
+        Raises
+        ------
+        ValueError
+            If motifs or position/spacer values are invalid.
+        RuntimeError
+            If the model has already been built.
         """
         self._ensure_model_not_built("Promoter constraints")
         upstream_index = self._find_motif_index(upstream)
@@ -115,7 +160,7 @@ class Optimizer:
             downstream_pos=downstream_pos,
             spacer_length=spacer_length,
         )
-        self.promoters.append(constraint)
+        self._promoters += (constraint,)
 
     def _find_motif_index(self: Self, motif: str, avoid: int | None = None) -> int:
         upstream_indices = {p.upstream_index for p in self.promoters}
@@ -161,14 +206,20 @@ class Optimizer:
             If the left or right motifs don't belong to the initial library.
         """
         self._ensure_model_not_built("Side biases")
+        if any(
+            value is not None and not isinstance(value, list) for value in (left, right)
+        ):
+            msg = "Side biases must be lists of library motifs"
+            raise ValueError(msg)
         try:
-            self.ilefts = [self.library.index(motif) for motif in left] if left else []
-            self.irights = (
-                [self.library.index(motif) for motif in right] if right else []
+            ilefts = tuple(self.library.index(motif) for motif in left) if left else ()
+            irights = (
+                tuple(self.library.index(motif) for motif in right) if right else ()
             )
         except ValueError as err:
             msg = "All motifs must belong to the initial library."
             raise ValueError(msg) from err
+        self._ilefts, self._irights = ilefts, irights
 
     def add_regulator_constraints(
         self: Self,
@@ -215,6 +266,14 @@ class Optimizer:
             msg = "At least one regulator constraint must be provided."
             raise ValueError(msg)
 
+        if required is not None and not isinstance(required, (set, frozenset)):
+            msg = "required regulators must be a set of labels"
+            raise ValueError(msg)
+        if min_count_by_regulator is not None and not isinstance(
+            min_count_by_regulator, dict
+        ):
+            msg = "min_count_by_regulator must be a dict of labels to counts"
+            raise ValueError(msg)
         mapping = _normalize_regulator_mapping(self.nb_motifs, regulator_by_index)
         available = set(mapping.values())
         required_set = set(required or [])
@@ -231,12 +290,9 @@ class Optimizer:
             available,
         )
 
-        self._regulator_constraints = {
-            "mapping": mapping,
-            "required": required_set,
-            "min_counts": min_counts,
-            "min_required": min_required_regulators,
-        }
+        self._regulator_constraints = RegulatorRequirements(
+            tuple(mapping.items()), tuple(min_counts.items()), min_required_regulators
+        )
 
     @property
     def nb_motifs(self: Self) -> int:
@@ -265,255 +321,23 @@ class Optimizer:
 
         Raises
         ------
-        RuntimeError
-            If the backend could not create the model.
+        SolverBackendError
+            If the requested backend could not create the model.
+        ValueError
+            If a solver option is invalid or rejected by the backend. The
+            existing model is retained when a replacement build is rejected.
         """
-        self.model = pywraplp.Solver.CreateSolver(solver)
-
-        if self.model is None:
-            msg = "Could not create model. There is a problem with the backend."
-            raise RuntimeError(msg)
-
-        # X_ij are binary variables. X_ij == 1 means that motif #j directly follows
-        # (and possibly overlaps) motif #i in the sequence.
-        start = {
-            (-1, j): self.model.BoolVar(f"X[-1,{j}]") for j in range(self.nb_nodes)
-        }
-        end = {(i, -1): self.model.BoolVar(f"X[{i},-1]") for i in range(self.nb_nodes)}
-        middle = {
-            (i, j): self.model.BoolVar(f"X[{i},{j}]")
-            for i in range(self.nb_nodes)
-            for j in range(self.nb_nodes)
-            if i != j
-        }
-        X = start | end | middle  # noqa: N806
-        self.model.X = X
-
-        # Path starts at the start
-        self.model.Add(sum(X[-1, j] for j in range(self.nb_nodes)) == 1)
-
-        # Path ends at the end
-        self.model.Add(sum(X[i, -1] for i in range(self.nb_nodes)) == 1)
-
-        # Conservation of flow
-        for k in range(self.nb_nodes):
-            enter_direct = sum(X[i, k] for i in range(-1, self.nb_nodes) if i != k)
-            exit_direct = sum(X[k, j] for j in range(-1, self.nb_nodes) if k != j)
-            self.model.Add(enter_direct == exit_direct)
-
-        # Don't include any motif more than once
-        for k in range(self.nb_motifs):
-            enter_direct = sum(X[i, k] for i in range(-1, self.nb_nodes) if i != k)
-            exit_direct = sum(X[k, j] for j in range(-1, self.nb_nodes) if k != j)
-            if self.strands == "single":
-                self.model.Add(enter_direct <= 1)
-                self.model.Add(exit_direct <= 1)
-                continue
-            # krev is the index of the reverse complement of motif k
-            krev = k + self.nb_motifs
-            enter_rev = sum(X[i, krev] for i in range(-1, self.nb_nodes) if i != krev)
-            exit_rev = sum(X[krev, j] for j in range(-1, self.nb_nodes) if krev != j)
-            self.model.Add(enter_direct + enter_rev <= 1)
-            self.model.Add(exit_direct + exit_rev <= 1)
-
-        # Global length constraint
-        size_inside = sum(
-            self.adjacency_matrix[i][j] * X[i, j]
-            for i in range(self.nb_nodes)
-            for j in range(self.nb_nodes)
-            if i != j
+        configuration = ModelConfiguration(
+            self._problem,
+            self._promoters,
+            self._regulator_constraints,
+            self._ilefts,
+            self._irights,
         )
-        size_terminal = sum(
-            len(self.library[i % self.nb_motifs]) * X[i, -1]
-            for i in range(self.nb_nodes)
-        )
-        self.model.Add(size_inside + size_terminal <= self.sequence_length)
+        self.model = build_solver_model(configuration, solver, solver_options)
+        self._model_modified = False
 
-        # Subtour elimination variables
-        self._add_continuity_variables()
-
-        # Apply user-defined distance constraints
-        self._add_promoter_constraints()
-
-        # Apply regulator coverage constraints
-        self._add_regulator_constraints()
-
-        # Objective
-        self.model.Maximize(
-            sum(
-                X[i, j]
-                for i in range(-1, self.nb_nodes)
-                for j in range(self.nb_nodes)
-                if i != j
-            ),
-        )
-
-        # Apply user-defined side biases
-        # (needs to be after the objective definition because it modifies it)
-        self._add_side_biases()
-
-        if solver_options:
-            for option in solver_options:
-                self.model.SetSolverSpecificParametersAsString(option)
-
-    def _add_continuity_variables(self: Self) -> None:
-        """Implement subtour elimination variables and constraints into the model."""
-        try:
-            self.model.cont  # noqa: B018
-        except AttributeError:
-            pass
-        else:
-            # Continuity variables already exist
-            return
-
-        self.model.cont = [
-            self.model.IntVar(1, self.nb_nodes, f"u[{i}]") for i in range(self.nb_nodes)
-        ]
-
-        for i in range(self.nb_nodes):
-            for j in range(self.nb_nodes):
-                if i == j:
-                    continue
-                distance_i_j = self.model.cont[j] - self.model.cont[i]
-                slack = self.nb_nodes * (1 - self.model.X[i, j])
-                self.model.Add(-distance_i_j + 1 <= slack)
-
-    def _add_position_variables(self: Self) -> None:
-        """Implement position variables and constraints into the model."""
-        try:
-            self.model.position  # noqa: B018
-        except AttributeError:
-            pass
-        else:
-            # Position variables already exist
-            return
-
-        # Initialize position variables
-        self.model.position = [
-            self.model.IntVar(0, self.sequence_length - 1, f"position[{i}]")
-            for i in range(self.nb_nodes)
-        ]
-
-        # Define position for each node
-        for i in range(-1, self.nb_nodes):
-            for j in range(self.nb_nodes):
-                if i == j:
-                    continue
-                shift = 0 if i == -1 else self.adjacency_matrix[i][j]
-                base_pos = 0 if i == -1 else self.model.position[i]
-                distance_i_j = self.model.position[j] - base_pos
-                slack = (self.sequence_length - 1) * (1 - self.model.X[i, j])
-                self.model.Add(shift * self.model.X[i, j] - slack <= distance_i_j)
-                self.model.Add(distance_i_j <= shift * self.model.X[i, j] + slack)
-
-    def _add_promoter_constraints(self: Self) -> None:
-        """Implement promoter constraints into the model."""
-        if not self.promoters:
-            return
-
-        self._add_position_variables()
-
-        for constraint in self.promoters:
-            # Both upstream and downstream elements must appear in the sequence
-            for k in [constraint.upstream_index, constraint.downstream_index]:
-                self.model.Add(
-                    sum(self.model.X[i, k] for i in range(-1, self.nb_nodes) if i != k)
-                    >= 1
-                )
-
-            # Position both upstream and downstream elements
-            spacer_length = (
-                self.model.position[constraint.downstream_index]
-                - self.model.position[constraint.upstream_index]
-                - len(self.library[constraint.upstream_index])
-            )
-            for pos_or_len, (min_val, max_val) in [
-                (
-                    self.model.position[constraint.upstream_index],
-                    constraint.upstream_pos,
-                ),
-                (
-                    self.model.position[constraint.downstream_index],
-                    constraint.downstream_pos,
-                ),
-                (spacer_length, constraint.spacer_length),
-            ]:
-                if min_val is not None:
-                    self.model.Add(min_val <= pos_or_len)
-                if max_val is not None:
-                    self.model.Add(pos_or_len <= max_val)
-
-    def _add_side_biases(self: Self) -> None:
-        """Implement the side biases into the model."""
-        if not self.ilefts and not self.irights:
-            return
-
-        self._add_position_variables()
-
-        objective = self.model.Objective()
-
-        weight = 0.5 / (self.nb_motifs * self.sequence_length)
-
-        for i in self.ilefts:
-            objective.SetCoefficient(self.model.position[i], -weight)
-            if self.strands == "double":
-                irev = i + self.nb_motifs
-                objective.SetCoefficient(self.model.position[irev], -weight)
-        for i in self.irights:
-            objective.SetCoefficient(self.model.position[i], weight)
-            if self.strands == "double":
-                irev = i + self.nb_motifs
-                objective.SetCoefficient(self.model.position[irev], weight)
-
-    def _add_regulator_constraints(self: Self) -> None:
-        """Implement regulator coverage constraints into the model."""
-        if not self._regulator_constraints:
-            return
-
-        mapping: dict[int, str] = self._regulator_constraints["mapping"]
-        min_counts: dict[str, int] = self._regulator_constraints["min_counts"]
-        min_required = self._regulator_constraints["min_required"]
-
-        self.model.selected = [
-            self.model.BoolVar(f"selected[{i}]") for i in range(self.nb_motifs)
-        ]
-
-        def _incoming(node: int) -> pywraplp.LinearExpr:
-            return sum(
-                self.model.X[i, node] for i in range(-1, self.nb_nodes) if i != node
-            )
-
-        for i in range(self.nb_motifs):
-            used_fwd = _incoming(i)
-            if self.strands == "double":
-                used_rev = _incoming(i + self.nb_motifs)
-                used_total = used_fwd + used_rev
-            else:
-                used_total = used_fwd
-            self.model.Add(used_total <= self.model.selected[i])
-            self.model.Add(self.model.selected[i] <= used_total)
-
-        groups: dict[str, list[int]] = {}
-        for idx, label in mapping.items():
-            groups.setdefault(label, []).append(idx)
-
-        for label, indices in groups.items():
-            total = sum(self.model.selected[i] for i in indices)
-            min_count = min_counts.get(label)
-            if min_count is not None:
-                self.model.Add(total >= min_count)
-
-        if min_required is not None:
-            covered_flags = []
-            for ridx, indices in enumerate(groups.values()):
-                covered = self.model.BoolVar(f"covered[{ridx}]")
-                total = sum(self.model.selected[i] for i in indices)
-                self.model.Add(total >= covered)
-                self.model.Add(total <= len(indices) * covered)
-                covered_flags.append(covered)
-            self.model.Add(sum(covered_flags) >= min_required)
-
-    def solve(self: Self) -> DenseArray:  # noqa: C901, PLR0912
+    def solve(self: Self) -> DenseArray:
         """
         Solve the currently built model and return its optimal solution.
 
@@ -524,8 +348,14 @@ class Optimizer:
         ------
         RuntimeError
             If the model has not been built yet (`build_model` should be called).
-        ValueError
-            If the model could not be solved optimally.
+        InfeasibleError
+            If the solver proves that no feasible path exists.
+        UnprovenSolutionError
+            If a feasible incumbent exists but optimality is not proved.
+        SolverBackendError
+            If the backend fails or reports an unsupported result status.
+        InvalidSolverResultError
+            If the selected arcs or reconstructed array violate their contracts.
 
         Returns
         -------
@@ -537,7 +367,11 @@ class Optimizer:
             raise RuntimeError(msg)
 
         # Solve the problem
-        status = self.model.Solve()
+        try:
+            status = self.model.Solve()
+        except Exception as err:
+            msg = f"Solver backend execution failed: {err}"
+            raise SolverBackendError(msg) from err
 
         if status != pywraplp.Solver.OPTIMAL:
             status_messages = {
@@ -550,45 +384,66 @@ class Optimizer:
             msg = status_messages.get(
                 status, f"Solver ended with unknown status: {status}."
             )
-            raise ValueError(msg)
+            error_type = {
+                pywraplp.Solver.INFEASIBLE: InfeasibleError,
+                pywraplp.Solver.FEASIBLE: UnprovenSolutionError,
+            }.get(status, SolverBackendError)
+            raise error_type(msg)
 
-        # Extract the solution
-        sol = [-1]
-        offset = 0
-        offsets_fwd = [None] * self.nb_motifs
-        offsets_rev = [None] * self.nb_motifs
-        while sol[-1] >= 0 or len(sol) == 1:
-            current = sol[-1]
-            if current == -1:
-                candidates = range(self.nb_nodes)
-            else:
-                candidates = range(-1, self.nb_nodes)
-            for j in candidates:
-                if current >= 0 and j == current:
-                    continue
-                if round(self.model.X[current, j].solution_value()) == 1:
-                    if len(sol) > 1:
-                        offset += self.adjacency_matrix[current][j]
-                    if j >= self.nb_motifs:
-                        offsets_rev[j % self.nb_motifs] = offset
-                    elif j >= 0:
-                        offsets_fwd[j] = offset
-                    sol.append(j)
-                    break
-            else:
-                msg = "Solver returned an invalid path."
-                raise RuntimeError(msg)
-        sol = sol[1:-1]
-        if not sol:
-            msg = "No feasible solution was found."
-            raise ValueError(msg)
+        try:
+            path = self._selected_path()
+            offsets_fwd = [None] * self.nb_motifs
+            offsets_rev = [None] * self.nb_motifs
+            offset = 0
+            previous = None
+            for node in path:
+                if previous is not None:
+                    offset += self._adjacency[previous][node]
+                offsets = offsets_fwd if node < self.nb_motifs else offsets_rev
+                offsets[node % self.nb_motifs] = offset
+                previous = node
+            return DenseArray(
+                self.library, self.sequence_length, offsets_fwd, offsets_rev
+            )
+        except (ValueError, TypeError, AttributeError, KeyError, IndexError) as err:
+            msg = f"Invalid solver result: {err}"
+            raise InvalidSolverResultError(msg) from err
 
-        return DenseArray(
-            self.library,
-            self.sequence_length,
-            offsets_fwd,
-            offsets_rev,
-        )
+    def _selected_path(self) -> list[int]:
+        selected = set()
+        for edge, variable in self.model.X.items():
+            value = variable.solution_value()
+            if (
+                not math.isfinite(value)
+                or min(abs(value), abs(value - 1)) > _INTEGER_TOLERANCE
+            ):
+                msg = "Solver returned a non-binary path variable"
+                raise InvalidSolverResultError(msg)
+            if round(value) == 1:
+                selected.add(edge)
+        remaining = set(selected)
+        path = []
+        used_entries = set()
+        current = -1
+        while True:
+            successors = [j for i, j in remaining if i == current]
+            if len(successors) != 1:
+                msg = "Solver returned an invalid path: expected one successor"
+                raise InvalidSolverResultError(msg)
+            node = successors[0]
+            remaining.remove((current, node))
+            if node == -1:
+                break
+            if not 0 <= node < self.nb_nodes or node % self.nb_motifs in used_entries:
+                msg = "Solver returned an invalid path: repeated or unknown entry"
+                raise InvalidSolverResultError(msg)
+            used_entries.add(node % self.nb_motifs)
+            path.append(node)
+            current = node
+        if remaining or not path:
+            msg = "Solver returned an invalid path: disconnected or empty result"
+            raise InvalidSolverResultError(msg)
+        return path
 
     def forbid(self: Self, solution: DenseArray) -> None:
         """
@@ -597,20 +452,46 @@ class Optimizer:
         Parameters
         ----------
         solution
-            The solution to forbid.
+            A result with this library, length bound, and permitted orientations,
+            whose ordered offsets describe an exact packing path.
 
         Raises
         ------
         RuntimeError
             If the model has not been built yet (`build_model` should be called).
+        ValueError
+            If the result is foreign or its placements do not form a valid path.
+            Rejected results leave the model unchanged.
         """
         if self.model is None:
             msg = "Model not built: call `build_model(solver)` first"
             raise RuntimeError(msg)
 
-        sol = [-1, *(i for _, i in solution.offset_indices_in_order()), -1]
+        if not isinstance(solution, DenseArray) or (
+            solution.library != self.library
+            or solution.sequence_length != self.sequence_length
+        ):
+            msg = "Solution does not belong to this packing problem"
+            raise ValueError(msg)
+        if self.strands == "single" and any(
+            o is not None for o in solution.offsets_rev
+        ):
+            msg = "Solution violates this problem's single-strand policy"
+            raise ValueError(msg)
+        ordered = solution.offset_indices_in_order()
+        expected_offset = 0
+        previous = None
+        for offset, index in ordered:
+            if previous is not None:
+                expected_offset += self._adjacency[previous][index]
+            if offset != expected_offset:
+                msg = "Solution placements do not describe an exact packing path"
+                raise ValueError(msg)
+            previous = index
+        sol = [-1, *(i for _, i in ordered), -1]
         sum_on_path = sum(self.model.X[i, j] for i, j in it.pairwise(sol))
         self.model.Add(sum_on_path <= solution.nb_motifs)
+        self._model_modified = True
 
     def set_motif_weight(self: Self, imotif: int, weight: float) -> None:
         """
@@ -621,31 +502,54 @@ class Optimizer:
         imotif
             Index of the motif.
         weight
-            Weight of the motif.
+            Finite real weight, representable as a solver coefficient. Negative
+            weights are permitted; booleans and nonfinite values are invalid.
 
         Raises
         ------
         RuntimeError
             If the model has not been built yet (`build_model` should be called).
+        ValueError
+            If the index is not an original library entry or the weight is
+            invalid. Rejected updates leave all coefficients unchanged.
         """
         if self.model is None:
             msg = "Model not built: call `build_model(solver)` first"
             raise RuntimeError(msg)
 
+        imotif = discrete_integer(imotif, "imotif", minimum=0)
+        if imotif >= self.nb_motifs:
+            msg = "imotif must identify an entry in the motif library"
+            raise ValueError(msg)
+        if isinstance(weight, bool) or not isinstance(weight, Real):
+            msg = "weight must be a finite real number (not bool)"
+            raise ValueError(msg)  # noqa: TRY004 - invalid configuration is a ValueError
+        try:
+            normalized_weight = float(weight)
+        except (OverflowError, ValueError) as err:
+            msg = "weight must be representable as a finite real number"
+            raise ValueError(msg) from err
+        if not math.isfinite(normalized_weight):
+            msg = "weight must be a finite real number"
+            raise ValueError(msg)
         objective = self.model.Objective()
 
         for i in range(-1, self.nb_nodes):
             if i != imotif:
-                objective.SetCoefficient(self.model.X[i, imotif], weight)
+                objective.SetCoefficient(self.model.X[i, imotif], normalized_weight)
             imotif2 = imotif + self.nb_motifs
             if self.strands == "double" and i != imotif2:
-                objective.SetCoefficient(self.model.X[i, imotif2], weight)
+                objective.SetCoefficient(self.model.X[i, imotif2], normalized_weight)
+        self._model_modified = True
 
     def solutions(
         self: Self, solver: str = "CBC", solver_options: list[str] | None = None
     ) -> Iterator[DenseArray]:
         """
         Iterate over solutions in decreasing order of score.
+
+        Only proven infeasibility ends iteration normally. Unproven, backend,
+        and invalid-result failures propagate, including after a yielded result.
 
         Note that this function (re)builds the model automatically.
 
@@ -667,7 +571,7 @@ class Optimizer:
         while True:
             try:
                 sol = self.solve()
-            except ValueError:
+            except InfeasibleError:
                 break
             yield sol
             self.forbid(sol)
@@ -677,6 +581,9 @@ class Optimizer:
     ) -> Iterator[DenseArray]:
         """
         Return an iterator of optimal solutions trying to minimize the bias in motifs.
+
+        Only proven infeasibility ends iteration normally. Other solve failures
+        propagate, including after a yielded result.
 
         Note that this function (re)builds the model automatically.
 
@@ -702,7 +609,7 @@ class Optimizer:
         while True:
             try:
                 sol = self.solve()
-            except ValueError:
+            except InfeasibleError:
                 break
             yield sol
             # Forbid the solution
@@ -744,76 +651,46 @@ class Optimizer:
 
         Raises
         ------
-        ValueError
+        InfeasibleError
             If no feasible solution exists.
         """
         try:
             return next(self.solutions(solver, solver_options=solver_options))
         except StopIteration as err:
             msg = "No feasible solution was found."
-            raise ValueError(msg) from err
+            raise InfeasibleError(msg) from err
 
     def approximate(self: Self) -> DenseArray:
         """
-        Return a solution approximated with a greedy algorithm.
+        Return the best path found by deterministic greedy starts.
+
+        Every selected entry owns one occurrence on one strand. Duplicate entries
+        need separate occurrences; incidental contained substrings are not added.
+        The heuristic does not prove optimality and does not call a solver.
 
         Raises
         ------
         ValueError
-            If no feasible solution exists.
+            If promoter/regulator requirements, side biases, or model changes
+            from ``forbid`` or ``set_motif_weight`` are configured.
+        InfeasibleError
+            If no motif fits the sequence length bound.
 
         Returns
         -------
         solution :
             Approximate solution.
         """
-        library = list(self.library)
-        if self.strands == "double":
-            library += [reverse_complement(motif) for motif in library]
-
-        while len(library) > {"single": 1, "double": 2}[self.strands]:
-            adj = adjacency_matrix(library)
-            _min_dist, i, j = min(
-                (adj[i][j], i, j)
-                for i in range(len(library))
-                for j in range(len(library))
-                if i != j
-                and not (self.strands == "double" and abs(i - j) == len(library) // 2)
-            )
-            library[i] = library[i][: adj[i][j]] + library[j]
-            if self.strands == "double":
-                library[(i + len(library) // 2) % len(library)] = reverse_complement(
-                    library[i],
-                )
-                del library[max(j, (j + len(library) // 2) % len(library))]
-                del library[min(j, (j + len(library) // 2) % len(library))]
-            else:
-                del library[j]
-        sequence = take_best_run(
-            library[0],
-            self.sequence_length,
-            self.library,
-            self.strands,
-        )
-        offsets_fwd = [
-            sequence.index(motif) if motif in sequence else None
-            for motif in self.library
-        ]
-        if self.strands == "double":
-            offsets_rev = [
-                sequence.index(reverse_complement(motif))
-                if reverse_complement(motif) in sequence
-                else None
-                for motif in self.library
-            ]
-            for i in range(self.nb_motifs):
-                if offsets_fwd[i] is not None and offsets_rev[i] is not None:
-                    offsets_rev[i] = None
-        else:
-            offsets_rev = [None] * self.nb_motifs
-        if all(offset is None for offset in offsets_fwd) and all(
-            offset is None for offset in offsets_rev
+        if (
+            self._promoters
+            or self._regulator_constraints
+            or self._ilefts
+            or self._irights
+            or self._model_modified
         ):
-            msg = "No feasible solution was found."
+            msg = (
+                "approximate() does not support configured constraints, "
+                "side biases, or model changes"
+            )
             raise ValueError(msg)
-        return DenseArray(self.library, self.sequence_length, offsets_fwd, offsets_rev)
+        return realize_greedy(self._problem)

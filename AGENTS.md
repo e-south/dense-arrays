@@ -1,24 +1,31 @@
+---
+id: dense-arrays-router
+intent: Route tasks to the relevant documentation and code owners.
+---
+
 # Dense Arrays agent router
 
 Dense Arrays is a public Python package for optimizing motif-dense DNA arrays
 and rendering explicit realized-array playback records.
 
-Start with:
+Choose the route for the task; do not load every reference:
 
-- `README.md` for user-facing scope and commands;
-- `docs/architecture/README.md` for module boundaries;
-- `docs/architecture/solution-playback.md` for playback authority;
-- `pyproject.toml` for supported Python, extras, and quality commands.
+| Task | Start here |
+| --- | --- |
+| Install or create an array | `README.md` → `docs/quickstart.md` |
+| Add positional or motif-group requirements | `docs/constraints.md` |
+| Render saved placements | `docs/playback.md` |
+| Change implementation or tests | `docs/architecture/README.md` task-to-file map |
+| Change placement JSON or interpretation | `docs/architecture/solution-playback.md` → serialization row in the code map |
+| Revise documentation | `docs/development/documentation.md` |
+| Review completed hardening | `docs/development/improvement-plan.md` and its linked baseline audit |
+
+`pyproject.toml` owns supported Python and extras. Nested source and test
+directories inherit this router unless a closer instruction file applies.
 
 Keep optimizer semantics, realized-array contracts, and playback presentation
 separate. Playback may explain persisted placements; it must not invent a
-solver-recorded order. Run the full local gate before handoff:
-
-```bash
-uv sync --frozen --extra dev --extra playback --extra docs
-uv run pre-commit run --all-files
-uv run pytest -q
-uv run mkdocs build --strict
-uv export --frozen --all-extras --no-hashes --no-emit-project | uv run pip-audit -r /dev/stdin --progress-spinner off
-uv build
-```
+solver-recorded order. Run the full local gate in `docs/development.md` before
+handoff. Preserve all existing author credits, including Virgile Andreani's.
+Attribute new work to Eric J. South; do not replace joint authorship with a
+single-author header. Keep generated dogfood media outside tracked source.

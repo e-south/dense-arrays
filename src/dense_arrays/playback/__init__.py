@@ -1,10 +1,5 @@
 """Public, renderer-independent dense-array playback contracts."""
 
-from .html import (
-    PlaybackDocument,
-    render_playback_collection_html,
-    render_playback_html,
-)
 from .models import (
     PLAYBACK_PLAN_SCHEMA_VERSION,
     ConstraintResult,
@@ -16,6 +11,7 @@ from .models import (
     PlaybackPlan,
     PlaybackStep,
 )
+from .presentation import PlaybackDocument
 from .reconstruction import reconstruct_playback
 from .serialization import (
     dumps_playback_plan,
@@ -48,6 +44,4 @@ __all__ = [
     "realized_array_from_dict",
     "realized_array_to_dict",
     "reconstruct_playback",
-    "render_playback_collection_html",
-    "render_playback_html",
 ]

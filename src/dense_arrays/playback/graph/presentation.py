@@ -1,5 +1,9 @@
-"""Explicit display choices applied after semantic graph projection."""
+"""Explicit display choices applied after semantic graph projection.
 
+Module Author(s): Eric J. South
+"""
+
+from ..models import PlaybackStep
 from ..theme import step_color as resolve_step_color
 from .model import ExplanationGraph, GraphEdge
 
@@ -7,8 +11,10 @@ from .model import ExplanationGraph, GraphEdge
 def select_context_edges(
     graph: ExplanationGraph, *, max_per_source: int = 2
 ) -> tuple[GraphEdge, ...]:
+    """Select a bounded set of prioritized context edges for each source."""
     if max_per_source < 0:
-        raise ValueError("max_per_source must be non-negative")
+        msg = "max_per_source must be non-negative"
+        raise ValueError(msg)
     grouped: dict[str, list[GraphEdge]] = {}
     for edge in graph.context_edges:
         grouped.setdefault(edge.source_id, []).append(edge)
@@ -27,5 +33,6 @@ def select_context_edges(
     return tuple(selected)
 
 
-def step_color(step, index: int, profile: str = "categorical") -> str:
+def step_color(step: PlaybackStep, index: int, profile: str = "categorical") -> str:
+    """Resolve a generic color from declared placement kind and order."""
     return resolve_step_color(step, index, profile)

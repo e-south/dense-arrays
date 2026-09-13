@@ -14,13 +14,15 @@ before_script:
 pre-commit:
   stage: test
   script:
+    - apt-get update
+    - apt-get install --no-install-recommends -y git
     - uv run pre-commit run --all-files
 
 test:
   stage: test
   script:
     - uv run pytest -v
-    - uv export --frozen --all-extras --no-hashes --no-emit-project | uv run pip-audit -r /dev/stdin --progress-spinner off
+    - uv export --frozen --all-extras --no-emit-project | uv run pip-audit -r /dev/stdin --require-hashes --disable-pip --progress-spinner off
 
 pages:
   stage: deploy
