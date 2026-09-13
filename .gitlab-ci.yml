@@ -14,6 +14,8 @@ before_script:
 pre-commit:
   stage: test
   script:
+    - apt-get update
+    - apt-get install --no-install-recommends -y git
     - uv run pre-commit run --all-files
 
 test:

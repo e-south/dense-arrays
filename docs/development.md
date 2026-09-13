@@ -66,5 +66,12 @@ The [GitHub workflow](https://github.com/e-south/dense-arrays/blob/main/.github/
 checks the lock, source quality, tests, documentation, dependencies, and package
 build on pushes to `main` and pull requests.
 The [GitLab workflow](https://github.com/e-south/dense-arrays/blob/main/.gitlab-ci.yml)
-also defines the GitLab Pages documentation build on its default branch.
-Building documentation locally does not publish that site.
+publishes GitLab Pages from its default branch after the test jobs pass. Its
+slim Python image omits Git, so the pre-commit job installs Git before checking
+the repository.
+
+After merging on GitHub, fast-forward the GitLab default branch to the same
+commit through the existing repository remote. Verify the test and Pages jobs,
+then open a changed guide on the hosted site and check its content and assets.
+Building documentation locally or passing GitHub checks does not publish that
+site.
