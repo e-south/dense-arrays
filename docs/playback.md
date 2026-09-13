@@ -116,9 +116,8 @@ coordinates. The order can be:
 
 Reconstruction also checks declared distances. A layout that violates a
 requirement retains that result as `passed=False`; rendering it does not make
-the requirement pass. Media keeps the reconstructed authority, ordering
-qualifications, and failed requirements visible. Long failure details are
-retained in native media metadata. See
+the requirement pass. Failed requirements appear on the figure. Reconstruction
+details and complete results are retained in native media metadata. See
 [how to read the full evidence](reference/playback-presentation.md#read-the-evidence).
 
 ## Render serialized input

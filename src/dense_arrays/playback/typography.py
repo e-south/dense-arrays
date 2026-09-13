@@ -43,3 +43,5 @@ PUBLICATION_NUCLEOTIDE_TYPOGRAPHY = NucleotideTypography(
     duplex_font_size_pt=30.0,
     target_cap_height_px=18.0,
 )
+
+PUBLICATION_LABEL_FONT_SIZE_PT = 11.5

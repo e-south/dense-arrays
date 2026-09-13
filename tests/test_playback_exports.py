@@ -304,7 +304,7 @@ def test_crowded_evidence_preserves_size_and_complete_png_metadata(
         text = "\n".join(artist.get_text() for artist in figure.texts)
         assert "full" in text
         assert "metadata" in text
-        assert "Reconstructed from placements" in text
+        assert "Reconstructed from placements" not in text
         assert all(axis.get_position().y0 < 0.25 for axis in figure.axes)
         if failures:
             assert "FAILED 15 distance constraints" in text
