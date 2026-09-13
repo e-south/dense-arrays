@@ -1,6 +1,6 @@
 ---
 title: Packing method
-description: Follow four motifs from compatible overlaps to a 37-base array.
+description: Follow four motifs from compatible overlaps to a 40-base array.
 ---
 
 # How motifs share sequence space
@@ -13,27 +13,27 @@ an order that fits the requested length limit.
 ## Follow the worked example
 
 The [first-array tutorial](quickstart.md) supplies four 16-base motifs. The
-first two share the nine-base string `AAGTCCTGA`:
+first two share the eight-base string `AGTCCTGA`:
 
 ```text
 ACGTTGCAAGTCCTGA
-       AAGTCCTGATCGTACC
+        AGTCCTGATCGTACCG
 ```
 
-Their combined length is 23 bases. The third and fourth motifs each share
-nine bases with the preceding motif, adding seven bases apiece. All four
-therefore fit in `16 + 7 + 7 + 7 = 37` bases, compared with 64 bases placed end
+Their combined length is 24 bases. The third and fourth motifs each share
+eight bases with the preceding motif, adding eight bases apiece. All four
+therefore fit in `16 + 8 + 8 + 8 = 40` bases, compared with 64 bases placed end
 to end:
 
 ```text
-ACGTTGCAAGTCCTGATCGTACCGATGCTTAGGACGT
+ACGTTGCAAGTCCTGATCGTACCGATGCTTAGGACGTTCA
 ```
 
 The process figure follows the same library through four stages: specify the
 motifs and length limit, compute directional overlap costs, select a path,
 and read the packed sequence.
 
-[![Four-stage motif packing: a library of four 16-base motifs, directional overlap costs, a path within 37 bases, and the resulting DNA array](assets/motif-packing-process.svg)](assets/motif-packing-process.svg)
+[![Four-stage motif packing: a library of four 16-base motifs, directional overlap costs, a path within 40 bases, and the resulting DNA array](assets/motif-packing-process.svg)](assets/motif-packing-process.svg)
 
 [Open the full-size figure](assets/motif-packing-process.svg) to read the sequence labels.
 
@@ -53,9 +53,9 @@ Reversing their order can change the overlap and therefore the cost. An
 integer optimization solver selects a path within the length limit.
 Double-strand optimization includes reverse-complement orientations as well.
 
-For the worked example, the first motif occupies 16 bases. The three
-subsequent transitions each add seven bases, producing starts at 0, 7, 14, and
-21. The result retains the sequence and these input-order offsets.
+In the shown orientation, the first motif occupies 16 bases. The three
+subsequent transitions each add eight bases, producing starts at 0, 8, 16, and
+24. A result in this orientation retains these input-order offsets.
 
 The exact model counts selected entries along its path. A motif that happens
 to occur inside another selected motif does not receive an additional

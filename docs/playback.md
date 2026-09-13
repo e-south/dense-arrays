@@ -7,13 +7,13 @@ description: Build a realized-array record and render its placements as a PNG, M
 
 Turn saved feature placements into a PNG, MP4, or GIF to inspect their positions
 and overlaps. This guide follows the four 16-base motifs from the
-[first-array example](quickstart.md) across their 37-base sequence.
+[first-array example](quickstart.md) across their 40-base sequence.
 
 ## Watch four overlapping motifs
 
 <p id="playback-example-description">The opening frame shows the complete graph
 and DNA duplex in gray. Color then follows the four placements in coordinate
-order: the first motif covers 16 bases, and each later motif adds seven.
+order: the first motif covers 16 bases, and each later motif adds eight.
 Overlapping portions share the same sequence positions throughout.</p>
 
 <video controls preload="metadata" poster="../assets/playback-opening.png"
@@ -58,7 +58,7 @@ from dense_arrays.realized import Orientation, Placement, PlacementKind, Realize
 
 realized = RealizedArray(
     source_id="synthetic:first-array",
-    sequence="ACGTTGCAAGTCCTGATCGTACCGATGCTTAGGACGT",
+    sequence="ACGTTGCAAGTCCTGATCGTACCGATGCTTAGGACGTTCA",
     placements=tuple(
         Placement(
             placement_id=identifier,
@@ -70,9 +70,9 @@ realized = RealizedArray(
         )
         for identifier, motif, start in (
             ("motif-1", "ACGTTGCAAGTCCTGA", 0),
-            ("motif-2", "AAGTCCTGATCGTACC", 7),
-            ("motif-3", "GATCGTACCGATGCTT", 14),
-            ("motif-4", "CCGATGCTTAGGACGT", 21),
+            ("motif-2", "AGTCCTGATCGTACCG", 8),
+            ("motif-3", "TCGTACCGATGCTTAG", 16),
+            ("motif-4", "ATGCTTAGGACGTTCA", 24),
         )
     ),
 )
@@ -87,7 +87,7 @@ print(output)
 print(plan.authority.value)  # placement_reconstructed
 assert plan.ordering_status.value == "unique"
 assert tuple((span.start, span.end) for span in plan.steps[1].added_spans) == (
-    (16, 23),
+    (16, 24),
 )
 ```
 
@@ -97,9 +97,9 @@ zero-based and half-open:
 | Placement | Sequence | Occupied span |
 | --- | --- | --- |
 | motif-1 | `ACGTTGCAAGTCCTGA` | `[0, 16)` |
-| motif-2 | `AAGTCCTGATCGTACC` | `[7, 23)` |
-| motif-3 | `GATCGTACCGATGCTT` | `[14, 30)` |
-| motif-4 | `CCGATGCTTAGGACGT` | `[21, 37)` |
+| motif-2 | `AGTCCTGATCGTACCG` | `[8, 24)` |
+| motif-3 | `TCGTACCGATGCTTAG` | `[16, 32)` |
+| motif-4 | `ATGCTTAGGACGTTCA` | `[24, 40)` |
 
 Each placement sequence is already oriented to the realized sequence. The
 poster and video exports share the NetworkX layout and Matplotlib renderer.

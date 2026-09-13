@@ -5,7 +5,7 @@ description: Install from source, solve a small CBC example, and read its sequen
 
 # Create your first array
 
-Pack four 16-base motifs into a 37-base sequence, then read where each motif
+Pack four 16-base motifs into a 40-base sequence, then read where each motif
 starts. The compatible overlaps let the motifs share bases. For your own
 library, the length limit may allow only a subset of the motifs to be placed.
 
@@ -32,25 +32,27 @@ Supply non-empty uppercase `A/C/G/T` motifs and a positive integer length limit:
 ```bash
 uv run dense-arrays optimize \
   --motif ACGTTGCAAGTCCTGA \
-  --motif AAGTCCTGATCGTACC \
-  --motif GATCGTACCGATGCTT \
-  --motif CCGATGCTTAGGACGT \
-  --length 37 --strands single
+  --motif AGTCCTGATCGTACCG \
+  --motif TCGTACCGATGCTTAG \
+  --motif ATGCTTAGGACGTTCA \
+  --length 40 --strands double
 ```
 
-The terminal displays the sequence, its complement, and the placed motifs:
+The terminal displays the sequence, its complement, and the placed motifs.
+One optimal arrangement is shown below; its reverse complement is equally valid:
 
 ```text
-ACGTTGCAAGTCCTGATCGTACCGATGCTTAGGACGT
+ACGTTGCAAGTCCTGATCGTACCGATGCTTAGGACGTTCA
 ```
 
-The four input motifs start at 0, 7, 14, and 21. Each consecutive pair shares
-nine bases, so the first motif contributes 16 bases and each later motif adds
-seven: `16 + 7 + 7 + 7 = 37`. Read the [packing method](method.md) for the
+In this orientation, the four input motifs start at 0, 8, 16, and 24. Each
+consecutive pair shares eight bases, so the first motif contributes 16 bases and each later motif adds
+eight: `16 + 8 + 8 + 8 = 40`. Read the [packing method](method.md) for the
 overlap calculation and its graph interpretation.
 
-`--strands single` permits motifs only in their supplied orientation;
-`--strands double` also permits reverse complements and is the default.
+`--strands double` searches both supplied motifs and their reverse complements
+and is the default. Use `--strands single` to restrict placements to the supplied
+orientation.
 
 For a larger input, replace the repeated `--motif` options with
 `--motifs-file motifs.txt`. Write one motif per line; blank lines and lines
@@ -70,24 +72,25 @@ from dense_arrays import Optimizer
 
 motifs = [
     "ACGTTGCAAGTCCTGA",
-    "AAGTCCTGATCGTACC",
-    "GATCGTACCGATGCTT",
-    "CCGATGCTTAGGACGT",
+    "AGTCCTGATCGTACCG",
+    "TCGTACCGATGCTTAG",
+    "ATGCTTAGGACGTTCA",
 ]
-optimizer = Optimizer(motifs, sequence_length=37, strands="single")
+optimizer = Optimizer(motifs, sequence_length=40, strands="double")
 best = optimizer.optimal()
-print(best.sequence)  # ACGTTGCAAGTCCTGATCGTACCGATGCTTAGGACGT
+print(best.sequence)
 print(best.nb_motifs)  # 4
-print(best.offsets_fwd)  # [0, 7, 14, 21]
-assert best.sequence == "ACGTTGCAAGTCCTGATCGTACCGATGCTTAGGACGT"
+print(best.offsets_fwd)
+print(best.offsets_rev)
+assert len(best.sequence) == 40
 assert best.nb_motifs == 4
-assert best.offsets_fwd == [0, 7, 14, 21]
 ```
 
-Offsets are zero-based starts in input order: the first entry occupies
-`[0, 16)`, the second `[7, 23)`, the third `[14, 30)`, and the fourth `[21, 37)`.
-The right endpoint is excluded. Use these positions to recover each motif
-from the sequence.
+Both offset lists use zero-based starts in input order. For the forward
+arrangement above, `offsets_fwd` is `[0, 8, 16, 24]` and each occupied span is
+16 bases long. For its reverse complement, `offsets_rev` is `[24, 16, 8, 0]`.
+Reverse offsets locate the reverse-complement motif on the returned sequence.
+The right endpoint of each span is excluded.
 
 `optimal()` returns a `DenseArray`. `sequence_length` is the requested limit;
 `len(best.sequence)` is the realized length and may be shorter. Terminal
@@ -111,10 +114,10 @@ the result count, not the time needed to solve each result:
 ```bash
 uv run dense-arrays solutions \
   --motif ACGTTGCAAGTCCTGA \
-  --motif AAGTCCTGATCGTACC \
-  --motif GATCGTACCGATGCTT \
-  --motif CCGATGCTTAGGACGT \
-  --length 37 --strands single \
+  --motif AGTCCTGATCGTACCG \
+  --motif TCGTACCGATGCTTAG \
+  --motif ATGCTTAGGACGTTCA \
+  --length 40 --strands double \
   --max-solutions 3 --diverse
 ```
 
@@ -128,7 +131,7 @@ from itertools import islice
 
 from dense_arrays import Optimizer
 
-optimizer = Optimizer(motifs, sequence_length=37, strands="single")
+optimizer = Optimizer(motifs, sequence_length=40, strands="double")
 for solution in islice(optimizer.solutions_diverse(), 3):
     print(solution.sequence, solution.nb_motifs)
 ```

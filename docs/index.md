@@ -9,7 +9,7 @@ description: Pack DNA motifs within a length limit and inspect their positions a
 
 Fit more DNA motifs into a short sequence by sharing compatible bases.
 Dense Arrays returns the selected motifs and their positions. Start with four
-16-base motifs that fit into a 37-base array, then add requirements or inspect
+16-base motifs that fit into a 40-base array, then add requirements or inspect
 the arrangement through playback.
 
 ## Start with an array
