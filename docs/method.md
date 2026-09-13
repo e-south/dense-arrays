@@ -1,52 +1,83 @@
 ---
 title: Packing method
-description: Understand compatible overlaps and the integer optimization formulation.
+description: Follow four motifs from compatible overlaps to a 37-base array.
 ---
 
 # How motifs share sequence space
 
-Dense Arrays formulates motif packing as an integer optimization problem.
-Given exact DNA strings and a sequence-length limit, compatible suffixes and
-prefixes can share bases. Selecting an order with useful overlaps allows more
-motif entries to fit into that limit. Double-strand optimization also admits
-reverse-complement orientations.
+Placing motifs end to end spends one base for every base in the library.
+Compatible overlaps reduce that cost: a suffix of one motif can also serve as
+the prefix of the next. Dense Arrays uses these overlaps to select motifs and
+an order that fits the requested length limit.
 
-For example, `CAG` overlaps `AGC` by two bases, and `AGC` overlaps `CGT` by one.
-Together they occupy `CAGCGT`: six bases for three three-base motifs. The
-banner uses this synthetic arrangement. It illustrates compatible placement,
-without asserting a biological effect or a recorded solver trajectory.
+## Follow the worked example
 
-![String packing formulation: motif library and length limit, pairwise shifts, an oriented graph, and example packed sequences](assets/SPP_overview.png)
+The [first-array tutorial](quickstart.md) supplies four 16-base motifs. The
+first two share the nine-base string `AAGTCCTGA`:
 
-The figure connects the nucleotide String Packing Problem to an Orienteering
-Problem: motifs become oriented graph nodes and transitions account for the
-sequence span needed to place successive motifs. The optimizer chooses a
-feasible arrangement within the requested length. The Python result retains
-the realized sequence and motif offsets.
+```text
+ACGTTGCAAGTCCTGA
+       AAGTCCTGATCGTACC
+```
 
-The exact model counts selected entries along this path. It does not count
-every motif that happens to occur as a substring: an entry wholly contained
-inside another does not get an additional placement through the overlap metric.
-Repeated identical strings also require distinct path placements. For example,
-`ACGTA` and `CGT` with a five-base limit yield one selected entry in the exact
-model. Distinguish selected entries from all sequence matches when reporting a
-motif count.
+Their combined length is 23 bases. The third and fourth motifs each share
+nine bases with the preceding motif, adding seven bases apiece. All four
+therefore fit in `16 + 7 + 7 + 7 = 37` bases, compared with 64 bases placed end
+to end:
 
-See the [associated paper](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1012276)
-for the formulation and scientific context. When citing software results,
-also record the package version or commit used.
+```text
+ACGTTGCAAGTCCTGATCGTACCGATGCTTAGGACGT
+```
 
-## Additional requirements
+The process figure follows the same library through four stages: specify the
+motifs and length limit, compute directional overlap costs, select a path,
+and read the packed sequence.
 
-The Python API can enforce positional relationships and regulator coverage,
-or express side preferences. These act on the supplied strings, labels, and
-coordinates. Their [guide](constraints.md) explains what each requirement means
-and supplies runnable examples.
+![Four-stage motif packing: a library of four 16-base motifs, directional overlap costs, a path within 37 bases, and the resulting DNA array](assets/motif-packing-process.svg)
 
-## Playback is a separate view
+*Motif packing from inputs to sequence.* The benchmark annotation summarizes
+the [paper's](https://doi.org/10.1371/journal.pcbi.1012276) Gurobi experiments:
+20–100 binding sites packed into 50–300 bp in 0.05–10 seconds.
 
-A producer can supply saved sequence placements to the
-[playback interface](playback.md). Reconstruction orders those placements by
-coordinates; it does not recover an unrecorded optimizer trace. Producer
-translation, study labels, and biological interpretation remain with their
-respective owners. See [architecture](architecture/README.md) for the boundaries.
+## From overlaps to an optimization problem
+
+Dense Arrays formulates the nucleotide String Packing Problem as an
+Orienteering Problem. Motifs become graph nodes, and directed transitions
+account for the sequence span needed to place one motif after another.
+Reversing their order can change the overlap and therefore the cost. An
+integer optimization solver selects a path within the length limit.
+Double-strand optimization includes reverse-complement orientations as well.
+
+For the worked example, the first motif occupies 16 bases. The three
+subsequent transitions each add seven bases, producing starts at 0, 7, 14, and
+21. The result retains the sequence and these input-order offsets.
+
+The exact model counts selected entries along its path. A motif that happens
+to occur inside another selected motif does not receive an additional
+placement through the overlap metric. For example, `ACGTTGCAAGTCCTGA` contains
+`TTGCAAGTCC`, but a 16-base limit gives one selected entry in the exact model.
+Repeated identical strings also require distinct path placements. Use the
+returned motif count and offsets when reporting selected entries; a search
+for all substring matches answers a different question.
+
+## Add requirements or inspect the result
+
+[Constraints](constraints.md) can require positional relationships or motif
+groups, and side biases can favor left or right positions. Configure these
+requirements before solving.
+
+[Playback](playback.md) shows saved placements across the finished sequence.
+Its order is reconstructed from coordinates. To translate an optimizer result
+or another producer's records into playback input, follow the
+[record and ownership contract](architecture/solution-playback.md).
+
+## Paper and citation
+
+The paper develops the formulation, benchmarks, and extensions, with the
+original full graph and alternative solutions:
+
+Andreani V, South EJ, Dunlop MJ (2024). Generating information-dense promoter
+sequences with optimal string packing. *PLOS Computational Biology* 20(7):
+e1012276. [doi:10.1371/journal.pcbi.1012276](https://doi.org/10.1371/journal.pcbi.1012276).
+
+When citing software results, also record the package version or commit used.

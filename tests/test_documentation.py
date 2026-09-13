@@ -43,7 +43,7 @@ def test_guide_python_examples(page: str, tmp_path: Path):
 
 
 class _PageLinks(HTMLParser):
-    """Collect only browser navigation targets and addressable anchors."""
+    """Collect browser navigation, media resources, and addressable anchors."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -58,7 +58,7 @@ class _PageLinks(HTMLParser):
             self.anchors.add(identifier)
         if tag == "a" and attributes.get("name"):
             self.anchors.add(str(attributes["name"]))
-        for name in ("href", "src"):
+        for name in ("href", "src", "poster"):
             target = attributes.get(name)
             if target:
                 self.targets.append(target)
