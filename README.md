@@ -21,19 +21,21 @@ With Python 3.12 or later and [uv](https://docs.astral.sh/uv/), run from a
 uv sync --frozen
 uv run dense-arrays optimize \
   --motif ACGTTGCAAGTCCTGA \
-  --motif AAGTCCTGATCGTACC \
-  --motif GATCGTACCGATGCTT \
-  --motif CCGATGCTTAGGACGT \
-  --length 37 --strands single
+  --motif AGTCCTGATCGTACCG \
+  --motif TCGTACCGATGCTTAG \
+  --motif ATGCTTAGGACGTTCA \
+  --length 40 --strands double
 ```
 
-These four 16-base motifs fit into 37 bases through compatible overlaps:
+The search considers both strands. One optimal arrangement packs all four
+16-base motifs into 40 bases:
 
 ```text
-ACGTTGCAAGTCCTGATCGTACCGATGCTTAGGACGT
+ACGTTGCAAGTCCTGATCGTACCGATGCTTAGGACGTTCA
 ```
 
-The motifs start at positions 0, 7, 14, and 21. The
+In this orientation, the motifs start at 0, 8, 16, and 24. The solver may return
+the reverse-complement arrangement. The
 [quickstart](docs/quickstart.md) explains these offsets and shows Python use
 and bounded enumeration of further solutions.
 

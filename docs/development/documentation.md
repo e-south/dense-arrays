@@ -50,7 +50,7 @@ what the implementation and tests establish.
 
 Give a fresh reader or agent a task, not the answer's file path:
 
-1. “Create the tutorial's 37-base array from four 16-base motifs using CBC,
+1. “Create the tutorial's 40-base array from four 16-base motifs using CBC,
    explain an overlap and the returned offsets, and find the associated paper.”
 2. “Require two entries from one motif group and one from another group.”
 3. “Render saved placements as a PNG, find the MP4 export command, and
