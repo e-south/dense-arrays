@@ -35,9 +35,10 @@ and read the packed sequence.
 
 ![Four-stage motif packing: a library of four 16-base motifs, directional overlap costs, a path within 37 bases, and the resulting DNA array](assets/motif-packing-process.svg)
 
-*Motif packing from inputs to sequence.* The benchmark annotation summarizes
-the [paper's](https://doi.org/10.1371/journal.pcbi.1012276) Gurobi experiments:
-20–100 binding sites packed into 50–300 bp in 0.05–10 seconds.
+*Motif packing from inputs to sequence.* Process figure adapted by Eric J.
+South for this worked example. The [paper](https://doi.org/10.1371/journal.pcbi.1012276)
+reports Gurobi experiments packing 20–100 binding sites into 50–300 bp in
+0.05–10 seconds.
 
 ## From overlaps to an optimization problem
 
