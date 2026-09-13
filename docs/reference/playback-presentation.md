@@ -43,15 +43,20 @@ later changes to caller dictionaries cannot change the document.
 The native duplex shows placement captions only for explicit `label_overrides`
 entries. Omitting the map leaves motif tracks free of identifier captions.
 Every motif nucleotide uses the duplex's font size and per-base coordinate
-grid. Reverse tracks display the coordinate-aligned complement of their stored
+grid. Measured glyph widths set compact cells; extra panel width becomes margins,
+and the complete grid shrinks uniformly only when it cannot fit. Actual glyph
+outlines are centered in their cells and placement boxes. Native nucleotide cap
+height also sets the graph's font scale; explicit captions and legend labels
+share a smaller, proportional scale. Reverse tracks display the coordinate-aligned complement of their stored
 sequence to match the lower strand, without reversing coordinate order. The
 stored placement sequence and graph labels remain unchanged.
 
 ## Scene settings
 
-The scene preserves resolved labels and a compact evidence summary. Authority,
-ordering, and failed requirements remain visible when optional notices are
-disabled. Titles and subtitles provide artifact metadata.
+The scene preserves resolved labels and concise failed-requirement or
+ambiguous/gapped-order explanations. Routine reconstruction and unique-order
+qualifications remain in artifact metadata. Titles and subtitles also provide
+artifact metadata.
 
 | Setting | Accepted values and effect |
 | --- | --- |
@@ -61,7 +66,7 @@ disabled. Titles and subtitles provide artifact metadata.
 | `graph_detail` | `full` includes context and traversal relations; `reduced` includes traversal relations at the chosen graph fraction; `none` hides the graph |
 | `graph_fraction` | Finite number from 0 to 0.5; it must be zero exactly when `graph_detail="none"` |
 | `show_edge_costs` | Boolean controlling edge-cost labels |
-| `show_authority_notice` | Boolean including plan notices in the visible summary and full evidence metadata |
+| `show_authority_notice` | Boolean including plan notices in full evidence metadata and the visible summary, except the routine reconstruction notice, which is metadata only |
 | `show_distance_bracket` | `never`, `when_declared`, or `always`; brackets describe declared constraints, and `always` reports when none exist |
 
 A `layout_only` document never animates a complete placement chain, regardless
@@ -72,8 +77,9 @@ and legend entries instead.
 ## Read the evidence
 
 The visible summary uses at most three lines and reserves no more than 25% of
-the figure height. It always identifies reconstructed authority and coordinate
-order. A short failed requirement shows its actual and required distance;
+the figure height when evidence needs disclosure. Routine authority and unique
+coordinate order do not add a canvas caption. Ambiguous or gapped order remains
+visible. A short failed requirement shows its actual and required distance;
 longer failure text becomes a `FAILED` count directing readers to metadata.
 Long optional notices are excerpted. This keeps the figure compact while
 native metadata retains every declared distance result, including passed results,

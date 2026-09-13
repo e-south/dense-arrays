@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .graph.geometry import KMER_FONT_FAMILY
+from .duplex_geometry import FEATURE_HEIGHT, draw_nucleotide, fit_duplex_grid
 from .theme import RESTING_COLOR, RESTING_TEXT_COLOR, blend_color
 from .timeline import complement_sequence, placement_progress
 
@@ -19,15 +19,17 @@ if TYPE_CHECKING:
     from .models import PlaybackStep
     from .presentation import PlaybackDocument
 
-_ACTIVE = "#167a70"
 _INK = "#4b5563"
 _TRACK_PITCH = 1.1
-_FEATURE_HEIGHT = 0.56
+_CAPTION_TRACK_PITCH = 1.35
 
 
-def _placement_tracks(steps: Sequence[PlaybackStep]) -> tuple[float, ...]:
+def _placement_tracks(
+    steps: Sequence[PlaybackStep], *, with_labels: bool
+) -> tuple[float, ...]:
     """Allocate non-overlapping lanes once from the complete placement plan."""
     lane_ends: dict[bool, list[int]] = {False: [], True: []}
+    pitch = _CAPTION_TRACK_PITCH if with_labels else _TRACK_PITCH
     positions = []
     for step in steps:
         reverse = step.orientation == "rev"
@@ -39,26 +41,32 @@ def _placement_tracks(steps: Sequence[PlaybackStep]) -> tuple[float, ...]:
             ends.append(step.end)
         else:
             ends[lane] = step.end
-        positions.append(
-            -1.45 - lane * _TRACK_PITCH if reverse else 1.05 + lane * _TRACK_PITCH
-        )
+        positions.append(-1.45 - lane * pitch if reverse else 1.05 + lane * pitch)
     return tuple(positions)
 
 
 def draw_duplex(
-    axis: Axes, document: PlaybackDocument, step_index: int, progress: float = 1.0
-) -> None:
-    """Keep the complete duplex fixed while coloring represented placements."""
+    axis: Axes,
+    document: PlaybackDocument,
+    step_index: int,
+    progress: float = 1.0,
+    *,
+    bottom_padding_pt: float = 0,
+) -> float:
+    """Draw the fixed duplex and return its nucleotide cap height in pixels."""
     from matplotlib.patches import FancyBboxPatch
 
     plan = document.plan
     sequence = plan.realized_sequence
     complement = complement_sequence(sequence)
     length = len(sequence)
-    font_size = max(5.2, min(10.5, 830 / max(1, length)))
-    axis.set_xlim(-4, length + 3)
-    tracks = _placement_tracks(plan.steps)
-    axis.set_ylim(min(-2.2, min(tracks) - 0.65), max(2.2, max(tracks) + 1.15))
+    tracks = _placement_tracks(plan.steps, with_labels=bool(document.label_overrides))
+    geometry = fit_duplex_grid(
+        axis,
+        sequence,
+        (min(-2.2, min(tracks) - 0.75), max(2.2, max(tracks) + 1.25)),
+        bottom_padding_pt=bottom_padding_pt,
+    )
     axis.axis("off")
     for index, step in enumerate(plan.steps):
         y = tracks[index]
@@ -68,13 +76,11 @@ def draw_duplex(
             FancyBboxPatch(
                 (step.start, y),
                 step.end - step.start,
-                _FEATURE_HEIGHT,
+                FEATURE_HEIGHT,
                 boxstyle="round,pad=0.01,rounding_size=0.08",
                 facecolor=color,
-                edgecolor=blend_color(RESTING_COLOR, _ACTIVE, emphasis)
-                if index == step_index
-                else color,
-                linewidth=1.2,
+                edgecolor="none",
+                linewidth=0,
             )
         )
         feature_sequence = (
@@ -83,26 +89,24 @@ def draw_duplex(
             else step.placement_sequence
         )
         for offset, base in enumerate(feature_sequence):
-            axis.text(
-                step.start + offset + 0.5,
-                y + _FEATURE_HEIGHT / 2,
+            draw_nucleotide(
+                axis,
+                (step.start + offset + 0.5, y + FEATURE_HEIGHT / 2),
                 base,
-                ha="center",
-                va="center",
-                color=blend_color(RESTING_TEXT_COLOR, "#FFFFFF", emphasis),
-                fontsize=font_size,
-                family=KMER_FONT_FAMILY,
+                blend_color(RESTING_TEXT_COLOR, "#FFFFFF", emphasis),
+                geometry,
             )
         if step.placement_id in document.label_overrides:
             reverse = step.orientation == "rev"
             axis.text(
                 (step.start + step.end) / 2,
-                y - 0.1 if reverse else y + _FEATURE_HEIGHT + 0.1,
+                y - 0.1 if reverse else y + FEATURE_HEIGHT + 0.1,
                 document.label_overrides[step.placement_id],
                 ha="center",
                 va="top" if reverse else "bottom",
                 color=blend_color(RESTING_TEXT_COLOR, _INK, emphasis),
-                fontsize=7,
+                fontsize=geometry.label_font_size_pt,
+                family=geometry.font.get_family(),
             )
     coordinate_steps = {
         coordinate: index
@@ -118,26 +122,8 @@ def draw_duplex(
             else placement_progress(placement, step_index, progress)
         )
         color = blend_color(RESTING_COLOR, _INK, emphasis)
-        axis.text(
-            index + 0.5,
-            0.30,
-            sequence[index],
-            ha="center",
-            va="center",
-            color=color,
-            fontsize=font_size,
-            family=KMER_FONT_FAMILY,
-        )
-        axis.text(
-            index + 0.5,
-            -0.30,
-            complement[index],
-            ha="center",
-            va="center",
-            color=color,
-            fontsize=font_size,
-            family=KMER_FONT_FAMILY,
-        )
+        draw_nucleotide(axis, (index + 0.5, 0.30), sequence[index], color, geometry)
+        draw_nucleotide(axis, (index + 0.5, -0.30), complement[index], color, geometry)
     terminal_color = blend_color(
         RESTING_TEXT_COLOR, _INK, placement_progress(0, step_index, progress)
     )
@@ -165,3 +151,4 @@ def draw_duplex(
         color=terminal_color,
         fontsize=11,
     )
+    return geometry.cap_height_px

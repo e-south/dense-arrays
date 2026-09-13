@@ -6,8 +6,8 @@ description: Visual and accessibility goals for publication playback, with imple
 # Playback product brief
 
 This brief records visual and publication goals. The runtime validates v1
-placement evidence and displays authority, ordering qualifications, and failed
-requirements. These checks do not certify every figure against the typography,
+placement evidence, stores authority in metadata, and displays ambiguous/gapped
+ordering qualifications and failed requirements. These checks do not certify every figure against the typography,
 contrast, and publication goals below. Use the [playback contract](solution-playback.md)
 for enforced semantics and the [development gate](../development.md) for review.
 

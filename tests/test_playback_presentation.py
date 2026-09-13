@@ -61,7 +61,7 @@ def test_raster_displays_order_failure_and_labels() -> None:
         text += "\n" + "\n".join(
             artist.get_text() for axis in figure.axes for artist in axis.texts
         )
-        assert "Reconstructed from placements" in text
+        assert "Reconstructed from placements" not in text
         assert "Layout only" in text
         assert "FAILED" in text
         assert "3 bp" in text

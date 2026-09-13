@@ -20,9 +20,11 @@ from .graph.layout import build_graph_scene
 from .graph.projection import project_explanation_graph
 from .graph.routing import quadratic_arc_length, route_graph_scene
 from .graph_drawing import draw_graph
+from .models import OrderingStatus
 from .presentation import PlaybackDocument, resolve_distance_brackets, resolve_evidence
 from .theme import RESTING_COLOR, RESTING_TEXT_COLOR, blend_color
 from .timeline import placement_progress
+from .typography import PUBLICATION_LABEL_FONT_SIZE_PT
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -83,20 +85,26 @@ def draw_document(
             progress,
             duplex_axis,
         )
+    else:
+        displayed_duplex_cap_height = draw_duplex(
+            duplex_axis,
+            document,
+            transition_index,
+            progress,
+            bottom_padding_pt=_distance_padding_points(duplex_axis, document),
+        )
+    nucleotide_font_size = _graph_font_size_for_cap_height(
+        displayed_duplex_cap_height, figure.dpi
+    )
     if graph_axis is not None:
         draw_graph(
             graph_axis,
             document,
             transition_index,
             progress,
-            kmer_font_size_pt=_graph_font_size_for_cap_height(
-                displayed_duplex_cap_height,
-                figure.dpi,
-            ),
+            kmer_font_size_pt=nucleotide_font_size,
         )
-    if duplex_frames is None:
-        draw_duplex(duplex_axis, document, transition_index, progress)
-    else:
+    if duplex_frames is not None:
         duplex_axis.imshow(
             duplex_frame,
             interpolation="lanczos",
@@ -104,10 +112,32 @@ def draw_document(
         )
         duplex_axis.axis("off")
     if legend_axis is not None:
-        _draw_legend(legend_axis, document, transition_index, progress)
+        _draw_legend(
+            legend_axis,
+            document,
+            transition_index,
+            progress,
+            font_size=nucleotide_font_size
+            * PUBLICATION_LABEL_FONT_SIZE_PT
+            / KMER_FONT_SIZE_PT,
+        )
     if duplex_frames is None or not duplex_frames.renders_distance_brackets:
-        draw_distance_brackets(duplex_axis, document, transition_index, progress)
+        draw_distance_brackets(
+            duplex_axis,
+            document,
+            transition_index,
+            progress,
+            native_font_size=(
+                nucleotide_font_size
+                * PUBLICATION_LABEL_FONT_SIZE_PT
+                / KMER_FONT_SIZE_PT
+            )
+            if duplex_frames is None
+            else None,
+        )
     lines = evidence_lines(document)
+    if not lines:
+        return
     line_height = min(
         11 / (72 * figure.get_figheight()),
         (_MAX_EVIDENCE_FRACTION - 0.05) / len(lines),
@@ -127,7 +157,13 @@ def draw_document(
 def evidence_lines(document: PlaybackDocument) -> tuple[tuple[str, str], ...]:
     """Bound canvas evidence to three lines, disclosing metadata for full details."""
     evidence = resolve_evidence(document)
-    lines = [(evidence.qualification, "#59635f")]
+    lines = []
+    ordering = {
+        OrderingStatus.AMBIGUOUS: "Ambiguous order; deterministic tie-break",
+        OrderingStatus.LAYOUT_ONLY: "Layout only; gaps prevent a placement chain",
+    }.get(document.plan.ordering_status)
+    if ordering:
+        lines.append((ordering, "#59635f"))
     if evidence.constraints:
         text = "; ".join(evidence.constraints)
         if len(text) > _EVIDENCE_LINE_WIDTH:
@@ -136,20 +172,57 @@ def evidence_lines(document: PlaybackDocument) -> tuple[tuple[str, str], ...]:
                 "full actual/required results in metadata"
             )
         lines.append((text, "#9d2525"))
-    if evidence.notices:
-        text = "; ".join(evidence.notices)
+    notices = (
+        tuple(
+            notice.message
+            for notice in document.plan.notices
+            if notice.code != "placement_reconstructed"
+        )
+        if document.presentation.show_authority_notice
+        else ()
+    )
+    if notices:
+        text = "; ".join(notices)
         if len(text) > _EVIDENCE_LINE_WIDTH:
             excerpt = textwrap.shorten(text, width=100, placeholder="…")
-            text = f"{excerpt} ({len(evidence.notices)} notices; full text in metadata)"
+            text = f"{excerpt} ({len(notices)} notices; full text in metadata)"
         lines.append((text, "#59635f"))
     return tuple(lines)
 
 
+def _distance_padding_points(axis: Axes, document: PlaybackDocument) -> float:
+    """Reserve the existing bracket rows before fitting the complete native grid."""
+    brackets = resolve_distance_brackets(document)
+    rows = len(brackets)
+    if rows > _MAX_NATIVE_DISTANCE_BRACKETS or any(
+        len(bracket.label) > _EVIDENCE_LINE_WIDTH for bracket in brackets
+    ):
+        rows = 1
+    if not rows:
+        if document.presentation.show_distance_bracket != "always":
+            return 0
+        top = 0.015
+    else:
+        top = 0.07 + (rows - 1) * 0.10
+    height_pt = axis.get_window_extent().height * 72 / axis.figure.dpi
+    return top * height_pt + PUBLICATION_LABEL_FONT_SIZE_PT * 1.5
+
+
 def draw_distance_brackets(
-    axis: Axes, document: PlaybackDocument, transition_index: int, progress: float
+    axis: Axes,
+    document: PlaybackDocument,
+    transition_index: int,
+    progress: float,
+    *,
+    native_font_size: float | None = None,
 ) -> None:
     """Draw declared distances below a native or producer-rendered duplex."""
     brackets = resolve_distance_brackets(document)
+    font_size = (
+        native_font_size
+        if native_font_size is not None
+        else PUBLICATION_LABEL_FONT_SIZE_PT
+    )
     if not brackets:
         if document.presentation.show_distance_bracket == "always":
             axis.text(
@@ -158,7 +231,7 @@ def draw_distance_brackets(
                 "No declared distance constraints",
                 transform=axis.transAxes,
                 ha="center",
-                fontsize=8,
+                fontsize=font_size,
                 color=blend_color(
                     RESTING_TEXT_COLOR,
                     "#59635f",
@@ -176,7 +249,7 @@ def draw_distance_brackets(
             transform=axis.transAxes,
             ha="center",
             va="bottom",
-            fontsize=7,
+            fontsize=font_size,
             color=blend_color(
                 RESTING_TEXT_COLOR,
                 "#9d2525" if any(bracket.failed for bracket in brackets) else "#59635f",
@@ -194,6 +267,12 @@ def draw_distance_brackets(
             0.08 + bracket.start / length * 0.84,
             0.08 + bracket.end / length * 0.84,
         )
+        if native_font_size is not None:
+            left, right = axis.get_xlim()
+            x1, x2 = (
+                (bracket.start - left) / (right - left),
+                (bracket.end - left) / (right - left),
+            )
         result = document.plan.constraint_results[index]
         emphasis = min(
             placement_progress(step_index, transition_index, progress)
@@ -219,7 +298,7 @@ def draw_distance_brackets(
             transform=axis.transAxes,
             ha="center",
             va="bottom",
-            fontsize=7,
+            fontsize=font_size,
             color=color,
         )
 
@@ -287,7 +366,12 @@ def document_axes(
 
 
 def _draw_legend(
-    axis: Axes, document: PlaybackDocument, transition_index: int, progress: float
+    axis: Axes,
+    document: PlaybackDocument,
+    transition_index: int,
+    progress: float,
+    *,
+    font_size: float,
 ) -> None:
     entries = document.presentation.legend_entries
     axis.set_xlim(0.0, 1.0)
@@ -319,7 +403,7 @@ def _draw_legend(
             ha="left",
             va="center",
             color=blend_color(RESTING_TEXT_COLOR, _GRAPH_TEXT, emphasis),
-            fontsize=11.5,
+            fontsize=font_size,
             family=KMER_FONT_FAMILY,
             fontweight="normal",
         )

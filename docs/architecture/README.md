@@ -45,6 +45,7 @@ Public entrypoints stay small; helper modules own the listed decisions.
 | Document labels, colors, and visible evidence | `playback/presentation.py`, `playback/theme.py` | `test_playback_presentation.py` |
 | Graph projection, selected relations, layout, routing | `playback/graph/`, `playback/graph_drawing.py` | `test_playback_graph.py`, plus rendered stills |
 | Raster scene and sequence frames | `playback/scene_drawing.py`, `playback/duplex_drawing.py`, `playback/duplex_frames.py` | `test_playback.py`, `test_playback_presentation.py` |
+| Native nucleotide cells, glyph centering, and shared typography | `playback/duplex_geometry.py`, `playback/typography.py` | `test_playback_typography.py`, `test_playback_resting.py` |
 | Frame timing, writers, and figure cleanup | `playback/frame_schedule.py`, `playback/export.py`, `playback/matplotlib_renderer.py` | `test_playback_exports.py` |
 | Dependency import boundaries | `__init__.py`, `playback/__init__.py`, `playback/graph/__init__.py` | `test_optional_playback_imports.py` |
 | Runnable documentation and built links | `docs/`, `mkdocs.yml` | `test_documentation.py` |

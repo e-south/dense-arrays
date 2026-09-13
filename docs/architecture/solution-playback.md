@@ -69,8 +69,9 @@ Renderers consume validated plans without importing optimizer or OR-Tools
 state. A `PlaybackDocument` resolves artifact metadata, labels, colors, and
 compact visible evidence. NetworkX supplies the established graph layout;
 Matplotlib draws the scene and writes PNG, MP4, or GIF through the same media
-pipeline. A compact summary preserves authority, ordering qualifications, and
-failed requirements. Full evidence is stored in native media metadata;
+pipeline. A compact summary preserves ambiguous/gapped ordering qualifications
+and failed requirements. Routine reconstructed authority and unique coordinate
+order are metadata only. Full evidence is stored in native media metadata;
 notices are an optional addition. Presentation settings and evidence retrieval
 belong in the [presentation reference](../reference/playback-presentation.md).
 
