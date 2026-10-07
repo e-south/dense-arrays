@@ -62,6 +62,9 @@ SVGs at their intended display size and retain accessible descriptions.
 
 ## Hosted checks and publication
 
+Use the [release procedure](development/releases.md) for immutable software tags,
+qualified distributions and PyPI publishing. Documentation hosting is separate.
+
 The [GitHub workflow](https://github.com/e-south/dense-arrays/blob/main/.github/workflows/ci.yml)
 checks the lock, source quality, tests, documentation, dependencies, and package
 build on pushes to `main` and pull requests.

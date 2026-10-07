@@ -17,6 +17,11 @@ readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 
+[project.urls]
+Repository = "https://github.com/e-south/dense-arrays"
+Documentation = "https://dunloplab.gitlab.io/dense-arrays"
+Issues = "https://github.com/e-south/dense-arrays/issues"
+
 [project.optional-dependencies]
 playback = [
     "matplotlib>=3.8.0",
@@ -39,7 +44,7 @@ dense-arrays = "dense_arrays.cli:app"
 dense-arrays-playback = "dense_arrays.playback.cli:app"
 
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=77.0.3", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.ruff.lint]
@@ -61,6 +66,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"maintenance/release.py" = ["T201"]
 # Optional visualization imports stay inside the functions that use them.
 # Relative imports follow the playback package boundary.
 "src/dense_arrays/playback/**/*.py" = [
