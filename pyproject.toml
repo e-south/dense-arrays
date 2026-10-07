@@ -1,6 +1,6 @@
 [project]
 name = "dense-arrays"
-version = "0.2.0"
+version = "0.2.1"
 description = "A library to create densely packed DNA arrays from motifs"
 authors = [
     {name = "Virgile Andreani", email = "andreani@bu.edu"},
