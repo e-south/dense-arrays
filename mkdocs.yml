@@ -25,6 +25,7 @@ nav:
       - Playback product brief: architecture/animation-product-spec.md
   - Contribute:
       - Development checks: development.md
+      - Software releases: development/releases.md
       - Write documentation: development/documentation.md
       - Hardening history:
           - Baseline audit: development/audit.md

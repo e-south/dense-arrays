@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: Cite Dense Arrays and retain the exact release or source revision used.
+type: software
+title: Dense Arrays
+authors:
+  - family-names: Andreani
+    given-names: Virgile
+  - family-names: South
+    given-names: Eric J.
+repository-code: https://github.com/e-south/dense-arrays
+url: https://dunloplab.gitlab.io/dense-arrays
+license: MIT
