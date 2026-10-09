@@ -9,6 +9,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from rich.text import Text
 from typer.testing import CliRunner
 
 from dense_arrays.cli import app
@@ -33,7 +34,8 @@ def test_operation_help_explains_first_use(
         app, [command, "--help"], terminal_width=80, env={"NO_COLOR": "1"}
     )
     assert result.exit_code == 0, result.output
-    text = " ".join(re.sub(r"[│╭╮╰╯─]", " ", result.stdout).split())
+    plain = Text.from_ansi(result.stdout).plain
+    text = " ".join(re.sub(r"[│╭╮╰╯─]", " ", plain).split())
     assert f"Example: dense-arrays {command} " in text
     assert "Inputs:" in text
     assert input_word in text
@@ -44,7 +46,7 @@ def test_operation_help_explains_first_use(
     assert text.index("Example:") < text.index("Inputs:") < text.index("Outputs:")
     assert "library-workflow/curated-example/" in text
     assert "Versioned example files" in text
-    assert max(map(len, result.stdout.splitlines())) <= 80
+    assert max(map(len, plain.splitlines())) <= 80
 
 
 def test_root_help_distinguishes_requirements_without_probing_tools(
@@ -72,7 +74,8 @@ def test_root_help_distinguishes_requirements_without_probing_tools(
             app, [*command, "--help"], terminal_width=80, env={"NO_COLOR": "1"}
         )
         assert result.exit_code == 0, result.output
-        text = " ".join(re.sub(r"[│╭╮╰╯─]", " ", result.stdout).split())
+        plain = Text.from_ansi(result.stdout).plain
+        text = " ".join(re.sub(r"[│╭╮╰╯─]", " ", plain).split())
         for phrase in (
             "Example:",
             "Inputs:",
@@ -89,5 +92,5 @@ def test_root_help_distinguishes_requirements_without_probing_tools(
             "https://dunloplab.gitlab.io/dense-arrays/",
         ):
             assert phrase in text
-        assert max(map(len, result.stdout.splitlines())) <= 80
+        assert max(map(len, plain.splitlines())) <= 80
     assert not list(tmp_path.iterdir())
