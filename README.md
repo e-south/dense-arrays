@@ -45,7 +45,7 @@ It also links the API, method, and contributor guides.
 
 Andreani V, South EJ, Dunlop MJ (2024). Generating information-dense promoter
 sequences with optimal string packing. *PLOS Computational Biology* 20(7):
-e1012276. [Paper](https://doi.org/10.1371/journal.pcbi.1012276).
+e1012276. [DOI: 10.1371/journal.pcbi.1012276](https://doi.org/10.1371/journal.pcbi.1012276).
 
 [Report an issue](https://github.com/e-south/dense-arrays/issues) ·
 [Contribute](https://github.com/e-south/dense-arrays/blob/main/docs/development.md) ·

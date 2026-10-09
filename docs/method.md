@@ -38,8 +38,9 @@ and read the packed sequence.
 [Open the full-size figure](assets/motif-packing-process.svg) to read the sequence labels.
 
 *Motif packing from inputs to sequence.* Process figure adapted by Eric J.
-South for this worked example. The [paper](https://doi.org/10.1371/journal.pcbi.1012276)
-reports Gurobi experiments packing 20–100 binding sites into 50–300 bp in
+South for this worked example. Andreani et al.
+([DOI: 10.1371/journal.pcbi.1012276](https://doi.org/10.1371/journal.pcbi.1012276))
+report Gurobi experiments packing 20–100 binding sites into 50–300 bp in
 0.05–10 seconds.
 
 ## From overlaps to an optimization problem
@@ -85,6 +86,6 @@ original full graph and alternative solutions:
 
 Andreani V, South EJ, Dunlop MJ (2024). Generating information-dense promoter
 sequences with optimal string packing. *PLOS Computational Biology* 20(7):
-e1012276. [doi:10.1371/journal.pcbi.1012276](https://doi.org/10.1371/journal.pcbi.1012276).
+e1012276. [DOI: 10.1371/journal.pcbi.1012276](https://doi.org/10.1371/journal.pcbi.1012276).
 
 When citing software results, also record the package version or commit used.
