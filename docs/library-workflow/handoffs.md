@@ -280,9 +280,11 @@ assert all(
 da.render(reopened, view="library-quality", out="handoff/revised-quality.png")
 ```
 
-`QualitySnapshot` checks the report's structure, histogram counts and population
-consistency. It records metrics; it does not reverify the original design or
-attempt records. Comparisons label each side as `saved_report` or
+`QualitySnapshot` checks histogram populations, source attainment and available
+attempt totals. Completed sources must have reached their targets; aggregate
+search counts and active time must agree with the included source histories.
+It records metrics without rereading the original design or attempt records.
+Comparisons label each side as `saved_report` or
 `artifact_records`. Read limits cap the retained document structure separately
 from historical work counters stored in the report. Rendering uses the saved
 metrics and requires a supported metric policy and the playback extra.

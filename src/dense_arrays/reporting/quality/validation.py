@@ -23,6 +23,7 @@ from dense_arrays._record_validation import (
 )
 from dense_arrays.artifacts.provenance import Producer
 from dense_arrays.artifacts.records import OUTCOMES
+from dense_arrays.artifacts.run_state import validate_counts
 from dense_arrays.reporting.metrics import COMPOSITION_METRICS, validate_metric_value
 
 
@@ -84,7 +85,7 @@ def validate_quality(value: object, *, schema: str, policy: str) -> dict[str, ob
     ):
         msg = "distinct sequences do not match the selected population"
         raise ValueError(msg)
-    _origins(data["source_runs"], count)
+    histories = _origins(data["source_runs"], count)
     if data["policy"] == policy and set(data["composition"]) != set(
         COMPOSITION_METRICS
     ):
@@ -103,7 +104,7 @@ def validate_quality(value: object, *, schema: str, policy: str) -> dict[str, ob
     ):
         msg = "placement_count does not match the occurrence denominator"
         raise ValueError(msg)
-    _search(data["search"])
+    _search(data["search"], histories, len(data["source_runs"]))
     _usage(data["part_usage"], count, data["concentration"]["occurrence_denominator"])
     _usage(
         data["group_usage"],
@@ -114,11 +115,11 @@ def validate_quality(value: object, *, schema: str, policy: str) -> dict[str, ob
     return data
 
 
-def _origins(value: object, selected: int) -> None:
+def _origins(value: object, selected: int) -> list[Mapping]:
     if not isinstance(value, list) or not value:
         msg = "quality requires source-run populations"
         raise TypeError(msg)
-    seen, total = set(), 0
+    seen, total, histories = set(), 0, []
     for record in value:
         source = _required(
             record,
@@ -129,6 +130,8 @@ def _origins(value: object, selected: int) -> None:
                 "attainment",
                 "selected_designs",
                 "included_designs",
+                "state",
+                "search",
             },
             "source run",
         )
@@ -156,10 +159,31 @@ def _origins(value: object, selected: int) -> None:
         ):
             msg = "quality source population does not reconcile"
             raise ValueError(msg)
+        history = _origin_history(source, counts)
+        if history is not None:
+            histories.append(history)
         total += source["selected_designs"]
     if total != selected:
         msg = "quality selected population does not match source counts"
         raise ValueError(msg)
+    return histories
+
+
+def _origin_history(source: Mapping, counts: Mapping) -> Mapping | None:
+    """Check source state and complete history independently of its selection."""
+    if source["state"] not in {"created", "running", "completed", "stopped", "failed"}:
+        msg = "unknown source run state"
+        raise ValueError(msg)
+    if source["state"] == "completed" and counts["shortfall"]:
+        msg = "source completion does not match its original target"
+        raise ValueError(msg)
+    if source["search"] is None:
+        return None
+    history = _history(source["search"])
+    if history["attempt_counts"]["accepted"] != counts["accepted"]:
+        msg = "source search history does not match accepted designs"
+        raise ValueError(msg)
+    return history
 
 
 def _distributions(value: object, population: int, *, known_policy: bool) -> None:
@@ -260,12 +284,22 @@ def _supply(supply: Mapping, concentration: Mapping) -> None:
         raise ValueError(msg)
 
 
-def _search(search: Mapping) -> None:
+def _search(search: Mapping, histories: list[Mapping], sources: int) -> None:
     search = _required(
         search, {"availability", "attempt_counts", "active_seconds"}, "search"
     )
     if search["availability"] not in {"complete", "partial", "not_included"}:
         msg = "unknown search availability"
+        raise ValueError(msg)
+    availability = (
+        "complete"
+        if len(histories) == sources
+        else "partial"
+        if histories
+        else "not_included"
+    )
+    if search["availability"] != availability:
+        msg = "search availability does not match the source histories"
         raise ValueError(msg)
     counts = search["attempt_counts"]
     if search["availability"] == "not_included":
@@ -273,16 +307,33 @@ def _search(search: Mapping) -> None:
             msg = "unavailable search history cannot supply attempt counts"
             raise ValueError(msg)
         return
-    counts = object_fields(counts, {"started", *OUTCOMES}, "attempt_counts")
-    if set(counts) != {"started", *OUTCOMES}:
-        msg = "search history requires every attempt outcome"
+    _history(search)
+    totals = {
+        name: sum(history["attempt_counts"][name] for history in histories)
+        for name in ("started", *OUTCOMES)
+    }
+    if counts != totals or not math.isclose(
+        search["active_seconds"],
+        math.fsum(history["active_seconds"] for history in histories),
+        rel_tol=1e-12,
+        abs_tol=1e-12,
+    ):
+        msg = "search totals do not reconcile with available source histories"
         raise ValueError(msg)
-    for name, count in counts.items():
-        integer(count, field_name=name, minimum=0)
-    if counts["started"] != sum(counts[name] for name in OUTCOMES):
-        msg = "search counts do not reconcile"
-        raise ValueError(msg)
+
+
+def _history(value: object) -> Mapping:
+    """Validate complete per-origin counters independently of selected designs."""
+    search = _required(value, {"attempt_counts", "active_seconds"}, "source search")
+    counts = object_fields(
+        search["attempt_counts"], {"started", *OUTCOMES}, "attempt_counts"
+    )
+    validate_counts(counts)
     _number(search["active_seconds"], "active_seconds")
+    if search["active_seconds"] < 0:
+        msg = "active_seconds must be nonnegative"
+        raise ValueError(msg)
+    return search
 
 
 def _usage(
