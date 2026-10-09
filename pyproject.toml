@@ -11,6 +11,7 @@ dependencies = [
     "ortools>=9.7.2996",
     "rich>=13.7.0",
     "typer>=0.12.0",
+    "pyyaml>=6.0.2",
 ]
 requires-python = ">=3.12"
 readme = "README.md"
@@ -23,6 +24,10 @@ Documentation = "https://dunloplab.gitlab.io/dense-arrays"
 Issues = "https://github.com/e-south/dense-arrays/issues"
 
 [project.optional-dependencies]
+tables = [
+    "pyarrow>=23.0.1",
+    "openpyxl>=3.1.5",
+]
 playback = [
     "matplotlib>=3.8.0",
     "networkx>=3.6.1",
@@ -33,6 +38,8 @@ docs = [
     "mkdocstrings[python]>=1.0.3",
 ]
 dev = [
+    "pyarrow>=23.0.1",
+    "openpyxl>=3.1.5",
     "pre-commit>=4.5.1",
     "pip-audit>=2.10.0",
     "pytest>=9.0.3",
