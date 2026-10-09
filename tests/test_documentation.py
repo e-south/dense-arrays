@@ -25,9 +25,36 @@ def _environment(tmp_path: Path) -> dict[str, str]:
     return environment
 
 
-@pytest.mark.parametrize("page", ["quickstart.md", "constraints.md", "playback.md"])
-def test_guide_python_examples(page: str, tmp_path: Path):
-    source = (ROOT / "docs" / page).read_text(encoding="utf-8")
+@pytest.mark.parametrize(
+    "page",
+    [
+        "api.md",
+        "quickstart.md",
+        "constraints.md",
+        "playback.md",
+        (
+            "library-workflow.md",
+            "library-workflow/results/export.md",
+            "library-workflow/generation/assembly.md",
+            "library-workflow/preparation/curated.md",
+            "library-workflow/results/quality.md",
+        ),
+        "library-workflow/matrices.md",
+        "library-workflow/batches.md",
+        "library-workflow/extension.md",
+        "library-workflow/handoffs.md",
+        "library-workflow/bundles.md",
+        "library-workflow/selection.md",
+        "library-workflow/search.md",
+        "library-workflow/tables.md",
+        "library-workflow/arrays.md",
+    ],
+)
+def test_guide_python_examples(page: str | tuple[str, ...], tmp_path: Path):
+    pages = (page,) if isinstance(page, str) else page
+    source = "\n\n".join(
+        (ROOT / "docs" / name).read_text(encoding="utf-8") for name in pages
+    )
     examples = re.findall(r"^```python\n(.*?)^```", source, re.MULTILINE | re.DOTALL)
     assert examples, f"No maintained Python examples found in {page}"
     result = subprocess.run(  # noqa: S603

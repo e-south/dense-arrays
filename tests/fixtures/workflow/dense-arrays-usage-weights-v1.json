@@ -1,0 +1,126 @@
+{
+  "source": "src/dense_arrays/optimizer.py:Optimizer.solutions_diverse",
+  "revision": "29a148f07bc7a08c8012b8f2b6cccb6acaf6d963", "revision_note": "# pragma: allowlist secret - public source fingerprint",
+  "source_sha256": "d6b68c50ded0cf2b85b3874db30b1788e68654d144bcb6bd5209979ad9dc79b6", "sha256_note": "# pragma: allowlist secret - public source fingerprint",
+  "scope": "Unmodified released iterator with controlled proposal membership; captures effective weights before each yield, not solver tie choices or final-library diversity",
+  "cases": [
+    {
+      "counts": [
+        0,
+        0,
+        0
+      ],
+      "weights": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "counts": [
+        1,
+        0,
+        0
+      ],
+      "weights": [
+        1.0,
+        1.1666666666666667,
+        1.1666666666666667
+      ]
+    },
+    {
+      "counts": [
+        1,
+        1,
+        0
+      ],
+      "weights": [
+        1.0,
+        1,
+        1.1666666666666667
+      ]
+    },
+    {
+      "counts": [
+        1,
+        1,
+        1
+      ],
+      "weights": [
+        1.0,
+        1,
+        1
+      ]
+    },
+    {
+      "counts": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "weights": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "counts": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "weights": [
+        1.0,
+        1.0,
+        1.125,
+        1.125
+      ]
+    },
+    {
+      "counts": [
+        2,
+        1,
+        1,
+        0
+      ],
+      "weights": [
+        1.0,
+        1.0,
+        1,
+        1.125
+      ]
+    },
+    {
+      "counts": [
+        2,
+        1,
+        2,
+        1
+      ],
+      "weights": [
+        1.0,
+        1.125,
+        1,
+        1.125
+      ]
+    },
+    {
+      "counts": [
+        3,
+        2,
+        2,
+        1
+      ],
+      "weights": [
+        1.0,
+        1,
+        1,
+        1.125
+      ]
+    }
+  ]
+}

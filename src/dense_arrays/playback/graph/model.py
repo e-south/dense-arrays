@@ -1,7 +1,14 @@
-"""Immutable topology and measured scene contracts for playback graphs.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/graph/model.py
+
+Immutable topology and measured scene contracts for playback graphs.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 

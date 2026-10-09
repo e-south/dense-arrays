@@ -1,0 +1,438 @@
+{
+  "schema": "dense_arrays.fixture.windows.v1",
+  "source": {
+    "repository": "dnadesign",
+    "path": "src/dnadesign/densegen/src/core/stage_a/stage_a_sampling_utils.py",
+    "functions": [
+      "_information_bits",
+      "_matrix_array",
+      "_select_pwm_window"
+    ],
+    "revision": "2ab9b233ddb6c3a410ae67d1616ce73104bd1785", "_fingerprint_10": "# pragma: allowlist secret - public source fingerprint",
+    "file_sha256": "815fb822dc9d1c61008b3c399b71cffc51387bda857101f1f7f9bfcaf1f18d0c", "_fingerprint_11": "# pragma: allowlist secret - public source fingerprint",
+    "functions_sha256": "5840723a0f3a820c35d0da70cd3c671f5c9f19c7cbc2dbe1a6ccf7ce991c7a26", "_fingerprint_12": "# pragma: allowlist secret - public source fingerprint"
+  },
+  "scope": "Fixed contiguous maximum-information windows only. Whole-width DenseGen reports a zero sentinel; native reports actual information. Native computes p log2 p without the 1e-9 logarithm floor. No assertion of historical random-stream or scoring equivalence.",
+  "cases": [
+    {
+      "name": "central",
+      "probabilities": [
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ],
+        [
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ],
+      "log_odds": [
+        [
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          1,
+          2,
+          3,
+          4
+        ],
+        [
+          2,
+          3,
+          4,
+          5
+        ],
+        [
+          3,
+          4,
+          5,
+          6
+        ]
+      ],
+      "length": 2,
+      "start": 1,
+      "information_bits": 4.0,
+      "selected_probabilities": [
+        [
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ]
+      ],
+      "selected_log_odds": [
+        [
+          1,
+          2,
+          3,
+          4
+        ],
+        [
+          2,
+          3,
+          4,
+          5
+        ]
+      ]
+    },
+    {
+      "name": "ties",
+      "probabilities": [
+        [
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          0
+        ]
+      ],
+      "log_odds": [
+        [
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          1,
+          2,
+          3,
+          4
+        ],
+        [
+          2,
+          3,
+          4,
+          5
+        ]
+      ],
+      "length": 1,
+      "start": 0,
+      "information_bits": 2.0,
+      "selected_probabilities": [
+        [
+          1,
+          0,
+          0,
+          0
+        ]
+      ],
+      "selected_log_odds": [
+        [
+          0,
+          1,
+          2,
+          3
+        ]
+      ]
+    },
+    {
+      "name": "uniform",
+      "probabilities": [
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ],
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ],
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ],
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ],
+      "log_odds": [
+        [
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          1,
+          2,
+          3,
+          4
+        ],
+        [
+          2,
+          3,
+          4,
+          5
+        ],
+        [
+          3,
+          4,
+          5,
+          6
+        ]
+      ],
+      "length": 2,
+      "start": 0,
+      "information_bits": 0.0,
+      "selected_probabilities": [
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ],
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ],
+      "selected_log_odds": [
+        [
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          1,
+          2,
+          3,
+          4
+        ]
+      ]
+    },
+    {
+      "name": "whole",
+      "probabilities": [
+        [
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ]
+      ],
+      "log_odds": [
+        [
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          1,
+          2,
+          3,
+          4
+        ]
+      ],
+      "length": 2,
+      "start": 0,
+      "information_bits": 0.0,
+      "selected_probabilities": [
+        [
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ]
+      ],
+      "selected_log_odds": [
+        [
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          1,
+          2,
+          3,
+          4
+        ]
+      ]
+    },
+    {
+      "name": "near_ties",
+      "probabilities": [
+        [
+          0.5,
+          0.5,
+          0,
+          0
+        ],
+        [
+          0.500001,
+          0.499999,
+          0,
+          0
+        ],
+        [
+          0.5,
+          0.5,
+          0,
+          0
+        ]
+      ],
+      "log_odds": [
+        [
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          1,
+          2,
+          3,
+          4
+        ],
+        [
+          2,
+          3,
+          4,
+          5
+        ]
+      ],
+      "length": 1,
+      "start": 1,
+      "information_bits": 1.0000000000028855,
+      "selected_probabilities": [
+        [
+          0.500001,
+          0.499999,
+          0,
+          0
+        ]
+      ],
+      "selected_log_odds": [
+        [
+          1,
+          2,
+          3,
+          4
+        ]
+      ]
+    },
+    {
+      "name": "tiny",
+      "probabilities": [
+        [
+          0.9999999999,
+          1e-10,
+          0,
+          0
+        ],
+        [
+          0.9,
+          0.1,
+          0,
+          0
+        ],
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ],
+      "log_odds": [
+        [
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          1,
+          2,
+          3,
+          4
+        ],
+        [
+          2,
+          3,
+          4,
+          5
+        ]
+      ],
+      "length": 1,
+      "start": 0,
+      "information_bits": 1.9999999968659952,
+      "selected_probabilities": [
+        [
+          0.9999999999,
+          1e-10,
+          0,
+          0
+        ]
+      ],
+      "selected_log_odds": [
+        [
+          0,
+          1,
+          2,
+          3
+        ]
+      ]
+    }
+  ]
+}

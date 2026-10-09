@@ -71,7 +71,7 @@ artifact metadata.
 
 A `layout_only` document never animates a complete placement chain, regardless
 of graph detail. No profile infers biological identity from a label or ID.
-Study-specific profiles such as `secg` are unsupported; supply caller colors
+Use the supported profiles and supply caller colors
 and legend entries instead.
 
 ## Read the evidence
@@ -170,20 +170,8 @@ If the producer draws its own distance brackets, its callback owner declares
 according to `show_distance_bracket`. This capability defaults to `False` and
 must be boolean; explicit ownership prevents duplicate span annotations.
 
-The existing DenseGen publication examples use this callback with
-`BaseRenderDuplexProjection.render_rgba`. Their producer-owned recipes in
-`dnadesign` are:
-
-- `src/dnadesign/densegen/workspaces/demo_dense_array_showcase/playback.yaml`
-  for generic overlap packing.
-- `src/dnadesign/densegen/workspaces/demo_dense_array_showcase/playback-constraints.yaml`
-  for fixed anchors and the RNAP illustration.
-
-Those recipes publish MP4/poster bundles under their workspace's
-`outputs/publication/playback/`. They anchor the refined graph-and-duplex
-presentation. Dense Arrays does not depend on `dnadesign`; producer translation,
-BaseRender frames, biological labels, and recipe publication remain with their
-respective owners. Review the exported media at its intended size; the
+The caller supplies frame styling, biological labels and output destinations.
+Review exported media at its intended size; the
 [product brief](../architecture/animation-product-spec.md) records visual goals.
 
 ## Signatures

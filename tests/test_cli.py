@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 from click import unstyle
+from ortools.linear_solver import pywraplp
 from typer.testing import CliRunner
 
 from dense_arrays import DenseArray, Optimizer, SolverBackendError
@@ -100,3 +101,52 @@ def test_cli_rejects_both_inputs(tmp_path: Path) -> None:
     combined = result.stdout + (result.stderr or "")
     plain_output = " ".join(unstyle(combined).split())
     assert "either --motif or --motifs-file" in plain_output
+
+
+@pytest.mark.parametrize(
+    "command", [["optimize"], ["solutions"], ["solutions", "--diverse"]]
+)
+def test_direct_commands_apply_solver_time_limit(
+    command: list[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Each direct command forwards cooperative seconds to its built backend."""
+    model = pywraplp.Solver.CreateSolver("CBC")
+    observed = []
+    monkeypatch.setattr(model, "SetTimeLimit", observed.append)
+    monkeypatch.setattr(pywraplp.Solver, "CreateSolver", lambda _name: model)
+    result = runner.invoke(
+        app,
+        [
+            *command,
+            "--motif",
+            "ACGTTGCAAGTCCTGA",
+            "--length",
+            "16",
+            "--strands",
+            "single",
+            "--solver-seconds",
+            "2",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert observed == [2000]
+
+
+@pytest.mark.parametrize("command", ["optimize", "solutions"])
+def test_direct_commands_reject_unsupported_solver_threads(command: str) -> None:
+    result = runner.invoke(
+        app,
+        [
+            command,
+            "--motif",
+            "ACGTTGCAAGTCCTGA",
+            "--length",
+            "16",
+            "--solver-threads",
+            "2",
+        ],
+    )
+    assert result.exit_code == 1
+    assert "threads" in result.stderr
+    assert "CBC" in result.stderr
+    assert "Traceback" not in result.output

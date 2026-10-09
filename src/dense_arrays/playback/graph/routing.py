@@ -1,7 +1,14 @@
-"""Assemble routed context and traversal relations for a measured scene.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/graph/routing.py
+
+Assemble routed context and traversal relations for a measured scene.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 

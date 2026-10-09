@@ -1,16 +1,26 @@
-"""Validated promoter and regulator requirements for motif packing.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/constraints.py
+
+Validated promoter and regulator requirements for motif packing.
 
 Module Author(s): Virgile Andreani, Eric J. South
+Maintainer(s): Eric J. South
 Dunlop Lab
-"""
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 
+import math
 from collections import Counter
 from dataclasses import dataclass
+from numbers import Real
 from typing import Self
 
-from .problem import discrete_integer
+from ._record_validation import integer, required_text
+from .problem import discrete_integer, motif_library
 
 _INTERVAL_ENDPOINTS = 2
 
@@ -63,6 +73,72 @@ class RegulatorRequirements:
     mapping: tuple[tuple[int, str], ...]
     min_counts: tuple[tuple[str, int], ...]
     min_required: int | None
+
+
+@dataclass(frozen=True)
+class CountConstraint:
+    """Inclusive occurrence bounds on a validated set of library indices."""
+
+    indices: tuple[int, ...]
+    minimum: int | None
+    maximum: int | None
+
+
+@dataclass(frozen=True)
+class CoverageConstraint:
+    """Minimum represented groups, each containing validated library indices."""
+
+    groups: tuple[tuple[int, ...], ...]
+    minimum: int
+
+
+@dataclass(frozen=True)
+class FixedOccurrence:
+    """One supplied identity, a declared strand and an inclusive start window."""
+
+    index: int
+    orientation: str
+    start: tuple[int | None, int | None]
+    origin: str = "start"
+
+
+@dataclass(frozen=True)
+class SpacingConstraint:
+    """Signed downstream-start minus upstream-end bounds for fixed identities."""
+
+    upstream: int
+    downstream: int
+    interval: tuple[int, int]
+
+
+def occurrence_indices(indices: list[int], available: int) -> tuple[int, ...]:
+    """Validate an explicit nonempty set of supplied occurrence indices."""
+    if not isinstance(indices, (list, tuple)) or not indices:
+        msg = "occurrence indices must be a nonempty list or tuple"
+        raise ValueError(msg)
+    result = tuple(discrete_integer(i, "index", minimum=0) for i in indices)
+    if max(result) >= available or len(set(result)) != len(result):
+        msg = "occurrence indices must be unique and within the available library"
+        raise ValueError(msg)
+    return result
+
+
+def count_bounds(
+    minimum: int | None, maximum: int | None, available: int
+) -> tuple[int | None, int | None]:
+    """Validate inclusive integer count bounds without conflating omission/zero."""
+    if minimum is None and maximum is None:
+        msg = "at least one count bound is required"
+        raise ValueError(msg)
+    low = None if minimum is None else discrete_integer(minimum, "minimum", minimum=0)
+    high = None if maximum is None else discrete_integer(maximum, "maximum", minimum=0)
+    if low is not None and low > available:
+        msg = f"minimum exceeds {available} available occurrences"
+        raise ValueError(msg)
+    if low is not None and high is not None and low > high:
+        msg = "minimum must not exceed maximum"
+        raise ValueError(msg)
+    return low, high
 
 
 def _interval(
@@ -157,3 +233,78 @@ def _normalize_min_required(
         msg = "min_required_regulators exceeds available regulators"
         raise ValueError(msg)
     return min_required_regulators
+
+
+@dataclass(frozen=True)
+class Length:
+    """A packing maximum or explicit final-length requirement, never both."""
+
+    maximum: int | None = None
+    exact: int | None = None
+
+    def __post_init__(self) -> None:
+        """Require exactly one positive integer length."""
+        if (self.maximum is None) == (self.exact is None):
+            msg = "length requires exactly one of maximum or exact"
+            raise ValueError(msg)
+        for name in ("maximum", "exact"):
+            if (value := getattr(self, name)) is not None:
+                integer(value, field_name=f"length.{name}", minimum=1)
+
+
+@dataclass(frozen=True)
+class Avoid:
+    """Exclude literal DNA matches except those wholly within named fixed intervals."""
+
+    id: str
+    patterns: tuple[str, ...]
+    strands: str = "both"
+    except_placements: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        """Freeze strict ACGT patterns and explicit interval exception identities."""
+        required_text(self.id, field_name="requirement.id")
+        object.__setattr__(self, "patterns", tuple(motif_library(self.patterns)))
+        if len(set(self.patterns)) != len(self.patterns):
+            msg = "avoid patterns must be unique"
+            raise ValueError(msg)
+        if self.strands not in {"forward", "both"}:
+            msg = "avoid strands must be forward or both"
+            raise ValueError(msg)
+        if not isinstance(self.except_placements, (list, tuple)):
+            msg = "except_placements must be a sequence of fixed part IDs"
+            raise TypeError(msg)
+        for name in self.except_placements:
+            required_text(name, field_name="except_placements")
+        if len(set(self.except_placements)) != len(self.except_placements):
+            msg = "except_placements must contain unique fixed part IDs"
+            raise ValueError(msg)
+        object.__setattr__(self, "except_placements", tuple(self.except_placements))
+
+
+@dataclass(frozen=True)
+class GC:
+    """Inclusive GC fraction bounds on the final sequence or added padding."""
+
+    id: str
+    scope: str
+    min: float
+    max: float
+
+    def __post_init__(self) -> None:
+        """Require finite fractions and a declared counting region."""
+        required_text(self.id, field_name="requirement.id")
+        if self.scope not in {"sequence", "padding"}:
+            msg = "gc scope must be sequence or padding"
+            raise ValueError(msg)
+        for name in ("min", "max"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, Real):
+                msg = f"gc.{name} must be a finite fraction"
+                raise TypeError(msg)
+            if not math.isfinite(value) or not 0 <= value <= 1:
+                msg = f"gc.{name} must be a finite fraction in [0, 1]"
+                raise ValueError(msg)
+        if self.min > self.max:
+            msg = "gc minimum exceeds maximum"
+            raise ValueError(msg)

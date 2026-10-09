@@ -1,0 +1,110 @@
+{
+  "source": {
+    "path": "src/dnadesign/densegen/src/adapters/sources/background_pool.py",
+    "revision": "2ab9b233ddb6c3a410ae67d1616ce73104bd1785", "revision_note": "# pragma: allowlist secret - public source fingerprint",
+    "sha256": "a42aa950188a236efaec09c955a3a9d3d12d34be6587bd50cf13dce04521170f", "sha256_note": "# pragma: allowlist secret - public source fingerprint",
+    "capture": "Unmodified final acceptance loop with supplied aggregate scores and per-motif ratios; motif parsing, scoring, sampling and normalization are outside fixture scope."
+  },
+  "cases": [
+    {
+      "reject": "any_hit",
+      "threshold": null,
+      "records": [
+        {
+          "sequence": "none",
+          "hits": [
+            null,
+            null
+          ]
+        },
+        {
+          "sequence": "equal",
+          "hits": [
+            {
+              "raw": 2,
+              "maximum": 4
+            },
+            null
+          ]
+        },
+        {
+          "sequence": "above",
+          "hits": [
+            {
+              "raw": 1,
+              "maximum": 4
+            },
+            {
+              "raw": 6,
+              "maximum": 8
+            }
+          ]
+        },
+        {
+          "sequence": "negative",
+          "hits": [
+            {
+              "raw": -1,
+              "maximum": 4
+            },
+            null
+          ]
+        }
+      ],
+      "accepted": [
+        "none"
+      ]
+    },
+    {
+      "reject": "score_above",
+      "threshold": 0.5,
+      "records": [
+        {
+          "sequence": "none",
+          "hits": [
+            null,
+            null
+          ]
+        },
+        {
+          "sequence": "equal",
+          "hits": [
+            {
+              "raw": 2,
+              "maximum": 4
+            },
+            null
+          ]
+        },
+        {
+          "sequence": "above",
+          "hits": [
+            {
+              "raw": 1,
+              "maximum": 4
+            },
+            {
+              "raw": 6,
+              "maximum": 8
+            }
+          ]
+        },
+        {
+          "sequence": "negative",
+          "hits": [
+            {
+              "raw": -1,
+              "maximum": 4
+            },
+            null
+          ]
+        }
+      ],
+      "accepted": [
+        "none",
+        "equal",
+        "negative"
+      ]
+    }
+  ]
+}

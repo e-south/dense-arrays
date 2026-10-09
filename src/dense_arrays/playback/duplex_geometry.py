@@ -1,7 +1,14 @@
-"""Fit a compact nucleotide grid to a native duplex viewport.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/duplex_geometry.py
+
+Fit a compact nucleotide grid to a native duplex viewport.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 

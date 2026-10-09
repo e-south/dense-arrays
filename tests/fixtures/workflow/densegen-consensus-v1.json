@@ -1,0 +1,68 @@
+{
+  "schema": "dense_arrays.fixture.consensus.v1",
+  "source": {
+    "repository": "dnadesign",
+    "path": "src/dnadesign/densegen/src/core/stage_a/stage_a_sampling_utils.py",
+    "function": "_pwm_consensus",
+    "revision": "2ab9b233ddb6c3a410ae67d1616ce73104bd1785", "_fingerprint_6": "# pragma: allowlist secret - public source fingerprint",
+    "file_sha256": "815fb822dc9d1c61008b3c399b71cffc51387bda857101f1f7f9bfcaf1f18d0c", "_fingerprint_7": "# pragma: allowlist secret - public source fingerprint",
+    "function_sha256": "a05bbed7069b18cbbfd3dc9b912eb95fe5b57b594363422ef4ee5d12c31cbbd3", "_fingerprint_8": "# pragma: allowlist secret - public source fingerprint"
+  },
+  "scope": "Highest-probability bases in canonical ACGT column order only; not random sampling, scoring, trimming or pool selection equivalence",
+  "cases": [
+    {
+      "name": "unique",
+      "probabilities": [
+        [
+          0.7,
+          0.1,
+          0.1,
+          0.1
+        ],
+        [
+          0.1,
+          0.7,
+          0.1,
+          0.1
+        ]
+      ],
+      "consensus": "AC"
+    },
+    {
+      "name": "ties",
+      "probabilities": [
+        [
+          0.5,
+          0.5,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0.5,
+          0.5
+        ],
+        [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ]
+      ],
+      "consensus": "AGA"
+    },
+    {
+      "name": "near_tie",
+      "probabilities": [
+        [
+          0.4999999,
+          0.5000001,
+          0,
+          0
+        ]
+      ],
+      "consensus": "C"
+    }
+  ]
+}

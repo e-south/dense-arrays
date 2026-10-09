@@ -32,6 +32,25 @@ OR-Tools build. `solver_options` contains backend-specific strings; rejected
 options raise `ValueError` before replacing an existing model. Their syntax
 and support depend on that backend, so they are not a portable timeout API.
 
+Use `SolverControls` to bound each solve through any exact optimizer method:
+
+```python
+from itertools import islice  # Bound the number of returned arrangements.
+from dense_arrays import Optimizer  # Configure the packing problem.
+from dense_arrays.solver import SolverControls  # Declare supported backend limits.
+
+# These synthetic 16-base sites share an eight-base overlap.
+optimizer = Optimizer(["ACGTTGCAAGTCCTGA", "AGTCCTGATCGTACCG"], 24)
+controls = SolverControls(time_limit_seconds=2)  # Cooperative seconds per solve.
+for result in islice(optimizer.solutions(controls=controls), 3):
+    print(result.sequence)  # Each returned result has a proved optimum.
+```
+
+The time allowance applies to each backend solve, not the entire enumeration.
+It is cooperative and cannot guarantee a hard deadline. `threads` is supported
+only for SCIP; CBC rejects an explicit thread request. `optimal()` and
+`solutions_diverse()` accept the same keyword-only `controls` argument.
+
 Only an optimal solver status returns a result. Exceptions are exported from
 `dense_arrays` and `dense_arrays.errors`:
 
@@ -55,9 +74,10 @@ report failures on stderr and exit nonzero. See [CLI behavior](cli.md).
 ## Greedy approximation
 
 `approximate()` builds a feasible path with a multi-start greedy heuristic;
-it does not prove optimality. It rejects configured promoter constraints,
-regulator requirements, side biases, and model changes made by `forbid()` or
-`set_motif_weight()`. Use an exact solver method when those requirements matter.
+it does not prove optimality. It rejects exact length, promoter constraints,
+regulator requirements, count/coverage bounds, fixed occurrences, spacing,
+side biases, and model changes made by `forbid()` or `set_motif_weight()`.
+Use an exact solver method when those requirements matter.
 
 The heuristic records selected entries and orientations as it builds the
 path. Repeated motifs need separate placements, and an incidental contained
@@ -77,10 +97,10 @@ weights, and nonfinite values are rejected before model mutation.
 Create an optimizer, then choose a solving method:
 
 ```text
-Optimizer(library, sequence_length, strands="double")
-optimizer.optimal(solver="CBC", solver_options=None)
-optimizer.solutions(solver="CBC", solver_options=None)
-optimizer.solutions_diverse(solver="CBC", solver_options=None)
+Optimizer(library, sequence_length, strands="double", *, length_mode="maximum")
+optimizer.optimal(solver="CBC", solver_options=None, *, controls=None)
+optimizer.solutions(solver="CBC", solver_options=None, *, controls=None)
+optimizer.solutions_diverse(solver="CBC", solver_options=None, *, controls=None)
 optimizer.approximate()
 ```
 

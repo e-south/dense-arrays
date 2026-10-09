@@ -1,0 +1,523 @@
+{
+  "source": {
+    "revision": "2ab9b233ddb6c3a410ae67d1616ce73104bd1785", "revision_note": "# pragma: allowlist secret - public source fingerprint",
+    "files": [
+      {
+        "path": "src/dnadesign/densegen/src/core/score_tiers.py",
+        "sha256": "56bd33966d145d30f44f5b9cf2b771cece1f5a393b372ab941b253ff04186210", "sha256_note": "# pragma: allowlist secret - public source fingerprint"
+      },
+      {
+        "path": "src/dnadesign/densegen/src/core/stage_a/stage_a_sampling_utils.py",
+        "sha256": "815fb822dc9d1c61008b3c399b71cffc51387bda857101f1f7f9bfcaf1f18d0c", "sha256_note": "# pragma: allowlist secret - public source fingerprint"
+      },
+      {
+        "path": "src/dnadesign/densegen/src/core/stage_a/stage_a_encoding.py",
+        "sha256": "1d9b9a48be2b220b444cbda5f442caf5a1361560314053a04589f4f37e750813", "sha256_note": "# pragma: allowlist secret - public source fingerprint"
+      },
+      {
+        "path": "src/dnadesign/densegen/src/core/stage_a/stage_a_types.py",
+        "sha256": "e7417d5a4039205b1cef9306c42570c34c441fc4c3fb9a5742390a4a3dd9fc83", "sha256_note": "# pragma: allowlist secret - public source fingerprint"
+      },
+      {
+        "path": "src/dnadesign/densegen/src/core/stage_a/stage_a_selection.py",
+        "sha256": "ad1e3dee16907d90d611e9ef66a0feeaf049943a016eae152ca81492f4fd2f59", "sha256_note": "# pragma: allowlist secret - public source fingerprint"
+      }
+    ],
+    "capture": "Unmodified selection and supporting function AST with synthetic already-ranked and unique candidates; no sampling or representative selection.",
+    "scope": "MMR greedy choice, lexical ties, score scaling and bounded pool; each pool is larger than retained target."
+  },
+  "cases": [
+    {
+      "score_scaling": "fraction_of_max_clipped",
+      "minimum_fraction_of_max": null,
+      "pool_size": 6,
+      "relevance_weight": 0.5,
+      "target": 2,
+      "probabilities": [
+        {
+          "A": 0.25,
+          "C": 0.25,
+          "G": 0.25,
+          "T": 0.25
+        },
+        {
+          "A": 0.25,
+          "C": 0.25,
+          "G": 0.25,
+          "T": 0.25
+        }
+      ],
+      "background": {
+        "A": 0.25,
+        "C": 0.25,
+        "G": 0.25,
+        "T": 0.25
+      },
+      "candidates": [
+        {
+          "sequence": "AA",
+          "raw": 10,
+          "maximum": 10
+        },
+        {
+          "sequence": "AT",
+          "raw": 9,
+          "maximum": 10
+        },
+        {
+          "sequence": "TA",
+          "raw": 9,
+          "maximum": 10
+        },
+        {
+          "sequence": "TT",
+          "raw": 8,
+          "maximum": 10
+        },
+        {
+          "sequence": "AC",
+          "raw": 7,
+          "maximum": 10
+        },
+        {
+          "sequence": "CA",
+          "raw": 6,
+          "maximum": 10
+        }
+      ],
+      "selected": [
+        "AA",
+        "TT"
+      ],
+      "evidence": {
+        "AA": {
+          "selection_rank": 1,
+          "selection_utility": 0.5,
+          "selection_score_norm": 1.0,
+          "nearest_selected_similarity": null,
+          "nearest_selected_distance": null,
+          "nearest_selected_distance_norm": null
+        },
+        "TT": {
+          "selection_rank": 2,
+          "selection_utility": 0.23333333333333336,
+          "selection_score_norm": 0.8,
+          "nearest_selected_similarity": 0.3333333333333333,
+          "nearest_selected_distance": 2.0,
+          "nearest_selected_distance_norm": 1.0
+        }
+      },
+      "pool_size_actual": 6
+    },
+    {
+      "score_scaling": "score_percentile",
+      "minimum_fraction_of_max": null,
+      "pool_size": 6,
+      "relevance_weight": 0.5,
+      "target": 2,
+      "probabilities": [
+        {
+          "A": 0.25,
+          "C": 0.25,
+          "G": 0.25,
+          "T": 0.25
+        },
+        {
+          "A": 0.25,
+          "C": 0.25,
+          "G": 0.25,
+          "T": 0.25
+        }
+      ],
+      "background": {
+        "A": 0.25,
+        "C": 0.25,
+        "G": 0.25,
+        "T": 0.25
+      },
+      "candidates": [
+        {
+          "sequence": "AA",
+          "raw": 10,
+          "maximum": 10
+        },
+        {
+          "sequence": "AT",
+          "raw": 9,
+          "maximum": 10
+        },
+        {
+          "sequence": "TA",
+          "raw": 9,
+          "maximum": 10
+        },
+        {
+          "sequence": "TT",
+          "raw": 8,
+          "maximum": 10
+        },
+        {
+          "sequence": "AC",
+          "raw": 7,
+          "maximum": 10
+        },
+        {
+          "sequence": "CA",
+          "raw": 6,
+          "maximum": 10
+        }
+      ],
+      "selected": [
+        "AA",
+        "AT"
+      ],
+      "evidence": {
+        "AA": {
+          "selection_rank": 1,
+          "selection_utility": 0.5,
+          "selection_score_norm": 1.0,
+          "nearest_selected_similarity": null,
+          "nearest_selected_distance": null,
+          "nearest_selected_distance_norm": null
+        },
+        "AT": {
+          "selection_rank": 2,
+          "selection_utility": 0.09999999999999998,
+          "selection_score_norm": 0.9,
+          "nearest_selected_similarity": 0.5,
+          "nearest_selected_distance": 1.0,
+          "nearest_selected_distance_norm": 0.5
+        }
+      },
+      "pool_size_actual": 6
+    },
+    {
+      "score_scaling": "fraction_of_max_clipped",
+      "minimum_fraction_of_max": 0.85,
+      "pool_size": 6,
+      "relevance_weight": 0.5,
+      "target": 2,
+      "probabilities": [
+        {
+          "A": 0.25,
+          "C": 0.25,
+          "G": 0.25,
+          "T": 0.25
+        },
+        {
+          "A": 0.25,
+          "C": 0.25,
+          "G": 0.25,
+          "T": 0.25
+        }
+      ],
+      "background": {
+        "A": 0.25,
+        "C": 0.25,
+        "G": 0.25,
+        "T": 0.25
+      },
+      "candidates": [
+        {
+          "sequence": "AA",
+          "raw": 10,
+          "maximum": 10
+        },
+        {
+          "sequence": "AT",
+          "raw": 9,
+          "maximum": 10
+        },
+        {
+          "sequence": "TA",
+          "raw": 9,
+          "maximum": 10
+        },
+        {
+          "sequence": "TT",
+          "raw": 8,
+          "maximum": 10
+        },
+        {
+          "sequence": "AC",
+          "raw": 7,
+          "maximum": 10
+        },
+        {
+          "sequence": "CA",
+          "raw": 6,
+          "maximum": 10
+        }
+      ],
+      "selected": [
+        "AA",
+        "AT"
+      ],
+      "evidence": {
+        "AA": {
+          "selection_rank": 1,
+          "selection_utility": 0.5,
+          "selection_score_norm": 1.0,
+          "nearest_selected_similarity": null,
+          "nearest_selected_distance": null,
+          "nearest_selected_distance_norm": null
+        },
+        "AT": {
+          "selection_rank": 2,
+          "selection_utility": 0.2,
+          "selection_score_norm": 0.9,
+          "nearest_selected_similarity": 0.5,
+          "nearest_selected_distance": 1.0,
+          "nearest_selected_distance_norm": 0.5
+        }
+      },
+      "pool_size_actual": 3
+    },
+    {
+      "score_scaling": "fraction_of_max_clipped",
+      "minimum_fraction_of_max": null,
+      "pool_size": 3,
+      "relevance_weight": 0.5,
+      "target": 2,
+      "probabilities": [
+        {
+          "A": 0.25,
+          "C": 0.25,
+          "G": 0.25,
+          "T": 0.25
+        },
+        {
+          "A": 0.25,
+          "C": 0.25,
+          "G": 0.25,
+          "T": 0.25
+        }
+      ],
+      "background": {
+        "A": 0.25,
+        "C": 0.25,
+        "G": 0.25,
+        "T": 0.25
+      },
+      "candidates": [
+        {
+          "sequence": "AA",
+          "raw": 10,
+          "maximum": 10
+        },
+        {
+          "sequence": "AT",
+          "raw": 9,
+          "maximum": 10
+        },
+        {
+          "sequence": "TA",
+          "raw": 9,
+          "maximum": 10
+        },
+        {
+          "sequence": "TT",
+          "raw": 8,
+          "maximum": 10
+        },
+        {
+          "sequence": "AC",
+          "raw": 7,
+          "maximum": 10
+        },
+        {
+          "sequence": "CA",
+          "raw": 6,
+          "maximum": 10
+        }
+      ],
+      "selected": [
+        "AA",
+        "AT"
+      ],
+      "evidence": {
+        "AA": {
+          "selection_rank": 1,
+          "selection_utility": 0.5,
+          "selection_score_norm": 1.0,
+          "nearest_selected_similarity": null,
+          "nearest_selected_distance": null,
+          "nearest_selected_distance_norm": null
+        },
+        "AT": {
+          "selection_rank": 2,
+          "selection_utility": 0.2,
+          "selection_score_norm": 0.9,
+          "nearest_selected_similarity": 0.5,
+          "nearest_selected_distance": 1.0,
+          "nearest_selected_distance_norm": 0.5
+        }
+      },
+      "pool_size_actual": 3
+    },
+    {
+      "score_scaling": "fraction_of_max_clipped",
+      "minimum_fraction_of_max": null,
+      "pool_size": 6,
+      "relevance_weight": 0.5,
+      "target": 2,
+      "probabilities": [
+        {
+          "A": 0.25,
+          "C": 0.25,
+          "G": 0.25,
+          "T": 0.25
+        },
+        {
+          "A": 0.97,
+          "C": 0.01,
+          "G": 0.01,
+          "T": 0.01
+        }
+      ],
+      "background": {
+        "A": 0.25,
+        "C": 0.25,
+        "G": 0.25,
+        "T": 0.25
+      },
+      "candidates": [
+        {
+          "sequence": "AA",
+          "raw": 10,
+          "maximum": 10
+        },
+        {
+          "sequence": "AT",
+          "raw": 9,
+          "maximum": 10
+        },
+        {
+          "sequence": "TA",
+          "raw": 9,
+          "maximum": 10
+        },
+        {
+          "sequence": "TT",
+          "raw": 8,
+          "maximum": 10
+        },
+        {
+          "sequence": "AC",
+          "raw": 7,
+          "maximum": 10
+        },
+        {
+          "sequence": "CA",
+          "raw": 6,
+          "maximum": 10
+        }
+      ],
+      "selected": [
+        "AA",
+        "TA"
+      ],
+      "evidence": {
+        "AA": {
+          "selection_rank": 1,
+          "selection_utility": 0.5,
+          "selection_score_norm": 1.0,
+          "nearest_selected_similarity": null,
+          "nearest_selected_distance": null,
+          "nearest_selected_distance_norm": null
+        },
+        "TA": {
+          "selection_rank": 2,
+          "selection_utility": 0.2,
+          "selection_score_norm": 0.9,
+          "nearest_selected_similarity": 0.5,
+          "nearest_selected_distance": 1.0,
+          "nearest_selected_distance_norm": 0.8920842423228093
+        }
+      },
+      "pool_size_actual": 6
+    },
+    {
+      "score_scaling": "fraction_of_max_clipped",
+      "minimum_fraction_of_max": null,
+      "pool_size": 6,
+      "relevance_weight": 0.5,
+      "target": 2,
+      "probabilities": [
+        {
+          "A": 0.1,
+          "C": 0.2,
+          "G": 0.3,
+          "T": 0.4
+        },
+        {
+          "A": 0.97,
+          "C": 0.01,
+          "G": 0.01,
+          "T": 0.01
+        }
+      ],
+      "background": {
+        "A": 0.1,
+        "C": 0.2,
+        "G": 0.3,
+        "T": 0.4
+      },
+      "candidates": [
+        {
+          "sequence": "AA",
+          "raw": 10,
+          "maximum": 10
+        },
+        {
+          "sequence": "AT",
+          "raw": 9,
+          "maximum": 10
+        },
+        {
+          "sequence": "TA",
+          "raw": 9,
+          "maximum": 10
+        },
+        {
+          "sequence": "TT",
+          "raw": 8,
+          "maximum": 10
+        },
+        {
+          "sequence": "AC",
+          "raw": 7,
+          "maximum": 10
+        },
+        {
+          "sequence": "CA",
+          "raw": 6,
+          "maximum": 10
+        }
+      ],
+      "selected": [
+        "AA",
+        "TA"
+      ],
+      "evidence": {
+        "AA": {
+          "selection_rank": 1,
+          "selection_utility": 0.5,
+          "selection_score_norm": 1.0,
+          "nearest_selected_similarity": null,
+          "nearest_selected_distance": null,
+          "nearest_selected_distance_norm": null
+        },
+        "TA": {
+          "selection_rank": 2,
+          "selection_utility": 0.2,
+          "selection_score_norm": 0.9,
+          "nearest_selected_similarity": 0.5,
+          "nearest_selected_distance": 1.0,
+          "nearest_selected_distance_norm": 0.9202734613162555
+        }
+      },
+      "pool_size_actual": 6
+    }
+  ]
+}

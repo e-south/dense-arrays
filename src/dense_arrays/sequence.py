@@ -1,8 +1,15 @@
-"""Sequence and overlap utilities for dense arrays.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/sequence.py
+
+Sequence and overlap utilities for dense arrays.
 
 Module Author(s): Virgile Andreani, Eric J. South
+Maintainer(s): Eric J. South
 Dunlop Lab
-"""
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 
@@ -27,8 +34,9 @@ def shift_metric(motifa: str, motifb: str) -> int:
         motifb:       TATGA
         shift : 0123456
 
-    Note: we only consider shifts such that the shifted `motifb` overhangs from
-    `motifa`.  If `motifb` is contained inside `motifa`, it will not be counted:
+    The second motif must end at or beyond the end of the first. A suffix-aligned
+    motif can share its endpoint: shift_metric("ACGT", "CGT") == 1. A match that
+    ends strictly inside the first motif is not an admissible path transition:
 
     shift_metric("ATGTTAACT", "TTAA") == 8 because
 

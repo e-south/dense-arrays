@@ -1,7 +1,14 @@
-"""Place edge-owned cost labels while avoiding nodes and other labels.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/graph/labels.py
+
+Place edge-owned cost labels while avoiding nodes and other labels.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 

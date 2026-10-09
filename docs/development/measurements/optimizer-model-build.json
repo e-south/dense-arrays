@@ -1,0 +1,243 @@
+{
+  "schema": "dense_arrays.optimizer_model_build_measurement.v1",
+  "environment": {
+    "python": "3.14.7",
+    "platform": "macOS-26.5-arm64-arm-64bit-Mach-O",
+    "ortools": "9.15.6755"
+  },
+  "scope": "Three paired sequential warm-import build-and-export timings, no solving in timed region. Separate tracemalloc run, excluding native allocations. Local synthetic measurements, not throughput guarantees.",
+  "workload": {
+    "seed": 17,
+    "sequence_length": 100,
+    "motif_length": 12,
+    "strands": "double",
+    "solver": "CBC",
+    "solver_seconds": 1,
+    "timed_operations": [
+      "Optimizer construction",
+      "build_model",
+      "ExportModelToProto",
+      "SerializeToString"
+    ],
+    "case_generation": "One random.Random(17); choices(ACGT,k=12), 30 motifs then 70 motifs."
+  },
+  "baseline_method": "def _add_continuity_variables(self) -> None:\n        \"\"\"Implement subtour elimination variables and constraints into the model.\"\"\"\n        try:\n            self.model.cont  # noqa: B018\n        except AttributeError:\n            pass\n        else:\n            # Continuity variables already exist\n            return\n\n        self.model.cont = [\n            self.model.IntVar(1, self.nb_nodes, f\"u[{i}]\") for i in range(self.nb_nodes)\n        ]\n\n        for i in range(self.nb_nodes):\n            for j in range(self.nb_nodes):\n                if i == j:\n                    continue\n                distance_i_j = self.model.cont[j] - self.model.cont[i]\n                slack = self.nb_nodes * (1 - self.model.X[i, j])\n                self.model.Add(-distance_i_j + 1 <= slack)",
+  "production_method": "def _add_continuity_variables(self) -> None:\n    \"\"\"Implement subtour elimination variables and constraints into the model.\"\"\"\n    try:\n        self.model.cont  # noqa: B018\n    except AttributeError:\n        pass\n    else:\n        # Continuity variables already exist\n        return\n\n    self.model.cont = [\n        self.model.IntVar(1, self.nb_nodes, f\"u[{i}]\") for i in range(self.nb_nodes)\n    ]\n\n    for i in range(self.nb_nodes):\n        for j in range(self.nb_nodes):\n            if i == j:\n                continue\n            # A selected edge increases rank: u_j >= u_i + 1. Direct\n            # coefficients avoid temporary expression trees for every edge.\n            row = self.model.Constraint(-self.model.infinity(), self.nb_nodes - 1)\n            row.SetCoefficient(self.model.cont[i], 1)\n            row.SetCoefficient(self.model.cont[j], -1)\n            row.SetCoefficient(self.model.X[i, j], self.nb_nodes)\n",
+  "cases": [
+    {
+      "parts": 30,
+      "library": [
+        "GTTCTGGAACGC",
+        "GCTTCTATTAGG",
+        "TAGTGCATCTAT",
+        "TTACATCTCTTA",
+        "GTGCCTAGGGAG",
+        "TCCTGCATCCCG",
+        "GCATTAGGCGTG",
+        "CACAAATGTTTA",
+        "TATTGCAAGAGC",
+        "ACGCCCGGCTTA",
+        "CACAGGCTCGTG",
+        "GCTTCCGGGAGG",
+        "TCCGGCACTTCT",
+        "ACGGACTGTATT",
+        "AGTAGTTCAGAG",
+        "CCGTTCATCTTA",
+        "GCCCGACCAAGC",
+        "ACATTACCGCGT",
+        "AGAGCTTTCGAG",
+        "TCCTTTCACAAA",
+        "CCTCATACTCTG",
+        "CTTGAATTGTTA",
+        "ATTCCACTACAG",
+        "AGCCCCTTTAAC",
+        "TTAGCCAGTTCC",
+        "GATTACCTGATT",
+        "TCCCTCTAACAC",
+        "AACACGCCCCGT",
+        "AGGTGCGTTTAC",
+        "CCTCTATAGACG"
+      ],
+      "seconds": {
+        "baseline": [
+          0.07164154200290795,
+          0.06516741699306294,
+          0.0648044999979902
+        ],
+        "production": [
+          0.04144912499759812,
+          0.04205579200061038,
+          0.041747666997252963
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.06516741699306294,
+        "production": 0.041747666997252963
+      },
+      "speedup": 1.5609834436341323,
+      "traced_peak_bytes": {
+        "baseline": 3439288,
+        "production": 3440692
+      },
+      "models_byte_identical": true,
+      "model_sha256": "c75faad2d45494516ff19a8e92ba29b5dcc9c61821fd8cdd5d4c6585dbb69d48", "model_sha256_note": "# pragma: allowlist secret - model content identity"
+    },
+    {
+      "parts": 70,
+      "library": [
+        "TACAGAATATCT",
+        "AACCGCCAAACT",
+        "GCCTTAGCTGGG",
+        "TACAATGACCAT",
+        "CAGCTCAGCAGT",
+        "TGCTAAAGACTG",
+        "AAAACGTCAGTA",
+        "GTCGTGATGGGT",
+        "GTAAAGGTAACG",
+        "CCAGGTCCTGCG",
+        "CAACCCGCCGAT",
+        "CAGAAAACCAAT",
+        "GGATATGCCGGT",
+        "AAGCGCATACGT",
+        "TTCACTGGGAGC",
+        "TCGGGTGATAGC",
+        "ACAATTCCGCAC",
+        "TTGTCTTTAGAG",
+        "CGGCACTCTTCC",
+        "TATCGAGACGGC",
+        "CCCAACTTCTCT",
+        "TTTGTCGGGACG",
+        "CGGGACTCATCA",
+        "GTGAACCTTTTC",
+        "GGGGAAAGATGC",
+        "TAATCTCATTCG",
+        "GATCGACATAAC",
+        "TAGTGCGACTAC",
+        "AGTAGTACCGTT",
+        "CAGTACCTCACG",
+        "ATAGCTTCCCGA",
+        "ACGCAGTTAAGT",
+        "AGCTTATACTCT",
+        "GGTGCCCACGCA",
+        "TGTGCTGGGCCA",
+        "CGATTCAAGTCT",
+        "ACAAATAAGCGA",
+        "ACTAATTGGCAC",
+        "CGTTGAGAACTC",
+        "GTGAGGCAAGTA",
+        "CTTTACACGCTC",
+        "CGGGGTGTTTTG",
+        "CAACTCACGATC",
+        "ATCAAGTCCTGT",
+        "ATTCTACTACCA",
+        "TATCGCCGTGAG",
+        "GTCTCTGCGTAC",
+        "CTTAGGGACTCT",
+        "TCAATGTCGCAC",
+        "ACCACTTTACGA",
+        "CTTAGCCTATTC",
+        "TTCAATCTATCG",
+        "CGGTACTGAAGA",
+        "ACCCCGATATCC",
+        "GCCTGGCTGCTC",
+        "TTTCTGACGCAA",
+        "ACCGTGGACCCC",
+        "TGCTGTTTCGTC",
+        "TAAACACGGCTT",
+        "TGTGTCTAGGAT",
+        "CTTCTAATTCCC",
+        "GAGGGAAACGGC",
+        "CTTTCAGAAAAA",
+        "ATTATTTTCGAG",
+        "TAATCACCATCG",
+        "GTTGCGAAGTTA",
+        "GGGCCTACAGCT",
+        "ATCCACGCAAGA",
+        "GCGATAGGTGGG",
+        "CAATGCTTGGAG"
+      ],
+      "seconds": {
+        "baseline": [
+          0.3643886250065407,
+          0.37013300000398885,
+          0.36087108400533907
+        ],
+        "production": [
+          0.23613145799026825,
+          0.23006008299125824,
+          0.23640162499214057
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.3643886250065407,
+        "production": 0.23613145799026825
+      },
+      "speedup": 1.5431600181859646,
+      "traced_peak_bytes": {
+        "baseline": 18436392,
+        "production": 18434006
+      },
+      "models_byte_identical": true,
+      "model_sha256": "ccf6336ffa733a565247962f467a30d37065860743d5f32e61f8c9d0ef8e769c", "model_sha256_note": "# pragma: allowlist secret - model content identity"
+    }
+  ],
+  "cbc_enumeration": {
+    "parts": [
+      "AAA",
+      "AAC",
+      "ACC",
+      "CCG",
+      "CGT",
+      "GTT"
+    ],
+    "length": 12,
+    "strands": "single",
+    "solver_seconds": 1,
+    "baseline": [
+      {
+        "sequence": "ACCGTTAAAC",
+        "occurrences": 6
+      },
+      {
+        "sequence": "CCGAAACCGTT",
+        "occurrences": 6
+      },
+      {
+        "sequence": "AACCGTTAAA",
+        "occurrences": 6
+      },
+      {
+        "sequence": "AAACCAACCGTT",
+        "occurrences": 6
+      },
+      {
+        "sequence": "GTTAAACCGT",
+        "occurrences": 6
+      }
+    ],
+    "production": [
+      {
+        "sequence": "ACCGTTAAAC",
+        "occurrences": 6
+      },
+      {
+        "sequence": "CCGAAACCGTT",
+        "occurrences": 6
+      },
+      {
+        "sequence": "AACCGTTAAA",
+        "occurrences": 6
+      },
+      {
+        "sequence": "AAACCAACCGTT",
+        "occurrences": 6
+      },
+      {
+        "sequence": "GTTAAACCGT",
+        "occurrences": 6
+      }
+    ],
+    "identical": true
+  },
+  "independent_oracle": "tests/packing/test_continuity.py exhausts all64 directed edge subsets on3 nodes and rank assignments; model rows admit exactly acyclic graphs."
+}

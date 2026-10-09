@@ -1,10 +1,19 @@
-"""Validate scalar fields and immutable JSON snapshots for persisted records.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/_record_validation.py
+
+Validate scalar fields and immutable JSON snapshots for persisted records.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 from collections.abc import Mapping, Sequence
 from enum import StrEnum
@@ -12,6 +21,33 @@ from types import MappingProxyType
 
 _IUPAC_DNA = frozenset("ACGTRYSWKMBDHVN")
 _SHA256_LENGTH = 64
+
+
+def canonical_json(value: object) -> str:
+    """Encode finite UTF-8 JSON with semantic array order and sorted keys."""
+    return json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    )
+
+
+def semantic_digest(value: object) -> str:
+    """Hash canonical JSON; callers include the semantic schema namespace."""
+    return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
+
+
+def object_fields(value: object, allowed: set[str], context: str) -> dict[str, object]:
+    """Copy a JSON object and reject fields outside its declared schema."""
+    if not isinstance(value, Mapping):
+        msg = f"{context} must be an object"
+        raise TypeError(msg)
+    if unknown := set(value) - allowed:
+        msg = f"{context}: unknown fields {sorted(unknown)}"
+        raise ValueError(msg)
+    return dict(value)
 
 
 def required_text(value: object, *, field_name: str) -> str:

@@ -1,7 +1,14 @@
-"""Choose deterministic edge centerlines around measured node obstacles.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/graph/edge_routing.py
+
+Choose deterministic edge centerlines around measured node obstacles.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 

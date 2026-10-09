@@ -1,7 +1,14 @@
-"""Draw sequence, complement, placement bars, and caller labels.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/duplex_drawing.py
+
+Draw sequence, complement, placement bars, and caller labels.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 

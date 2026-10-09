@@ -1,0 +1,172 @@
+{
+  "scope": "Three paired native plan, prepare, verify, candidate and quality reads after per-mode warmup. Separate profiling and Python allocation measurements. Synthetic workloads; no solver or scoring performance claim.",
+  "python": "3.14.7",
+  "platform": "macOS-26.5-arm64-arm-64bit-Mach-O",
+  "shared_request": {
+    "seed": 7,
+    "strategy": "stochastic",
+    "batch_size": 16,
+    "retain": {
+      "count": 1,
+      "policy": "first_eligible"
+    },
+    "screening_strands": "forward"
+  },
+  "methods": {
+    "baseline": "Collect and sort every overlapping literal match before extracting the pass/fail result.",
+    "production": "Consume the shared violation iterator until the first match; detailed evidence still collects and sorts all observations."
+  },
+  "cases": [
+    {
+      "case": {
+        "name": "ordinary_background",
+        "length": 100,
+        "candidates": 64,
+        "probabilities": [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ],
+        "patterns": [
+          "AAA",
+          "CCC",
+          "GGG",
+          "TTT",
+          "GAATTC",
+          "GGATCC"
+        ]
+      },
+      "seconds": {
+        "baseline": [
+          0.028489791991887614,
+          0.031801749995793216,
+          0.026993749997927807
+        ],
+        "prototype": [
+          0.027472624991787598,
+          0.025262416995246895,
+          0.03264762499020435
+        ],
+        "production": [
+          0.027213541005039588,
+          0.0293015409988584,
+          0.026841250000870787
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.028489791991887614,
+        "prototype": 0.027472624991787598,
+        "production": 0.027213541005039588
+      },
+      "traced_peak_bytes": {
+        "baseline": 331684,
+        "prototype": 331740,
+        "production": 331740
+      },
+      "identities": {
+        "baseline": {
+          "plan_id": "fb5846bb0dddcc92c9940ac737d255cef49ce2150dcf1ff8bc7b4de365d7d9dc",
+          "pool_id": "50fbbdff82ca2a426c1bac35f2a01de720a35270086f6bd4ca05236350e9c01e",
+          "candidate_records_sha256": "7fabef1f74961b95e4c0a171c6c5fe08e938465297cc435c36e63456906032f1", "digest_note": "# pragma: allowlist secret - synthetic candidate record checksum"
+        },
+        "prototype": {
+          "plan_id": "fb5846bb0dddcc92c9940ac737d255cef49ce2150dcf1ff8bc7b4de365d7d9dc",
+          "pool_id": "50fbbdff82ca2a426c1bac35f2a01de720a35270086f6bd4ca05236350e9c01e",
+          "candidate_records_sha256": "7fabef1f74961b95e4c0a171c6c5fe08e938465297cc435c36e63456906032f1", "digest_note": "# pragma: allowlist secret - synthetic candidate record checksum"
+        },
+        "production": {
+          "plan_id": "fb5846bb0dddcc92c9940ac737d255cef49ce2150dcf1ff8bc7b4de365d7d9dc",
+          "pool_id": "50fbbdff82ca2a426c1bac35f2a01de720a35270086f6bd4ca05236350e9c01e",
+          "candidate_records_sha256": "7fabef1f74961b95e4c0a171c6c5fe08e938465297cc435c36e63456906032f1", "digest_note": "# pragma: allowlist secret - synthetic candidate record checksum"
+        }
+      },
+      "native_outputs_equal": true,
+      "outputs_match_prototype_experiment": true,
+      "counts": {
+        "duplicate_discarded": 0,
+        "eligibility_rejected": 63,
+        "eligible": 1,
+        "eligible_unique": 1,
+        "execution_error": 0,
+        "not_selected": 0,
+        "processed": 64,
+        "retained": 1
+      }
+    },
+    {
+      "case": {
+        "name": "overlapping_negative_control",
+        "length": 1000,
+        "candidates": 64,
+        "probabilities": [
+          1,
+          0,
+          0,
+          0
+        ],
+        "patterns": [
+          "AAA",
+          "AAAA",
+          "AAAAA"
+        ]
+      },
+      "seconds": {
+        "baseline": [
+          0.39260733300761785,
+          0.3921964999899501,
+          0.39511725000920705
+        ],
+        "prototype": [
+          0.09210270900803152,
+          0.09588941599940881,
+          0.0936036659986712
+        ],
+        "production": [
+          0.09193141700234264,
+          0.09161620799568482,
+          0.09197937499266118
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.39260733300761785,
+        "prototype": 0.0936036659986712,
+        "production": 0.09193141700234264
+      },
+      "traced_peak_bytes": {
+        "baseline": 1443741,
+        "prototype": 390628,
+        "production": 388956
+      },
+      "identities": {
+        "baseline": {
+          "plan_id": "e0965bc025725e4d08c2e320db5242920874f88f9337da6de11c3bc49de5f62d",
+          "pool_id": "88b4dd68f02a959f54243d0dc8b54b143e2f4feaa8f064311c826e7addf963f0",
+          "candidate_records_sha256": "2fbe02c6e3877b535a781620be0948d5964a182bd617a50826676e3ae9b5e06f", "digest_note": "# pragma: allowlist secret - synthetic candidate record checksum"
+        },
+        "prototype": {
+          "plan_id": "e0965bc025725e4d08c2e320db5242920874f88f9337da6de11c3bc49de5f62d",
+          "pool_id": "88b4dd68f02a959f54243d0dc8b54b143e2f4feaa8f064311c826e7addf963f0",
+          "candidate_records_sha256": "2fbe02c6e3877b535a781620be0948d5964a182bd617a50826676e3ae9b5e06f", "digest_note": "# pragma: allowlist secret - synthetic candidate record checksum"
+        },
+        "production": {
+          "plan_id": "e0965bc025725e4d08c2e320db5242920874f88f9337da6de11c3bc49de5f62d",
+          "pool_id": "88b4dd68f02a959f54243d0dc8b54b143e2f4feaa8f064311c826e7addf963f0",
+          "candidate_records_sha256": "2fbe02c6e3877b535a781620be0948d5964a182bd617a50826676e3ae9b5e06f", "digest_note": "# pragma: allowlist secret - synthetic candidate record checksum"
+        }
+      },
+      "native_outputs_equal": true,
+      "outputs_match_prototype_experiment": true,
+      "counts": {
+        "duplicate_discarded": 0,
+        "eligibility_rejected": 64,
+        "eligible": 0,
+        "eligible_unique": 0,
+        "execution_error": 0,
+        "not_selected": 0,
+        "processed": 64,
+        "retained": 0
+      }
+    }
+  ]
+}

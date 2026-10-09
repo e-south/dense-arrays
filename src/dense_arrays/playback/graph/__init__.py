@@ -1,7 +1,14 @@
-"""Measured explanation-graph geometry for dense-array playback.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/graph/__init__.py
+
+Measured explanation-graph geometry for dense-array playback.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from ..positions import journey_path_positions, radial_path_positions
 from .geometry import (

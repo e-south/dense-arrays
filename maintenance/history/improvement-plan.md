@@ -11,7 +11,7 @@ Author: Eric J. South. Status: implemented and locally verified on
 The six slices below address every finding C1–C5 and P1–P4. Users can distinguish
 infeasibility from execution failure, validate saved placements before export,
 and interpret media without mistaking coordinate reconstruction for a recorded
-solver path. The [architecture map](../architecture/README.md) routes each task
+solver path. The [architecture map](../../docs/architecture/README.md) routes each task
 to its implementation and focused tests.
 
 ## Scope and decisions
@@ -36,12 +36,10 @@ results, and nested provenance are immutable snapshots.
 Python and JSON records share semantic validation. Supported v1 plans describe
 coordinate reconstruction; reserved solver-recorded authority is rejected.
 Producers supply evidence for recovered coordinates explicitly. The
-[migration guide](../migration.md) records caller changes.
+[migration guide](../../docs/migration.md) records caller changes.
 
-The DenseGen adapter migration belongs to its producer repository. Dense Arrays
-has no dependency on DenseGen, Research Studies, HOP, their recipes, or their
-data. Scientific claim expansion, exact solver-trace formats, framework
-replacement, and new study dependencies were outside this work.
+Callers own conversion from their records to explicit realized placements.
+Scientific interpretation and solver-trace formats were outside this work.
 
 ## Delivered slices
 
@@ -59,7 +57,7 @@ replacement, and new study dependencies were outside this work.
 Compact media preserves authority, order, and failed-requirement qualifications.
 Long evidence and many native distance brackets use visible summaries with all
 declared distance results in native metadata; optional notices remain
-caller-selected. The [presentation reference](../reference/playback-presentation.md#read-the-evidence)
+caller-selected. The [presentation reference](../../docs/reference/playback-presentation.md#read-the-evidence)
 explains how to read that evidence. This policy keeps the established canvas
 proportions while avoiding clipped text.
 
@@ -69,14 +67,14 @@ files already written. A drawing failure preserves prior outputs, closes figures
 and retains the original error if writer cleanup also fails.
 
 Producer callbacks supply a constant image shape within each scene, with at most
-two frame snapshots cached for transitions. The DenseGen migration pins each
-scene to its completed-frame crop, preventing a late terminus reveal from changing
+two frame snapshots cached for transitions. A fixed completed-frame crop prevents
+a late terminus reveal from changing
 frame dimensions. Both anchored showcase final frames remain pixel-identical to
 the previous tight crop.
 
 ## Verification record
 
-The [full local gate](../development.md#local-verification) passed:
+The [full local gate](../../docs/development.md#local-verification) passed:
 
 - **323 tests**, including guide execution and built-link checks; three existing
   SWIG deprecation warnings remain.

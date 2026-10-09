@@ -1,0 +1,176 @@
+---
+title: Explain shortfalls and assess a library
+description: Inspect rejection evidence, composition and source-run attainment.
+author: Eric J. South
+---
+
+# Explain shortfalls and assess a library
+
+Use the saved run from [Generate a saved library](../../library-workflow.md).
+Install the [playback extra](../../installation.md#optional-features) for PNG output.
+
+```python
+import dense_arrays as da  # Inspect saved evidence and render reports.
+from dense_arrays import reporting  # Select a consistent report population.
+
+result = "runs/python-first"  # Output of the first-library Python example.
+summary = da.inspect(result)  # Original run attainment remains separate from selection.
+with da.inspect(result, view="designs", limit=1).records() as records:
+    design = next(records)  # Bind one identity for the filtered-report example.
+selected = reporting.DesignFilter(design_ids=(design.reference,))  # Reusable predicate.
+```
+
+## Find why generation stopped
+
+Inspect the run's recorded failures and the composition of accepted designs:
+
+```bash
+# Read the stopping reason and suggested next action.
+dense-arrays inspect runs/first --view diagnostics --limit 20
+# Include accepted, rejected and no-candidate attempts in the first inspection.
+dense-arrays inspect runs/first --view attempts --limit 10
+# Report composition for the accepted designs.
+dense-arrays inspect runs/first --view quality --limit 20 --json
+# Plot the same library-level metrics.
+dense-arrays render runs/first --view library-quality --out quality.png
+```
+
+Diagnostics report stable codes, requirement references, observed/expected
+values, proof scope, and a next action. A forbidden match includes its final
+coordinates, strand, and intersecting part or padding intervals. An attempt
+limit leaves feasibility unresolved. Reason totals can overlap, while attempt
+outcomes are mutually exclusive. Once you know the recorded outcomes, narrow
+the attempt page with `--outcome rejected` or another outcome of interest.
+
+```python
+diagnostics = da.inspect(
+    result, view="diagnostics", limit=20
+)  # Bound displayed reasons.
+print(diagnostics.cost.to_dict())  # descriptor available before the scan
+print(diagnostics.to_dict())
+# Read the attempt history, including attempts that produced no candidate.
+attempts = da.inspect(
+    result,
+    view="attempts",
+    all=True,
+)
+with attempts.records() as records:
+    for attempt in records:
+        print(attempt.attempt_id, attempt.outcome)
+        if attempt.candidate is not None:
+            print(attempt.candidate.packed.sequence)
+            if attempt.candidate.final is not None:
+                print(attempt.candidate.final.sequence)
+
+quality = da.inspect(result, view="quality", limit=20)  # Limit displayed usage rows.
+print(quality.cost.to_dict())
+metrics = quality.to_dict()  # Compute exact aggregates for the declared population.
+assert metrics["attainment"]["accepted"] == summary.accepted
+# Draw the selected saved evidence without generating new sequences.
+da.render(quality, view="library-quality", out="python-quality.png")
+```
+
+### Examine a shortfall
+
+This request asks for two distinct designs from one 16-base part in a 16-base
+array. Only one design is available, so generation saves it and exits with code
+**3**. Use a new output directory:
+
+```bash
+# Request two designs from a pool that supports only one distinct sequence.
+dense-arrays run --motif ACGTTGCAAGTCCTGA --length 16 --count 2 --strands single --seed 7 --out runs/shortfall --json
+# Explain why the saved run stopped short of its target.
+dense-arrays inspect runs/shortfall --view diagnostics --limit 20
+# Read the accepted attempt and the attempt that produced no candidate.
+dense-arrays inspect runs/shortfall --view attempts --limit 10
+```
+
+The summary reports one accepted design and `batch_exhausted`. The second
+attempt has outcome `no_candidate`, so a query restricted to `rejected` would
+hide it. The accepted design remains available for inspection and export.
+
+## Interpret attempt evidence
+
+`attempt.candidate` contains the original packing and the last evaluated final
+sequence, with their placements. Accepted, rejected and duplicate candidates
+retain this evidence. An active-time stop before assembly has a packing but no
+final sequence; attempts without a candidate, and older records lacking this
+evidence, return `None`. Rejected candidates are not accepted designs and do not
+appear in library exports.
+
+`inspect(..., verify=True)` recounts the saved final checks, validates the packing
+and assembly coordinates, and joins accepted candidates to their design records.
+It reads recorded bytes without solving or drawing padding. Earlier padding
+trials and the solver's optimality proof are not replayed by this check.
+
+`AttemptFilter` accepts attempt ordinals, bare/full cell references, and outcome
+codes. Its CLI flags are `--attempt-id`, `--cell`, and `--outcome`. Multiple
+values within a field mean OR; fields combine with AND. It also applies to
+diagnostics, whose report names the filtered attempt population while retaining
+the original run target. A declared `dense_arrays.attempt-filter.v1` file can be
+passed through `--selection`; filter files and convenience flags are exclusive.
+
+## Assess accepted designs
+
+Quality reports cover the designs selected by their `DesignFilter`, or all
+accepted designs when no filter is supplied. They name
+eligible and unused parts/groups, occurrence and design denominators, GC and
+length distributions, placement counts, padding, and recorded requirement evidence.
+`placement_count` counts all supplied part occurrences, including background parts;
+it does not count detected motif hits. Reports identify this definition as
+`library_composition.v2`. Saved reports with an unsupported metric policy remain
+readable but are not compared numerically.
+Density is the union of placement intervals divided by final length; compression
+is summed part lengths divided by the pre-padding span. Positional occupancy
+uses the number of designs reaching each position as its denominator. Empty
+denominators are null with a reason. A missing recorded check remains missing;
+inspection does not repeat screening.
+
+`selection.designs` and `selection.distinct_sequences` describe the selected
+population in `dense_arrays.quality.v3` reports.
+`attainment` describes the original single run; filtering does not
+change its target, accepted count or shortfall. Search outcomes cover all attempts
+in the supplied native snapshots, including attempts outside the design selection.
+For bundles, `search.availability` identifies complete, partial or absent attempt
+history; unavailable counters are null. Each origin reports included and selected
+design counts separately from its original attainment. Eligible
+supply remains the parts and groups in the source plans, so filtered reports can
+show more unused supply. Reuse the same filter for a report and a record export:
+
+```python
+selected_quality = da.inspect(
+    result, view="quality", select=selected
+)  # Reuse the export filter.
+assert selected_quality.to_dict()["selection"]["designs"] == 1
+# Draw the selected saved evidence without generating new sequences.
+da.render(selected_quality, view="library-quality", out="selected-quality.png")
+```
+
+The quality CLI accepts the same `--selection`, `--design-id`, `--cell`,
+`--part-id` and `--group` flags as record inspection. The same flags are available
+on `render --view library-quality`. A precomputed Python report already binds its
+filter and limits; rendering it does not replace those settings.
+
+`limit` bounds displayed diagnostics or rows in each ranked part/group usage
+table, including per-cell tables, not the
+aggregate population. Quality usage tables support `after` cursors; every page
+retains the same exact aggregates and recomputes the declared scan. Reports cache
+their first successful computation in memory. `repr` and `cost` do no record scan.
+Aggregate reports reject `all=True` because their displayed tables are bounded.
+
+Reports charge source-plan rows plus each examined design/attempt; part/group
+filter resolution also reads the relevant plans. Repeated source arguments are
+checked again without multiplying the reported design or attempt counts. Quality
+also caps retained lookup entries for source identities, distinct sequences,
+distribution values, and occupancy boundaries. These are work/state limits,
+not hard byte or time guarantees. CLI prints cost before computation and returns
+an explicit error if a cap prevents an exact report. The quality render accepts
+the same read-limit flags; graphics dependencies are checked before scanning.
+
+The optional quality PNG shows ranked part use, GC, density, and search outcomes
+from the same report. Its metadata contains the report and snapshot fingerprint.
+Install the playback extra for rendering; text/JSON reports use the base install.
+Quality also accepts [combined runs](../extension.md#assess-a-combined-library)
+and [portable bundles](../bundles.md#combine-artifacts-and-assess-included-designs).
+Use a [saved panel](../selection.md) to report and render the same
+sampled identities at pinned source revisions.

@@ -5,31 +5,76 @@ repo_url: https://github.com/e-south/dense-arrays
 
 nav:
   - Home: index.md
+  - Installation: installation.md
   - First array: quickstart.md
+  - Saved libraries:
+      - Generate, inspect and export: library-workflow.md
+      - Share supplied arrays: library-workflow/arrays.md
+      - Build a curated library: library-workflow/curated-example.md
+      - Import part tables: library-workflow/tables.md
+      - Prepare curated pools: library-workflow/preparation/curated.md
+      - Assemble exact-length designs: library-workflow/generation/assembly.md
+      - Inspect and share:
+          - Export sequences and placements: library-workflow/results/export.md
+          - Bound record inspection: library-workflow/results/inspection.md
+          - Explain shortfalls and quality: library-workflow/results/quality.md
+      - Generate a design matrix: library-workflow/matrices.md
+      - Choose packing search: library-workflow/search.md
+      - Bound preparation and packing work: library-workflow/resources.md
+      - Prepare sampled parts:
+          - Choose a recipe: library-workflow/preparation.md
+          - Sample motif models: library-workflow/preparation/motifs.md
+          - Choose lengths and windows: library-workflow/preparation/windows.md
+          - Combine recipes: library-workflow/preparation/sets.md
+          - Retain scores and diversity: library-workflow/preparation/retention.md
+          - Screen motif hits: library-workflow/preparation/screening.md
+          - Bound effort and targets: library-workflow/preparation/effort.md
+          - Inspect and reuse pools: library-workflow/preparation/inspection.md
+      - Plot preparation quality: library-workflow/preparation-quality.md
+      - Constrained background parts: library-workflow/background.md
+      - Prepare a candidate batch: library-workflow/batches.md
+      - Add designs to a library: library-workflow/extension.md
+      - Continue an interrupted run: library-workflow/recovery.md
+      - Save requests, plans and reports: library-workflow/handoffs.md
+      - Share a portable library: library-workflow/bundles.md
+      - Select and save a library panel: library-workflow/selection.md
   - Constraints: constraints.md
   - Playback: playback.md
   - Method: method.md
   - Reference:
       - Choose an interface: api.md
+      - Choose a result view: reference/outputs.md
       - Optimizer: reference/optimizer.md
       - DenseArray results: reference/results.md
       - Sequence utilities: reference/sequence.md
+      - Motif inputs and scoring: reference/motif-scoring.md
+      - Motif windows: reference/motif-windows.md
       - Realized arrays: reference/realized.md
       - Playback API: reference/playback.md
       - Media presentation: reference/playback-presentation.md
-      - Update an existing caller: migration.md
+      - Input and record compatibility: migration.md
       - Command-line options: reference/cli.md
   - Architecture:
       - Module boundaries: architecture/README.md
+      - Library workflow:
+          - Overview and ownership: architecture/library-workflow/index.md
+          - Domain contracts: architecture/library-workflow/domain.md
+          - Operation contracts: architecture/library-workflow/operations.md
+          - Generation and revision: architecture/library-workflow/generation.md
+          - Preparation: architecture/library-workflow/preparation.md
+          - Persistence and recovery: architecture/library-workflow/artifacts.md
+          - Reporting and read limits: architecture/library-workflow/reporting.md
+          - Selection and saved panels: architecture/library-workflow/selection.md
+          - Exports and bundles: architecture/library-workflow/exports.md
+          - Delivery and acceptance: architecture/library-workflow/delivery.md
       - Playback contract: architecture/solution-playback.md
       - Playback product brief: architecture/animation-product-spec.md
   - Contribute:
       - Development checks: development.md
       - Software releases: development/releases.md
       - Write documentation: development/documentation.md
-      - Hardening history:
-          - Baseline audit: development/audit.md
-          - Completed work: development/improvement-plan.md
+      - Background generation method: development/background-generation.md
+      - Packing model performance: development/optimizer-performance.md
 
 theme:
   name: material
@@ -37,6 +82,7 @@ theme:
 plugins:
   - search
   - mkdocstrings:
+      custom_templates: maintenance/docs/templates
       handlers:
         python:
           options:

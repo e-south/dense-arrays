@@ -1,40 +1,65 @@
 ---
 title: Dense Arrays
-description: Pack DNA motifs within a length limit and inspect their positions and overlaps.
+description: Prepare binding-site parts, generate constrained DNA libraries, and inspect or share the results.
 ---
 
 # Dense Arrays
 
 ![Dense Arrays — overlapping motifs within a sequence-length limit](assets/dense-arrays-banner.svg)
 
-Fit more DNA motifs into a short sequence by sharing compatible bases.
-Dense Arrays returns the selected motifs and their positions. Start with four
-16-base motifs that fit into a 40-base array, then add requirements or inspect
-the arrangement through playback.
+Design nucleotide sequences with densely packed DNA-protein binding sites.
+Prepare input pools, generate libraries under your constraints, and inspect
+sequences with their recorded site positions and orientations. Python and the
+command line use the same operations.
 
-## Start with an array
+## Start here
 
-[Run the first example](quickstart.md) to create the sequence and read its
-offsets. The [packing method](method.md) explains how overlaps save space,
-from the motif library to the selected arrangement. [Watch its playback](playback.md#watch-four-overlapping-motifs)
-to follow the same placements across the finished sequence.
+[Install Dense Arrays](installation.md), then [create your first array](quickstart.md).
+To [generate a saved library](library-workflow.md), use the
+[source workflow installation](installation.md#use-the-library-workflow).
+For a larger table-based workflow with multiple design combinations, follow
+[the curated binding-site example](library-workflow/curated-example.md).
 
-## Choose the next task
+## Prepare parts
 
-| Task | Read |
+| Task | Guide |
 | --- | --- |
-| Require motif groups or positional relationships | [Constraints](constraints.md) |
-| Render saved placements as images or video | [Playback](playback.md) |
-| Look up a command, option, or failure | [CLI reference](reference/cli.md) |
-| Use the Python interfaces | [API reference](api.md) |
+| Read binding sites from CSV, TSV, Excel or Parquet | [Part tables](library-workflow/tables.md) |
+| Sample motif models, choose windows and retain candidates | [Part preparation](library-workflow/preparation.md) |
+| Generate background under GC and forbidden-pattern constraints | [Background parts](library-workflow/background.md) |
+| Understand motif inputs, scoring units and thresholds | [Motif scoring](reference/motif-scoring.md) and [windows](reference/motif-windows.md) |
+| Inspect preparation yield and selection evidence | [Preparation quality](library-workflow/preparation-quality.md) |
 
-## Integrate or contribute
+## Generate libraries
 
-- [Architecture](architecture/README.md): code owners and data flow.
-- [Playback contract](architecture/solution-playback.md): coordinates, schemas,
-  reconstruction, and producer handoffs.
-- [Update an existing caller](migration.md): input and integration changes.
-- [Development](development.md): local verification and documentation builds.
+| Task | Guide |
+| --- | --- |
+| Generate and verify a saved collection | [Saved libraries](library-workflow.md) |
+| Set positional or motif-group constraints on an optimizer | [Constraints](constraints.md) |
+| Combine requirements and assign per-combination targets | [Design matrices](library-workflow/matrices.md) |
+| Choose exact or greedy packing and part-use preferences | [Packing search](library-workflow/search.md) |
+| Sample candidate batches and control retries | [Batch sampling](library-workflow/batches.md) |
+| Set preparation, solver and inspection limits | [Resource limits](library-workflow/resources.md) |
+| Continue an interrupted run | [Recovery](library-workflow/recovery.md) |
+| Revise a request, compare plans or extend a library | [Revision and extension](library-workflow/extension.md) |
 
-For the published formulation and citation, see the
-[method and associated paper](method.md#paper-and-citation).
+## Inspect and share results
+
+| Task | Guide |
+| --- | --- |
+| Share existing sequences and placements | [Supplied-array collections](library-workflow/arrays.md) |
+| Choose a summary, diagnostic, figure or export | [Result views](reference/outputs.md) |
+| Save requests, plans and compare quality reports | [Reports and reusable requests](library-workflow/handoffs.md) |
+| Select a fixed-size panel with reproducible membership | [Library selection](library-workflow/selection.md) |
+| Share verified records independently of original files | [Portable bundles](library-workflow/bundles.md) |
+| Render placements as stills or animations | [Playback](playback.md) |
+
+## Reference and contribution
+
+[Python interfaces](api.md) · [CLI options](reference/cli.md) ·
+[Packing method and paper](method.md) · [Caller compatibility](migration.md)
+
+For implementation work, use the [code map](architecture/README.md),
+[workflow contracts](architecture/library-workflow/index.md), and
+[development checks](development.md). [Documentation guidance](development/documentation.md)
+explains page ownership, examples and module attribution.

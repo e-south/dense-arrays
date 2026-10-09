@@ -1,7 +1,14 @@
-"""Shared reveal and complement semantics for playback renderers.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/timeline.py
+
+Shared reveal and complement semantics for playback renderers.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 

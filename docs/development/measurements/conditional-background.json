@@ -1,0 +1,224 @@
+{
+  "scope": "Native conditional generation; synthetic single-run measurements, uninstrumented timing and separate tracemalloc run",
+  "python": "3.14.7",
+  "platform": "macOS-26.5-arm64-arm-64bit-Mach-O",
+  "defaults": {
+    "states": 250000,
+    "automaton_states": 4096,
+    "mass_bits": 32000000,
+    "seconds": 30.0
+  },
+  "cases": [
+    {
+      "name": "ordinary",
+      "length": 20,
+      "gc": [
+        6,
+        14
+      ],
+      "patterns": [
+        "GAATTC",
+        "GGATCC",
+        "GGTCTC",
+        "GAGACC"
+      ],
+      "probabilities": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+      ],
+      "construction_seconds": 0.008800875002634712,
+      "draw_100_seconds": 0.0037050000100862235,
+      "unique": 100,
+      "peak_traced_bytes": 388945,
+      "outcome": {
+        "schema": "dense_arrays.conditional_construction.v1",
+        "policy": "conditional_background_shake256.v1",
+        "model_id": "065d48d57e6f1e80f24e790d0d6b628a135bf7e9c9b2c910a019f26398649b60",
+        "status": "feasible",
+        "reason": "completed",
+        "states": 1780,
+        "automaton_states": 20,
+        "mass_bits": 25976,
+        "mass": "0xf1c6ab0600"
+      }
+    },
+    {
+      "name": "rare_gc",
+      "length": 30,
+      "gc": [
+        29,
+        30
+      ],
+      "patterns": [
+        "CCC",
+        "GGG"
+      ],
+      "probabilities": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+      ],
+      "construction_seconds": 0.0013096250040689483,
+      "draw_100_seconds": 0.005204000000958331,
+      "unique": 100,
+      "peak_traced_bytes": 33719,
+      "outcome": {
+        "schema": "dense_arrays.conditional_construction.v1",
+        "policy": "conditional_background_shake256.v1",
+        "model_id": "b8c572b495c13bbdd404527316aa02671b0055f709bac45daf6bc9e2b76c7311",
+        "status": "feasible",
+        "reason": "completed",
+        "states": 289,
+        "automaton_states": 7,
+        "mass_bits": 3304,
+        "mass": "0x888fd6a"
+      }
+    },
+    {
+      "name": "longer",
+      "length": 100,
+      "gc": [
+        48,
+        52
+      ],
+      "patterns": [
+        "AAA",
+        "CCC",
+        "GGG",
+        "TTT",
+        "GAATTC",
+        "GGATCC"
+      ],
+      "probabilities": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+      ],
+      "construction_seconds": 0.19268887500220444,
+      "draw_100_seconds": 0.018570790998637676,
+      "unique": 100,
+      "peak_traced_bytes": 8191873,
+      "outcome": {
+        "schema": "dense_arrays.conditional_construction.v1",
+        "policy": "conditional_background_shake256.v1",
+        "model_id": "a4c42dc4769a33b7fb53269923af75730c2db71cb972d8f4997e9c0810bbbed7",
+        "status": "feasible",
+        "reason": "completed",
+        "states": 40555,
+        "automaton_states": 22,
+        "mass_bits": 3235453,
+        "mass": "0x8d84cf13c02e2ced2af9e868d5e716d2256d2008427161d3"
+      }
+    },
+    {
+      "name": "weighted",
+      "length": 100,
+      "gc": [
+        48,
+        52
+      ],
+      "patterns": [
+        "AAA",
+        "CCC",
+        "GGG",
+        "TTT"
+      ],
+      "probabilities": [
+        0.1,
+        0.2,
+        0.3,
+        0.4
+      ],
+      "construction_seconds": 0.10354379100317601,
+      "draw_100_seconds": 0.01811229200393427,
+      "unique": 100,
+      "peak_traced_bytes": 6627305,
+      "outcome": {
+        "schema": "dense_arrays.conditional_construction.v1",
+        "policy": "conditional_background_shake256.v1",
+        "model_id": "090cd3ff7b236e8a4365055c8988e1bc88e25c17e332fa80cbf8a15d2e6ba4f4",
+        "status": "feasible",
+        "reason": "completed",
+        "states": 22062,
+        "automaton_states": 13,
+        "mass_bits": 3084772,
+        "mass": "0xb4aef58e1d3e12664f27045c7818580d91704e2f4f4cb2e8d5b1e007770e717359d03ee7a5cc5cc0"
+      }
+    },
+    {
+      "name": "impossible",
+      "length": 20,
+      "gc": [
+        10,
+        10
+      ],
+      "patterns": [
+        "A",
+        "C",
+        "G",
+        "T"
+      ],
+      "probabilities": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+      ],
+      "construction_seconds": 0.00010983299580402672,
+      "draw_100_seconds": 1.66997779160738e-07,
+      "unique": 0,
+      "peak_traced_bytes": 3188,
+      "outcome": {
+        "schema": "dense_arrays.conditional_construction.v1",
+        "policy": "conditional_background_shake256.v1",
+        "model_id": "413615f4e99700bfe353434712ae643c11dc480a3f6e6f2724a4e803cf3a2469",
+        "status": "infeasible",
+        "reason": "completed",
+        "states": 2,
+        "automaton_states": 5,
+        "mass_bits": 4,
+        "mass": "0x0"
+      }
+    },
+    {
+      "name": "large_limit",
+      "length": 1000,
+      "gc": [
+        480,
+        520
+      ],
+      "patterns": [
+        "AAA",
+        "CCC",
+        "GGG",
+        "TTT"
+      ],
+      "probabilities": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+      ],
+      "construction_seconds": 0.7371289579896256,
+      "draw_100_seconds": 1.0840012691915035e-06,
+      "unique": 0,
+      "peak_traced_bytes": 30843385,
+      "outcome": {
+        "schema": "dense_arrays.conditional_construction.v1",
+        "policy": "conditional_background_shake256.v1",
+        "model_id": "89f1d80cb8a56aba25b14807ce65f1aa03bd8f1b7fd04d659b4183734f7999e6",
+        "status": "limited",
+        "reason": "mass_bits",
+        "states": 146656,
+        "automaton_states": 13,
+        "mass_bits": 31999822,
+        "mass": null
+      }
+    }
+  ],
+  "random_exhaustive_cases": 150
+}

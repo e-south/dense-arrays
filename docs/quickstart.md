@@ -1,6 +1,6 @@
 ---
 title: First array
-description: Install from source, solve a small CBC example, and read its sequence and offsets.
+description: Pack four binding-site-sized sequences with CBC and read their positions and overlaps.
 ---
 
 # Create your first array
@@ -9,28 +9,19 @@ Pack four 16-base motifs into a 40-base sequence, then read where each motif
 starts. The compatible overlaps let the motifs share bases. For your own
 library, the length limit may allow only a subset of the motifs to be placed.
 
-## Install from source
+## Set up an environment
 
-Use Python 3.12 or later. With [uv](https://docs.astral.sh/uv/):
-
-```bash
-git clone https://github.com/e-south/dense-arrays.git
-cd dense-arrays
-uv sync --frozen
-```
-
-Run the commands below from that checkout. To install into an existing Python
-environment instead, run `python -m pip install .` from the repository root.
-The core installation includes the optimizer and persisted-placement
-contracts. Rendering requires the extra dependencies described in
-[playback](playback.md); contributor tools are listed in [development](development.md).
+Follow [installation](installation.md) to install the package in a virtual
+environment. The base install includes CBC; FIMO is not needed for this example.
+The sequences below are synthetic 16-base sites, chosen to illustrate overlaps.
 
 ## Solve from the terminal
 
 Supply non-empty uppercase `A/C/G/T` motifs and a positive integer length limit:
 
 ```bash
-uv run dense-arrays optimize \
+# Search both strands for an arrangement within 40 bases.
+dense-arrays optimize \
   --motif ACGTTGCAAGTCCTGA \
   --motif AGTCCTGATCGTACCG \
   --motif TCGTACCGATGCTTAG \
@@ -58,32 +49,36 @@ For a larger input, replace the repeated `--motif` options with
 `--motifs-file motifs.txt`. Write one motif per line; blank lines and lines
 starting with `#` are ignored. The two input forms cannot be combined.
 
-Use `uv run dense-arrays optimize --help` to see all options. CBC is the
+Use `dense-arrays optimize --help` to see all options. CBC is the
 default OR-Tools backend. `--solver` selects another backend only if the local
 OR-Tools installation can create it. An unavailable backend produces an error
 and a nonzero exit. See [CLI failures](reference/cli.md).
 
 ## Solve from Python
 
-Run this code with `uv run python` in the checkout environment:
+Run this code with `python` in your activated environment, or `uv run python`
+in a uv project:
 
 ```python
-from dense_arrays import Optimizer
+from dense_arrays import Optimizer  # Configure and solve the packing problem.
 
+# Four synthetic 16-base sites; adjacent sites share eight bases.
 motifs = [
     "ACGTTGCAAGTCCTGA",
     "AGTCCTGATCGTACCG",
     "TCGTACCGATGCTTAG",
     "ATGCTTAGGACGTTCA",
 ]
-optimizer = Optimizer(motifs, sequence_length=40, strands="double")
-best = optimizer.optimal()
-print(best.sequence)
-print(best.nb_motifs)  # 4
-print(best.offsets_fwd)
-print(best.offsets_rev)
-assert len(best.sequence) == 40
-assert best.nb_motifs == 4
+optimizer = Optimizer(
+    motifs, sequence_length=40, strands="double"
+)  # Allow both strands.
+best = optimizer.optimal()  # Require a proven optimum for this packing model.
+print(best.sequence)  # The final DNA, without terminal display padding.
+print(best.nb_motifs)  # Four selected input entries in this example.
+print(best.offsets_fwd)  # Forward-strand starts in input order; None means absent.
+print(best.offsets_rev)  # Reverse-complement starts on the same final sequence.
+assert len(best.sequence) == 40  # This arrangement fills the length limit.
+assert best.nb_motifs == 4  # Every supplied site was selected.
 ```
 
 Both offset lists use zero-based starts in input order. For the forward
@@ -112,7 +107,8 @@ Limit enumeration to the number of results you intend to inspect. This bounds
 the result count, not the time needed to solve each result:
 
 ```bash
-uv run dense-arrays solutions \
+# Print at most three arrangements, favoring sites used less often so far.
+dense-arrays solutions \
   --motif ACGTTGCAAGTCCTGA \
   --motif AGTCCTGATCGTACCG \
   --motif TCGTACCGATGCTTAG \
@@ -127,13 +123,16 @@ earlier result was printed.
 In Python, reuse the `motifs` library defined above with a fresh optimizer:
 
 ```python
-from itertools import islice
+from itertools import islice  # Bound how many results are consumed.
 
+# Use the typed requests and operations needed by this example.
 from dense_arrays import Optimizer
 
-optimizer = Optimizer(motifs, sequence_length=40, strands="double")
-for solution in islice(optimizer.solutions_diverse(), 3):
-    print(solution.sequence, solution.nb_motifs)
+optimizer = Optimizer(
+    motifs, sequence_length=40, strands="double"
+)  # Allow both strands.
+for solution in islice(optimizer.solutions_diverse(), 3):  # Stop after three results.
+    print(solution.sequence, solution.nb_motifs)  # Report DNA and selected-entry count.
 ```
 
 `solutions()` enumerates arrangements in decreasing score order.

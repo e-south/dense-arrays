@@ -1,0 +1,5 @@
+schema: dense_arrays.prepare.v1
+source:
+  kind: table
+  table: parts.csv
+  format: csv

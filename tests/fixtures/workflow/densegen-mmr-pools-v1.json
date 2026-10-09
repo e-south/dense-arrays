@@ -1,0 +1,770 @@
+{
+  "source": {
+    "revision": "2ab9b233ddb6c3a410ae67d1616ce73104bd1785", "revision_note": "# pragma: allowlist secret - public source fingerprint",
+    "files": [
+      {
+        "path": "src/dnadesign/densegen/src/core/score_tiers.py",
+        "sha256": "56bd33966d145d30f44f5b9cf2b771cece1f5a393b372ab941b253ff04186210", "sha256_note": "# pragma: allowlist secret - source content fingerprint"
+      },
+      {
+        "path": "src/dnadesign/densegen/src/core/stage_a/stage_a_sampling_utils.py",
+        "sha256": "815fb822dc9d1c61008b3c399b71cffc51387bda857101f1f7f9bfcaf1f18d0c", "sha256_note": "# pragma: allowlist secret - source content fingerprint"
+      },
+      {
+        "path": "src/dnadesign/densegen/src/core/stage_a/stage_a_encoding.py",
+        "sha256": "1d9b9a48be2b220b444cbda5f442caf5a1361560314053a04589f4f37e750813", "sha256_note": "# pragma: allowlist secret - source content fingerprint"
+      },
+      {
+        "path": "src/dnadesign/densegen/src/core/stage_a/stage_a_types.py",
+        "sha256": "e7417d5a4039205b1cef9306c42570c34c441fc4c3fb9a5742390a4a3dd9fc83", "sha256_note": "# pragma: allowlist secret - source content fingerprint"
+      },
+      {
+        "path": "src/dnadesign/densegen/src/core/stage_a/stage_a_selection.py",
+        "sha256": "ad1e3dee16907d90d611e9ef66a0feeaf049943a016eae152ca81492f4fd2f59", "sha256_note": "# pragma: allowlist secret - source content fingerprint"
+      }
+    ],
+    "capture": "Unmodified selection and supporting function AST with synthetic ranked distinct-score candidates; one model and one score denominator.",
+    "scope": "Compare pool membership and availability of choice; full-pool retained ordering remains independently versioned."
+  },
+  "cases": [
+    {
+      "candidates": [
+        {
+          "sequence": "AAA",
+          "raw": 100,
+          "maximum": 100
+        },
+        {
+          "sequence": "AAC",
+          "raw": 99,
+          "maximum": 100
+        },
+        {
+          "sequence": "AAG",
+          "raw": 98,
+          "maximum": 100
+        },
+        {
+          "sequence": "AAT",
+          "raw": 97,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACA",
+          "raw": 96,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACC",
+          "raw": 95,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACG",
+          "raw": 94,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACT",
+          "raw": 93,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGA",
+          "raw": 92,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGC",
+          "raw": 91,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGG",
+          "raw": 90,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGT",
+          "raw": 89,
+          "maximum": 100
+        },
+        {
+          "sequence": "ATA",
+          "raw": 88,
+          "maximum": 100
+        },
+        {
+          "sequence": "ATC",
+          "raw": 87,
+          "maximum": 100
+        },
+        {
+          "sequence": "ATG",
+          "raw": 86,
+          "maximum": 100
+        },
+        {
+          "sequence": "ATT",
+          "raw": 85,
+          "maximum": 100
+        },
+        {
+          "sequence": "CAA",
+          "raw": 84,
+          "maximum": 100
+        },
+        {
+          "sequence": "CAC",
+          "raw": 83,
+          "maximum": 100
+        },
+        {
+          "sequence": "CAG",
+          "raw": 82,
+          "maximum": 100
+        },
+        {
+          "sequence": "CAT",
+          "raw": 81,
+          "maximum": 100
+        },
+        {
+          "sequence": "CCA",
+          "raw": 80,
+          "maximum": 100
+        },
+        {
+          "sequence": "CCC",
+          "raw": 79,
+          "maximum": 100
+        },
+        {
+          "sequence": "CCG",
+          "raw": 78,
+          "maximum": 100
+        },
+        {
+          "sequence": "CCT",
+          "raw": 77,
+          "maximum": 100
+        },
+        {
+          "sequence": "CGA",
+          "raw": 76,
+          "maximum": 100
+        },
+        {
+          "sequence": "CGC",
+          "raw": 75,
+          "maximum": 100
+        },
+        {
+          "sequence": "CGG",
+          "raw": 74,
+          "maximum": 100
+        },
+        {
+          "sequence": "CGT",
+          "raw": 73,
+          "maximum": 100
+        },
+        {
+          "sequence": "CTA",
+          "raw": 72,
+          "maximum": 100
+        },
+        {
+          "sequence": "CTC",
+          "raw": 71,
+          "maximum": 100
+        },
+        {
+          "sequence": "CTG",
+          "raw": 70,
+          "maximum": 100
+        },
+        {
+          "sequence": "CTT",
+          "raw": 69,
+          "maximum": 100
+        },
+        {
+          "sequence": "GAA",
+          "raw": 68,
+          "maximum": 100
+        },
+        {
+          "sequence": "GAC",
+          "raw": 67,
+          "maximum": 100
+        },
+        {
+          "sequence": "GAG",
+          "raw": 66,
+          "maximum": 100
+        },
+        {
+          "sequence": "GAT",
+          "raw": 65,
+          "maximum": 100
+        },
+        {
+          "sequence": "GCA",
+          "raw": 64,
+          "maximum": 100
+        },
+        {
+          "sequence": "GCC",
+          "raw": 63,
+          "maximum": 100
+        },
+        {
+          "sequence": "GCG",
+          "raw": 62,
+          "maximum": 100
+        },
+        {
+          "sequence": "GCT",
+          "raw": 61,
+          "maximum": 100
+        }
+      ],
+      "target": 2,
+      "maximum": 40,
+      "cutoff": null,
+      "pool_sequences": [
+        "AAA",
+        "AAC",
+        "AAG",
+        "AAT",
+        "ACA",
+        "ACC",
+        "ACG",
+        "ACT",
+        "AGA",
+        "AGC",
+        "AGG",
+        "AGT",
+        "ATA",
+        "ATC",
+        "ATG",
+        "ATT",
+        "CAA",
+        "CAC",
+        "CAG",
+        "CAT"
+      ],
+      "selected": [
+        "AAA",
+        "ACC"
+      ],
+      "rung_fraction": 0.6000000000000001,
+      "has_choice": true
+    },
+    {
+      "candidates": [
+        {
+          "sequence": "AAA",
+          "raw": 100,
+          "maximum": 100
+        },
+        {
+          "sequence": "AAC",
+          "raw": 99,
+          "maximum": 100
+        },
+        {
+          "sequence": "AAG",
+          "raw": 98,
+          "maximum": 100
+        },
+        {
+          "sequence": "AAT",
+          "raw": 97,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACA",
+          "raw": 96,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACC",
+          "raw": 95,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACG",
+          "raw": 94,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACT",
+          "raw": 93,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGA",
+          "raw": 92,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGC",
+          "raw": 91,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGG",
+          "raw": 90,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGT",
+          "raw": 89,
+          "maximum": 100
+        },
+        {
+          "sequence": "ATA",
+          "raw": 88,
+          "maximum": 100
+        },
+        {
+          "sequence": "ATC",
+          "raw": 87,
+          "maximum": 100
+        },
+        {
+          "sequence": "ATG",
+          "raw": 86,
+          "maximum": 100
+        },
+        {
+          "sequence": "ATT",
+          "raw": 85,
+          "maximum": 100
+        },
+        {
+          "sequence": "CAA",
+          "raw": 84,
+          "maximum": 100
+        },
+        {
+          "sequence": "CAC",
+          "raw": 83,
+          "maximum": 100
+        },
+        {
+          "sequence": "CAG",
+          "raw": 82,
+          "maximum": 100
+        },
+        {
+          "sequence": "CAT",
+          "raw": 81,
+          "maximum": 100
+        }
+      ],
+      "target": 4,
+      "maximum": 20,
+      "cutoff": 0.97,
+      "pool_sequences": [
+        "AAA",
+        "AAC",
+        "AAG",
+        "AAT"
+      ],
+      "selected": [
+        "AAA",
+        "AAC",
+        "AAG",
+        "AAT"
+      ],
+      "rung_fraction": 1.0,
+      "has_choice": false
+    },
+    {
+      "candidates": [
+        {
+          "sequence": "AAA",
+          "raw": 100,
+          "maximum": 100
+        },
+        {
+          "sequence": "AAC",
+          "raw": 99,
+          "maximum": 100
+        },
+        {
+          "sequence": "AAG",
+          "raw": 98,
+          "maximum": 100
+        },
+        {
+          "sequence": "AAT",
+          "raw": 97,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACA",
+          "raw": 96,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACC",
+          "raw": 95,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACG",
+          "raw": 94,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACT",
+          "raw": 93,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGA",
+          "raw": 92,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGC",
+          "raw": 91,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGG",
+          "raw": 90,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGT",
+          "raw": 89,
+          "maximum": 100
+        },
+        {
+          "sequence": "ATA",
+          "raw": 88,
+          "maximum": 100
+        },
+        {
+          "sequence": "ATC",
+          "raw": 87,
+          "maximum": 100
+        },
+        {
+          "sequence": "ATG",
+          "raw": 86,
+          "maximum": 100
+        },
+        {
+          "sequence": "ATT",
+          "raw": 85,
+          "maximum": 100
+        },
+        {
+          "sequence": "CAA",
+          "raw": 84,
+          "maximum": 100
+        },
+        {
+          "sequence": "CAC",
+          "raw": 83,
+          "maximum": 100
+        },
+        {
+          "sequence": "CAG",
+          "raw": 82,
+          "maximum": 100
+        },
+        {
+          "sequence": "CAT",
+          "raw": 81,
+          "maximum": 100
+        }
+      ],
+      "target": 4,
+      "maximum": 3,
+      "cutoff": null,
+      "pool_sequences": [
+        "AAA",
+        "AAC",
+        "AAG"
+      ],
+      "selected": [
+        "AAA",
+        "AAC",
+        "AAG"
+      ],
+      "rung_fraction": 0.30000000000000004,
+      "has_choice": false
+    },
+    {
+      "candidates": [
+        {
+          "sequence": "AAA",
+          "raw": 100,
+          "maximum": 100
+        },
+        {
+          "sequence": "AAC",
+          "raw": 99,
+          "maximum": 100
+        },
+        {
+          "sequence": "AAG",
+          "raw": 98,
+          "maximum": 100
+        },
+        {
+          "sequence": "AAT",
+          "raw": 97,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACA",
+          "raw": 96,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACC",
+          "raw": 95,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACG",
+          "raw": 94,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACT",
+          "raw": 93,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGA",
+          "raw": 92,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGC",
+          "raw": 91,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGG",
+          "raw": 90,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGT",
+          "raw": 89,
+          "maximum": 100
+        }
+      ],
+      "target": 3,
+      "maximum": 12,
+      "cutoff": null,
+      "pool_sequences": [
+        "AAA",
+        "AAC",
+        "AAG",
+        "AAT",
+        "ACA",
+        "ACC",
+        "ACG",
+        "ACT",
+        "AGA",
+        "AGC",
+        "AGG",
+        "AGT"
+      ],
+      "selected": [
+        "AAA",
+        "ACC",
+        "AGG"
+      ],
+      "rung_fraction": 1.0,
+      "has_choice": true
+    },
+    {
+      "candidates": [
+        {
+          "sequence": "AAA",
+          "raw": 100,
+          "maximum": 100
+        },
+        {
+          "sequence": "AAC",
+          "raw": 99,
+          "maximum": 100
+        },
+        {
+          "sequence": "AAG",
+          "raw": 98,
+          "maximum": 100
+        },
+        {
+          "sequence": "AAT",
+          "raw": 97,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACA",
+          "raw": 96,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACC",
+          "raw": 95,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACG",
+          "raw": 94,
+          "maximum": 100
+        },
+        {
+          "sequence": "ACT",
+          "raw": 93,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGA",
+          "raw": 92,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGC",
+          "raw": 91,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGG",
+          "raw": 90,
+          "maximum": 100
+        },
+        {
+          "sequence": "AGT",
+          "raw": 89,
+          "maximum": 100
+        },
+        {
+          "sequence": "ATA",
+          "raw": 88,
+          "maximum": 100
+        },
+        {
+          "sequence": "ATC",
+          "raw": 87,
+          "maximum": 100
+        },
+        {
+          "sequence": "ATG",
+          "raw": 86,
+          "maximum": 100
+        },
+        {
+          "sequence": "ATT",
+          "raw": 85,
+          "maximum": 100
+        },
+        {
+          "sequence": "CAA",
+          "raw": 84,
+          "maximum": 100
+        },
+        {
+          "sequence": "CAC",
+          "raw": 83,
+          "maximum": 100
+        },
+        {
+          "sequence": "CAG",
+          "raw": 82,
+          "maximum": 100
+        },
+        {
+          "sequence": "CAT",
+          "raw": 81,
+          "maximum": 100
+        },
+        {
+          "sequence": "CCA",
+          "raw": 80,
+          "maximum": 100
+        },
+        {
+          "sequence": "CCC",
+          "raw": 79,
+          "maximum": 100
+        },
+        {
+          "sequence": "CCG",
+          "raw": 78,
+          "maximum": 100
+        },
+        {
+          "sequence": "CCT",
+          "raw": 77,
+          "maximum": 100
+        },
+        {
+          "sequence": "CGA",
+          "raw": 76,
+          "maximum": 100
+        },
+        {
+          "sequence": "CGC",
+          "raw": 75,
+          "maximum": 100
+        },
+        {
+          "sequence": "CGG",
+          "raw": 74,
+          "maximum": 100
+        },
+        {
+          "sequence": "CGT",
+          "raw": 73,
+          "maximum": 100
+        },
+        {
+          "sequence": "CTA",
+          "raw": 72,
+          "maximum": 100
+        },
+        {
+          "sequence": "CTC",
+          "raw": 71,
+          "maximum": 100
+        }
+      ],
+      "target": 2,
+      "maximum": 15,
+      "cutoff": 0.9,
+      "pool_sequences": [
+        "AAA",
+        "AAC",
+        "AAG",
+        "AAT",
+        "ACA",
+        "ACC",
+        "ACG",
+        "ACT",
+        "AGA",
+        "AGC",
+        "AGG"
+      ],
+      "selected": [
+        "AAA",
+        "ACC"
+      ],
+      "rung_fraction": 1.0,
+      "has_choice": true
+    }
+  ]
+}

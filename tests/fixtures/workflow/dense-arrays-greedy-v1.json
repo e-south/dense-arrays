@@ -1,0 +1,222 @@
+{
+  "source": {
+    "revision": "29a148f07bc7a08c8012b8f2b6cccb6acaf6d963", "revision_note": "# pragma: allowlist secret - public source fingerprint",
+    "path": "src/dense_arrays/greedy.py",
+    "sha256": "b49e713101b548d80b4c80d4cd6521e091ac6f9cea53e65ff8dac74345c41397", "sha256_note": "# pragma: allowlist secret - public source fingerprint"
+  },
+  "scope": "Unmodified released greedy packing, before cooperative deadline support; sequence and occurrence geometry only, no optimality claim.",
+  "cases": [
+    {
+      "library": [
+        "AAA",
+        "CCC",
+        "GGG"
+      ],
+      "length": 6,
+      "strands": "single",
+      "expected": {
+        "sequence": "AAACCC",
+        "offsets_fwd": [
+          0,
+          3,
+          null
+        ],
+        "offsets_rev": [
+          null,
+          null,
+          null
+        ],
+        "occurrences": 2
+      }
+    },
+    {
+      "library": [
+        "AAA",
+        "CCC",
+        "GGG"
+      ],
+      "length": 6,
+      "strands": "double",
+      "expected": {
+        "sequence": "AAACCC",
+        "offsets_fwd": [
+          0,
+          3,
+          null
+        ],
+        "offsets_rev": [
+          null,
+          null,
+          null
+        ],
+        "occurrences": 2
+      }
+    },
+    {
+      "library": [
+        "AAA",
+        "AAA"
+      ],
+      "length": 3,
+      "strands": "single",
+      "expected": {
+        "sequence": "AAA",
+        "offsets_fwd": [
+          0,
+          null
+        ],
+        "offsets_rev": [
+          null,
+          null
+        ],
+        "occurrences": 1
+      }
+    },
+    {
+      "library": [
+        "AAA",
+        "AAA"
+      ],
+      "length": 3,
+      "strands": "double",
+      "expected": {
+        "sequence": "AAA",
+        "offsets_fwd": [
+          0,
+          null
+        ],
+        "offsets_rev": [
+          null,
+          null
+        ],
+        "occurrences": 1
+      }
+    },
+    {
+      "library": [
+        "AAAAAC",
+        "ACG",
+        "CGT"
+      ],
+      "length": 5,
+      "strands": "single",
+      "expected": {
+        "sequence": "ACGT",
+        "offsets_fwd": [
+          null,
+          0,
+          1
+        ],
+        "offsets_rev": [
+          null,
+          null,
+          null
+        ],
+        "occurrences": 2
+      }
+    },
+    {
+      "library": [
+        "AAAAAC",
+        "ACG",
+        "CGT"
+      ],
+      "length": 5,
+      "strands": "double",
+      "expected": {
+        "sequence": "ACGT",
+        "offsets_fwd": [
+          null,
+          0,
+          1
+        ],
+        "offsets_rev": [
+          null,
+          null,
+          null
+        ],
+        "occurrences": 2
+      }
+    },
+    {
+      "library": [
+        "ATGTTAACT",
+        "TTAA"
+      ],
+      "length": 9,
+      "strands": "single",
+      "expected": {
+        "sequence": "TTAA",
+        "offsets_fwd": [
+          null,
+          0
+        ],
+        "offsets_rev": [
+          null,
+          null
+        ],
+        "occurrences": 1
+      }
+    },
+    {
+      "library": [
+        "ATGTTAACT",
+        "TTAA"
+      ],
+      "length": 9,
+      "strands": "double",
+      "expected": {
+        "sequence": "TTAA",
+        "offsets_fwd": [
+          null,
+          0
+        ],
+        "offsets_rev": [
+          null,
+          null
+        ],
+        "occurrences": 1
+      }
+    },
+    {
+      "library": [
+        "AAA",
+        "AA"
+      ],
+      "length": 3,
+      "strands": "single",
+      "expected": {
+        "sequence": "AAA",
+        "offsets_fwd": [
+          0,
+          0
+        ],
+        "offsets_rev": [
+          null,
+          null
+        ],
+        "occurrences": 2
+      }
+    },
+    {
+      "library": [
+        "AAA",
+        "AA"
+      ],
+      "length": 3,
+      "strands": "double",
+      "expected": {
+        "sequence": "AAA",
+        "offsets_fwd": [
+          0,
+          0
+        ],
+        "offsets_rev": [
+          null,
+          null
+        ],
+        "occurrences": 2
+      }
+    }
+  ]
+}

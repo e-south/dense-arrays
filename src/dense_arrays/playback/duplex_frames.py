@@ -1,7 +1,14 @@
-"""Validate producer raster frames and adapt them to playback transitions.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/duplex_frames.py
+
+Validate producer raster frames and adapt them to playback transitions.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 

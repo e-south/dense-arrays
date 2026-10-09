@@ -1,6 +1,6 @@
 [project]
 name = "dense-arrays"
-version = "0.2.1"
+version = "0.3.0"
 description = "A library to create densely packed DNA arrays from motifs"
 authors = [
     {name = "Virgile Andreani", email = "andreani@bu.edu"},
@@ -11,6 +11,7 @@ dependencies = [
     "ortools>=9.7.2996",
     "rich>=13.7.0",
     "typer>=0.12.0",
+    "pyyaml>=6.0.2",
 ]
 requires-python = ">=3.12"
 readme = "README.md"
@@ -23,6 +24,10 @@ Documentation = "https://dunloplab.gitlab.io/dense-arrays"
 Issues = "https://github.com/e-south/dense-arrays/issues"
 
 [project.optional-dependencies]
+tables = [
+    "pyarrow>=23.0.1",
+    "openpyxl>=3.1.5",
+]
 playback = [
     "matplotlib>=3.8.0",
     "networkx>=3.6.1",
@@ -33,6 +38,8 @@ docs = [
     "mkdocstrings[python]>=1.0.3",
 ]
 dev = [
+    "pyarrow>=23.0.1",
+    "openpyxl>=3.1.5",
     "pre-commit>=4.5.1",
     "pip-audit>=2.10.0",
     "pytest>=9.0.3",
@@ -81,7 +88,7 @@ ignore = [
 # Keep the existing explicit media option signatures.
 "src/dense_arrays/playback/matplotlib_renderer.py" = ["PLR0913"]
 "src/dense_arrays/playback/export.py" = ["PLR0913"]
-"tests/test_*.py" = ["ANN201", "D103", "S101", "PLR2004", "FBT001"]
+"tests/**/test_*.py" = ["ANN201", "D103", "S101", "PLR2004", "FBT001"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"

@@ -38,8 +38,9 @@ and read the packed sequence.
 [Open the full-size figure](assets/motif-packing-process.svg) to read the sequence labels.
 
 *Motif packing from inputs to sequence.* Process figure adapted by Eric J.
-South for this worked example. The [paper](https://doi.org/10.1371/journal.pcbi.1012276)
-reports Gurobi experiments packing 20–100 binding sites into 50–300 bp in
+South for this worked example. Andreani et al.
+([DOI: 10.1371/journal.pcbi.1012276](https://doi.org/10.1371/journal.pcbi.1012276))
+report Gurobi experiments packing 20–100 binding sites into 50–300 bp in
 0.05–10 seconds.
 
 ## From overlaps to an optimization problem
@@ -58,9 +59,11 @@ subsequent transitions each add eight bases, producing starts at 0, 8, 16, and
 24. A result in this orientation retains these input-order offsets.
 
 The exact model counts selected entries along its path. A motif that happens
-to occur inside another selected motif does not receive an additional
+to occur strictly inside another selected motif does not receive an additional
 placement through the overlap metric. For example, `ACGTTGCAAGTCCTGA` contains
 `TTGCAAGTCC`, but a 16-base limit gives one selected entry in the exact model.
+Suffix-aligned entries can share an endpoint: selecting `ACGT` followed by `CGT`
+uses a start-to-start shift of one base and counts two entries in four bases.
 Repeated identical strings also require distinct path placements. Use the
 returned motif count and offsets when reporting selected entries; a search
 for all substring matches answers a different question.
@@ -83,6 +86,6 @@ original full graph and alternative solutions:
 
 Andreani V, South EJ, Dunlop MJ (2024). Generating information-dense promoter
 sequences with optimal string packing. *PLOS Computational Biology* 20(7):
-e1012276. [doi:10.1371/journal.pcbi.1012276](https://doi.org/10.1371/journal.pcbi.1012276).
+e1012276. [DOI: 10.1371/journal.pcbi.1012276](https://doi.org/10.1371/journal.pcbi.1012276).
 
 When citing software results, also record the package version or commit used.

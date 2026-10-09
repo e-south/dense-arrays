@@ -31,14 +31,9 @@ the solver's search history. Reproduce the placements and exports below.
 
 ## Create a PNG example
 
-From the [installed checkout](quickstart.md#install-from-source), install the
-playback dependencies:
-
-```bash
-uv sync --frozen --extra playback
-```
-
-Then run this Python example with `uv run python`. It describes the same four
+Install the [playback extra](installation.md#optional-features), then run this
+example with `python` in your activated environment or `uv run python` in a uv
+project. It describes the same four
 synthetic placements as the first-array example, without running a solver or
 reading an external data file. Outputs go to a new temporary directory whose
 path is printed:
@@ -47,6 +42,7 @@ path is printed:
 from pathlib import Path
 from tempfile import mkdtemp
 
+# Serialize and reconstruct playback from recorded placements.
 from dense_arrays.playback import (
     PlaybackDocument,
     dumps_playback_plan,
@@ -54,8 +50,11 @@ from dense_arrays.playback import (
     reconstruct_playback,
 )
 from dense_arrays.playback.matplotlib_renderer import render_collection_poster_png
+
+# Describe oriented features in final-sequence coordinates.
 from dense_arrays.realized import Orientation, Placement, PlacementKind, RealizedArray
 
+# Record the final DNA and each oriented placement in that coordinate frame.
 realized = RealizedArray(
     source_id="synthetic:first-array",
     sequence="ACGTTGCAAGTCCTGATCGTACCGATGCTTAGGACGTTCA",
@@ -76,11 +75,15 @@ realized = RealizedArray(
         )
     ),
 )
+# Derive a display order from coordinates, not solver chronology.
 plan = reconstruct_playback(realized)
 output = Path(mkdtemp(prefix="dense-arrays-playback-"))
+# Write the example input or request so it can also be used from the CLI.
 (output / "realized.json").write_text(dumps_realized_array(realized), encoding="utf-8")
+# Write the example input or request so it can also be used from the CLI.
 (output / "plan.json").write_text(dumps_playback_plan(plan), encoding="utf-8")
 document = PlaybackDocument(plan=plan, title="Four overlapping motifs")
+# Render the recorded placements to a new PNG file.
 poster = render_collection_poster_png((document,), output / "poster.png")
 assert poster.is_file() and poster.stat().st_size > 0
 print(output)
@@ -122,13 +125,9 @@ details and complete results are retained in native media metadata. See
 
 ## Render serialized input
 
-From the repository root, activate the installed environment:
-
-```bash
-source .venv/bin/activate
-```
-
-Then change to the output directory printed by the Python example. Render
+Keep your environment active and change to the output directory printed by
+the Python example. In a uv project, keep the project directory and pass the
+full path to the saved JSON instead. Render
 either `RealizedArray` or `PlaybackPlan` JSON:
 
 ```bash

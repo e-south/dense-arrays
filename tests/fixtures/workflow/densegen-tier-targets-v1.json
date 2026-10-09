@@ -1,0 +1,61 @@
+{
+  "source": "src/dnadesign/densegen/src/core/stage_a/stage_a_tier_targets.py",
+  "revision": "2ab9b233ddb6c3a410ae67d1616ce73104bd1785", "revision_note": "# pragma: allowlist secret - public source fingerprint",
+  "source_sha256": "29929af4b6dff0e58315e3c322fbfb34727c0bb67666aa655ced626446357d80", "sha256_note": "# pragma: allowlist secret - public source fingerprint",
+  "functions": [
+    "required_unique_for_tier_target",
+    "evaluate_tier_target"
+  ],
+  "scope": "Pure arithmetic helpers only; does not assert equivalent candidate streams, batch boundaries, widening or stopping trajectories",
+  "cases": [
+    {
+      "retained_count": 200,
+      "max_retained_fraction": 0.001,
+      "eligible_unique": 150000,
+      "required_unique": 200000,
+      "met": false
+    },
+    {
+      "retained_count": 200,
+      "max_retained_fraction": 0.001,
+      "eligible_unique": 200000,
+      "required_unique": 200000,
+      "met": true
+    },
+    {
+      "retained_count": 10,
+      "max_retained_fraction": 0.1,
+      "eligible_unique": 99,
+      "required_unique": 100,
+      "met": false
+    },
+    {
+      "retained_count": 10,
+      "max_retained_fraction": 0.1,
+      "eligible_unique": 100,
+      "required_unique": 100,
+      "met": true
+    },
+    {
+      "retained_count": 3,
+      "max_retained_fraction": 0.3,
+      "eligible_unique": 10,
+      "required_unique": 10,
+      "met": true
+    },
+    {
+      "retained_count": 2,
+      "max_retained_fraction": 0.3,
+      "eligible_unique": 6,
+      "required_unique": 7,
+      "met": false
+    },
+    {
+      "retained_count": 0,
+      "max_retained_fraction": 0.1,
+      "eligible_unique": 0,
+      "required_unique": 0,
+      "met": true
+    }
+  ]
+}

@@ -1,0 +1,171 @@
+{
+  "schema": "dense_arrays.densegen_curated_demo_fixture.v1",
+  "source_revision": "2ab9b233ddb6c3a410ae67d1616ce73104bd1785", "source_revision_note": "# pragma: allowlist secret - public source revision",
+  "source_workspace": "src/dnadesign/densegen/workspaces/demo_tfbs_baseline",
+  "source_input_sha256": "96893f5479fb128231abcf59d87bb3ded17efcc3f398d6f76d48323c1e59e604", "source_input_sha256_note": "# pragma: allowlist secret - source content fingerprint",
+  "source_config": {
+    "densegen": {
+      "schema_version": "2.9",
+      "run": {
+        "id": "demo_tfbs_baseline",
+        "root": "."
+      },
+      "inputs": [
+        {
+          "name": "basic_sites",
+          "type": "binding_sites",
+          "path": "inputs/sites.csv"
+        }
+      ],
+      "output": {
+        "targets": [
+          "parquet"
+        ],
+        "schema": {
+          "bio_type": "dna",
+          "alphabet": "dna_4"
+        },
+        "parquet": {
+          "path": "outputs/tables/records.parquet",
+          "deduplicate": true,
+          "chunk_size": 64
+        }
+      },
+      "generation": {
+        "sequence_length": 100,
+        "sampling": {
+          "pool_strategy": "iterative_subsample",
+          "library_size": 10,
+          "cover_all_regulators": true,
+          "unique_binding_sites": true,
+          "unique_binding_cores": true,
+          "iterative_max_libraries": 200
+        },
+        "plan": [
+          {
+            "name": "baseline",
+            "sequences": 50,
+            "sampling": {
+              "include_inputs": [
+                "basic_sites"
+              ]
+            },
+            "regulator_constraints": {
+              "min_total_sites": 0,
+              "groups": []
+            }
+          },
+          {
+            "name": "baseline_sigma70",
+            "sequences": 50,
+            "sampling": {
+              "include_inputs": [
+                "basic_sites"
+              ]
+            },
+            "fixed_elements": {
+              "promoter_constraints": [
+                {
+                  "name": "sigma70_consensus",
+                  "upstream": "TTGACA",
+                  "downstream": "TATAAT",
+                  "spacer_length": [
+                    16,
+                    18
+                  ]
+                }
+              ]
+            },
+            "regulator_constraints": {
+              "min_total_sites": 0,
+              "groups": []
+            }
+          }
+        ]
+      },
+      "solver": {
+        "backend": "CBC",
+        "strategy": "iterate",
+        "solver_attempt_timeout_seconds": 10
+      },
+      "runtime": {
+        "round_robin": true,
+        "max_accepted_per_library": 10,
+        "min_count_per_tf": 0,
+        "max_duplicate_solutions": 3,
+        "no_progress_seconds_before_resample": 10,
+        "max_consecutive_no_progress_resamples": 60,
+        "max_failed_solutions": 0,
+        "random_seed": 42
+      },
+      "postprocess": {
+        "pad": {
+          "mode": "adaptive",
+          "end": "5prime",
+          "gc": {
+            "mode": "range",
+            "min": 0.4,
+            "max": 0.6,
+            "target": 0.5,
+            "tolerance": 0.1,
+            "min_pad_length": 0
+          },
+          "max_tries": 2000
+        }
+      },
+      "logging": {
+        "log_dir": "outputs/logs",
+        "level": "INFO",
+        "progress_style": "summary"
+      }
+    },
+    "plots": {
+      "source": "parquet",
+      "out_dir": "outputs/plots",
+      "format": "pdf",
+      "default": [
+        "source_cohort_concentration",
+        "stage_a_sampling_yield",
+        "stage_a_pool_diversity",
+        "plan_regulator_deployment_heatmap",
+        "placement_occupancy_map",
+        "retained_pool_coverage_by_regulator",
+        "attempt_outcome_timeline",
+        "solve_pressure_and_progress",
+        "background_sequence_logo",
+        "compression_ratio_by_plan",
+        "dense_array_showcase_video",
+        "retained_vs_deployed_length_mix_by_regulator",
+        "retained_vs_deployed_tier_mix_by_regulator",
+        "score_strata_and_deployed_length_bridge",
+        "source_plan_input_heatmap",
+        "stage_a_pool_score_strata",
+        "tfbs_concentration_profile",
+        "upstream_motif_supply_and_pwm_strength"
+      ],
+      "video": {
+        "enabled": true,
+        "mode": "all_plans_round_robin_single_video",
+        "sampling": {
+          "stride": 5,
+          "max_source_rows": 20000,
+          "max_snapshots": 140
+        },
+        "playback": {
+          "target_duration_sec": 14,
+          "fps": 12
+        }
+      }
+    }
+  },
+  "native_example": "docs/examples/curated-library",
+  "input_conversion": "All 750 input rows retain order, sequence and group. Supplied IDs site_0001 through site_0750 replace implicit source identities; two explicit anchor occurrences follow.",
+  "behavior_changes": {
+    "padding": "Strict padding-scoped 0.4-0.6 GC; uniform proposals with 2000 trials; no short-pad relaxation.",
+    "sampling": "Versioned native group balancing, fixed occurrences included in the ten offered parts, per-cell independent priorities; no original-seed equivalence.",
+    "core_uniqueness": "The input has no motif core annotations. Native core uniqueness is false; full sequence uniqueness remains true. No core coordinates are inferred.",
+    "stopping": "Explicit 30 attempts per batch, 200 batches per cell, 10 accepted per batch; shared 2000 attempts and 600 active seconds; 10-second solver calls. Unknown or unproven exact search advances to the next batch with its evidence preserved. No translation of wall-clock no-progress or duplicate streak heuristics.",
+    "publication": "Native run with separate portable exports; no Parquet or external delivery implied.",
+    "plots": "Native quality and persisted placement rendering; old plot selection and playback scheduling are not converted."
+  }
+}

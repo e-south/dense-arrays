@@ -1,7 +1,14 @@
-"""Strict JSON serialization for realized arrays and playback plans.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/serialization.py
+
+Strict JSON serialization for realized arrays and playback plans.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 

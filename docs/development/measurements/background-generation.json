@@ -1,0 +1,340 @@
+{
+  "schema": "dense_arrays.background_method_comparison.v1",
+  "status": "decision_experiment_not_implementation",
+  "environment": {
+    "python": "3.14.7 (main, Aug 14 2026, 15:24:10) [Clang 22.1.3 ]",
+    "ortools": "9.15.6755",
+    "platform": "macOS 26.5 arm64"
+  },
+  "scope": "Synthetic fixed-length uniform DNA; 100 requested sequences; 10000 rejection draws; 2 second CP-SAT solve limit, one worker; one observed timing run, not a general performance guarantee.",
+  "source_sha256": "3bb5b90d97190fe43cf26967cf99b34c5c8a067f8522db15ba75787ff1770942", "source_sha256_note": "# pragma: allowlist secret - source content identity",
+  "cases": [
+    {
+      "case": "ordinary",
+      "length": 20,
+      "gc_counts": [
+        6,
+        14
+      ],
+      "patterns": [
+        "GAATTC",
+        "GGATCC",
+        "GGTCTC",
+        "GAGACC"
+      ],
+      "rejection": {
+        "draws": 100,
+        "accepted": 100,
+        "seconds": 0.00024158399901352823
+      },
+      "dfs": {
+        "accepted": 100,
+        "unique": 100,
+        "seconds": 0.0029379999905359,
+        "error": null
+      },
+      "counted": {
+        "valid_count": "1038420215296",
+        "states": 16,
+        "count_states": 2355,
+        "build_seconds": 0.0019155000045429915,
+        "draw_seconds": 0.0008628749928902835,
+        "accepted": 100,
+        "unique": 100
+      },
+      "cp_sat_automaton": {
+        "status": "FEASIBLE",
+        "build_seconds": 0.002636250006617047,
+        "solver_seconds": 2.003038,
+        "conflicts": 53,
+        "branches": 4743116,
+        "callbacks": 23644,
+        "encoding": "automaton",
+        "accepted": 14,
+        "unique": 14
+      },
+      "cp_sat_clauses": {
+        "status": "FEASIBLE",
+        "build_seconds": 0.0012850420025642961,
+        "solver_seconds": 0.014685,
+        "conflicts": 1,
+        "branches": 3894,
+        "callbacks": 100,
+        "encoding": "clauses",
+        "accepted": 100,
+        "unique": 100
+      }
+    },
+    {
+      "case": "rare_gc",
+      "length": 30,
+      "gc_counts": [
+        29,
+        30
+      ],
+      "patterns": [
+        "CCC",
+        "GGG"
+      ],
+      "rejection": {
+        "draws": 10000,
+        "accepted": 0,
+        "seconds": 0.02494608299457468
+      },
+      "dfs": {
+        "accepted": 100,
+        "unique": 100,
+        "seconds": 0.0039670830010436475,
+        "error": null
+      },
+      "counted": {
+        "valid_count": "143195498",
+        "states": 5,
+        "count_states": 292,
+        "build_seconds": 0.0002515420055715367,
+        "draw_seconds": 0.001065000004018657,
+        "accepted": 100,
+        "unique": 100
+      },
+      "cp_sat_automaton": {
+        "status": "FEASIBLE",
+        "build_seconds": 0.0004542090027825907,
+        "solver_seconds": 2.000112,
+        "conflicts": 285,
+        "branches": 1461401,
+        "callbacks": 35395,
+        "encoding": "automaton",
+        "accepted": 28,
+        "unique": 28
+      },
+      "cp_sat_clauses": {
+        "status": "FEASIBLE",
+        "build_seconds": 0.0010130410082638264,
+        "solver_seconds": 0.038174,
+        "conflicts": 788,
+        "branches": 14550,
+        "callbacks": 100,
+        "encoding": "clauses",
+        "accepted": 100,
+        "unique": 100
+      }
+    },
+    {
+      "case": "infeasible",
+      "length": 20,
+      "gc_counts": [
+        10,
+        10
+      ],
+      "patterns": [
+        "A",
+        "C",
+        "G",
+        "T"
+      ],
+      "rejection": {
+        "draws": 10000,
+        "accepted": 0,
+        "seconds": 0.018894209002610296
+      },
+      "dfs": {
+        "accepted": 0,
+        "unique": 0,
+        "seconds": 7.779200677759945e-05,
+        "error": "infeasible constrained sequence generation: no sequence satisfies constraints (length=20, gc_min=0.5, gc_max=0.5, forbidden=4, left_context='', right_context='')."
+      },
+      "counted": {
+        "valid_count": "0",
+        "states": 1,
+        "count_states": 1,
+        "build_seconds": 2.883299021050334e-05,
+        "draw_seconds": 1.667009200900793e-06,
+        "accepted": 0,
+        "unique": 0
+      },
+      "cp_sat_automaton": {
+        "status": "INFEASIBLE",
+        "build_seconds": 0.0003657500055851415,
+        "solver_seconds": 0.002101,
+        "conflicts": 0,
+        "branches": 0,
+        "callbacks": 0,
+        "encoding": "automaton",
+        "accepted": 0,
+        "unique": 0
+      },
+      "cp_sat_clauses": {
+        "status": "INFEASIBLE",
+        "build_seconds": 0.0007384159980574623,
+        "solver_seconds": 5.4000000000000005e-05,
+        "conflicts": 0,
+        "branches": 0,
+        "callbacks": 0,
+        "encoding": "clauses",
+        "accepted": 0,
+        "unique": 0
+      }
+    },
+    {
+      "case": "longer",
+      "length": 100,
+      "gc_counts": [
+        48,
+        52
+      ],
+      "patterns": [
+        "AAA",
+        "CCC",
+        "GGG",
+        "TTT",
+        "GAATTC",
+        "GGATCC"
+      ],
+      "rejection": {
+        "draws": 10000,
+        "accepted": 24,
+        "seconds": 0.07430387499334756
+      },
+      "dfs": {
+        "accepted": 100,
+        "unique": 100,
+        "seconds": 0.011344625003403053,
+        "error": null
+      },
+      "counted": {
+        "valid_count": "3470030505166041371954420878357995515874345860350948237779",
+        "states": 16,
+        "count_states": 40704,
+        "build_seconds": 0.0350304169987794,
+        "draw_seconds": 0.004910042000119574,
+        "accepted": 100,
+        "unique": 100
+      },
+      "cp_sat_automaton": {
+        "status": "FEASIBLE",
+        "build_seconds": 0.0009485420014243573,
+        "solver_seconds": 2.0005,
+        "conflicts": 72,
+        "branches": 4025700,
+        "callbacks": 4545,
+        "encoding": "automaton",
+        "accepted": 6,
+        "unique": 6
+      },
+      "cp_sat_clauses": {
+        "status": "FEASIBLE",
+        "build_seconds": 0.004824999996344559,
+        "solver_seconds": 0.20308400000000001,
+        "conflicts": 22,
+        "branches": 57685,
+        "callbacks": 100,
+        "encoding": "clauses",
+        "accepted": 100,
+        "unique": 100
+      }
+    }
+  ],
+  "exhaustive_checks": [
+    {
+      "length": 5,
+      "gc_counts": [
+        2,
+        3
+      ],
+      "patterns": [
+        "AA",
+        "CGC"
+      ],
+      "valid_sequences": 514,
+      "full_set_agreement": true
+    },
+    {
+      "length": 6,
+      "gc_counts": [
+        0,
+        0
+      ],
+      "patterns": [
+        "TTT"
+      ],
+      "valid_sequences": 44,
+      "full_set_agreement": true
+    },
+    {
+      "length": 4,
+      "gc_counts": [
+        4,
+        4
+      ],
+      "patterns": [
+        "CC",
+        "GG"
+      ],
+      "valid_sequences": 2,
+      "full_set_agreement": true
+    }
+  ],
+  "limits": {
+    "cp_sat": {
+      "status": "UNKNOWN",
+      "build_seconds": 0.0010203749989159405,
+      "solver_seconds": 0.000115,
+      "conflicts": 0,
+      "branches": 0,
+      "callbacks": 0,
+      "encoding": "automaton"
+    },
+    "counted": "state_limit_unknown"
+  },
+  "edge_cases": {
+    "source_node_limit_on_feasible_problem": "infeasible constrained sequence generation: search-node limit reached (nodes>1).",
+    "gc_rounding": {
+      "length": 50,
+      "fraction": 0.14,
+      "source_count_bounds": [
+        8,
+        7
+      ],
+      "native_predicate_accepts_seven": true
+    },
+    "dfs_distribution": {
+      "length": 2,
+      "forbidden": [
+        "AA"
+      ],
+      "feasible_strings": 15,
+      "dfs_first_base_counts_of_24": {
+        "A": 6,
+        "C": 6,
+        "G": 6,
+        "T": 6
+      },
+      "uniform_first_base_counts_of_15": {
+        "A": 3,
+        "C": 4,
+        "G": 4,
+        "T": 4
+      }
+    },
+    "conditional_length_distribution": {
+      "lengths": [
+        1,
+        2
+      ],
+      "valid_counts": [
+        4,
+        15
+      ],
+      "uniform_declared_length_probabilities": [
+        "1/2",
+        "1/2"
+      ],
+      "conditioned_length_probabilities": [
+        "16/31",
+        "15/31"
+      ],
+      "reason": "Uniform length prior and base distribution conditioned on all sequence rules."
+    }
+  },
+  "qualification": "The counting prototype covers uniform DNA only. Weighted distributions, ranged-length conditioning, bounded memory, and native artifact integration require implementation tests."
+}

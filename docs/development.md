@@ -5,30 +5,33 @@ description: Find focused checks, run the full local gate, and preview documenta
 
 # Develop Dense Arrays
 
-Start from the [source checkout](quickstart.md#install-from-source). Read the
+Start from the [source checkout](installation.md#install-from-source). Read the
 [architecture map](architecture/README.md) before changing module boundaries,
 and the [playback contract](architecture/solution-playback.md) before changing
 serialized placements, reconstruction, or rendering.
 
 Choose a focused test from the [task-to-file map](architecture/README.md#find-the-files-for-a-change).
 For documentation, use the [writing and routing guide](development/documentation.md).
-The [baseline audit](development/audit.md) and
-[completed hardening record](development/improvement-plan.md) preserve the
-September 2026 findings, repairs, and verification.
+
+For optimizer changes, use the [model-building measurements](development/optimizer-performance.md)
+and their constraint-parity checks before comparing end-to-end execution time.
 
 ## Local verification
 
-Run the full gate from the repository root before handoff:
+Run these checks from the repository root. `uv sync` manages the checkout’s
+`.venv` from `pyproject.toml` and `uv.lock`; `uv run` selects that environment:
 
 ```bash
-uv sync --frozen --extra dev --extra playback --extra docs
-uv run pre-commit run --all-files
-uv run ruff check .
-uv run ruff format --check .
-uv run pytest -q
-uv run mkdocs build --strict
+uv sync --frozen --extra dev --extra playback --extra docs  # Reproduce the locked tool environment.
+uv run pre-commit run --all-files  # Check tracked source, secrets and formatting.
+uv run ruff check .  # Check Python correctness and style rules.
+uv run ruff format --check .  # Verify formatting without rewriting files.
+uv run pytest -q  # Exercise behavior, failure paths and guide examples.
+uv run mkdocs build --strict  # Reject broken documentation configuration.
+
+# Audit the exact locked versions and hashes across optional features.
 uv export --frozen --all-extras --no-emit-project | uv run pip-audit -r /dev/stdin --require-hashes --disable-pip --progress-spinner off
-uv build
+uv build  # Build the wheel and source distribution.
 ```
 
 To run checks when committing, install the hooks with
@@ -48,12 +51,14 @@ readers to a guide, and keep signature details in [the API reference](api.md).
 Run changed examples in the locked environment. Examples that add constraints
 must construct a fresh optimizer before solving.
 
-`tests/test_documentation.py` executes the Python examples in `quickstart.md`,
-`constraints.md`, and `playback.md`, then builds the site strictly and checks
-built links, assets, and anchors. Keep examples on each page runnable in order;
-temporary playback outputs are isolated by the test. The linked presentation
-example continues from the playback guide's `plan` and output directory and
-also needs a manual run when changed.
+`tests/test_documentation.py` executes the Python examples in the first-array,
+constraints, playback and saved-library guides, including their linked export,
+assembly and quality examples. Its page list names the additional workflow
+guides covered by the test. It also builds the site strictly and checks links,
+assets and anchors. Keep examples on each page runnable in order; test outputs
+use temporary directories. Run changed preparation examples separately, with
+FIMO when scoring is requested. The linked playback presentation example also
+needs a manual run when changed.
 
 Preview documentation with `uv run mkdocs serve`; `uv run mkdocs build --strict`
 writes the static site to `public/`. Shared documentation images live in

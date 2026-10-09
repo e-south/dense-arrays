@@ -1,7 +1,14 @@
-"""Deterministic, symmetry-scored layout for publication playback graphs.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/graph/isotropic_layout.py
+
+Deterministic, symmetry-scored layout for publication playback graphs.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 
