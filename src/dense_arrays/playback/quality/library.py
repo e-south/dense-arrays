@@ -18,8 +18,9 @@ from typing import TYPE_CHECKING
 from dense_arrays.reporting.quality.models import QUALITY_POLICY, QUALITY_SCHEMA
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Mapping, Sequence
 
+    from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
 
@@ -89,8 +90,12 @@ def quality_figure(report: Mapping[str, object]) -> Figure:
             0.04,
             min((b - a for a, b in pairwise(values)), default=0.05) * 0.8,
         )
-        axis.bar(
-            values, [item["count"] for item in histogram], width=width, color=color
+        _histogram(
+            axis,
+            values,
+            [item["count"] for item in histogram],
+            width=width,
+            color=color,
         )
         axis.set(
             title=title, xlabel=xlabel, ylabel="Selected designs", xlim=(-0.05, 1.05)
@@ -131,6 +136,32 @@ def quality_figure(report: Mapping[str, object]) -> Figure:
         fontsize=9,
     )
     return figure
+
+
+def _histogram(
+    axis: Axes,
+    values: Sequence[float],
+    counts: Sequence[int],
+    *,
+    width: float,
+    color: str,
+) -> None:
+    """Draw exact bin rectangles with one artist, retaining every value and count."""
+    from matplotlib.collections import PolyCollection
+
+    vertices = [
+        (
+            (value - width / 2, 0),
+            (value - width / 2, count),
+            (value - width / 2 + width, count),
+            (value - width / 2 + width, 0),
+        )
+        for value, count in zip(values, counts, strict=True)
+    ]
+    collection = PolyCollection(vertices, facecolors=color, edgecolors="none")
+    collection.sticky_edges.y[:] = [0]
+    axis.add_collection(collection)
+    axis.autoscale_view()
 
 
 def _source_caption(report: Mapping[str, object]) -> str:

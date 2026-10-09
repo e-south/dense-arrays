@@ -152,7 +152,14 @@ def test_empty_filtered_quality_and_bounded_render_use_the_same_population(
     assert embedded == report.to_dict()
     figure = quality_figure(embedded)
     axes = {a.get_label(): a for a in figure.axes}
-    assert sum(b.get_height() for b in axes["gc_fraction"].patches) == 4
+    assert (
+        sum(
+            path.vertices[:, 1].max()
+            for collection in axes["gc_fraction"].collections
+            for path in collection.get_paths()
+        )
+        == 4
+    )
     figure.clear()
     cli = CliRunner().invoke(
         app,

@@ -268,8 +268,18 @@ def test_quality_plot_axes_use_exact_report_counts(tmp_path: Path):
     figure = quality_figure(report)
     axes = {ax.get_label(): ax for ax in figure.axes}
     assert [bar.get_width() for bar in axes["part_usage"].patches] == [1] * 8 + [0] * 2
-    assert [bar.get_height() for bar in axes["gc_fraction"].patches] == [4, 4]
-    assert [bar.get_height() for bar in axes["density"].patches] == [8]
+    for metric, expected in (("gc_fraction", [4, 4]), ("density", [8])):
+        axis = axes[metric]
+        # One drawing object represents every exact bin as cardinality grows.
+        assert len(axis.patches) + len(axis.collections) == 1
+        paths = axis.collections[0].get_paths()
+        assert [max(path.vertices[:, 1]) for path in paths] == expected
+        centers = [
+            (min(path.vertices[:, 0]) + max(path.vertices[:, 0])) / 2 for path in paths
+        ]
+        assert centers == pytest.approx(
+            [row["value"] for row in report["composition"][metric]["histogram"]]
+        )
     assert [bar.get_width() for bar in axes["outcomes"].patches] == [8, 1, 1]
     figure.clear()
 
