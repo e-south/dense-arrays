@@ -1,0 +1,145 @@
+{
+  "schema": "dense_arrays.differential_fixture.v1",
+  "historical_replay": false,
+  "producer": {
+    "repository": "dnadesign",
+    "revision": "f2fe8eaef7edb48238e60d19ae25a72d47e48145", "note": "# pragma: allowlist secret - public source revision",
+    "source": "src/dnadesign/densegen/src/config/generation.py",
+    "source_sha256": "28543bfb8fcbabd6f69166ed49c272b7e8ddef9299832796aed19a54e79cdc21", "source_note": "# pragma: allowlist secret - source fingerprint"
+  },
+  "capture_scope": "Executed unmodified _expand_matrix_pairs and _distribute_expanded_quotas from the pinned source; configuration loading and execution are not exercised.",
+  "motif_sets": {
+    "up": {
+      "consensus": "TTGACA",
+      "shift": "TTTACA"
+    },
+    "down": {
+      "consensus": "TATAAT",
+      "shift": "TAAAAT"
+    }
+  },
+  "cases": [
+    {
+      "pairing": "cross_product",
+      "total": 10,
+      "combinations": [
+        [
+          "consensus",
+          "TTGACA",
+          "consensus",
+          "TATAAT"
+        ],
+        [
+          "consensus",
+          "TTGACA",
+          "shift",
+          "TAAAAT"
+        ],
+        [
+          "shift",
+          "TTTACA",
+          "consensus",
+          "TATAAT"
+        ],
+        [
+          "shift",
+          "TTTACA",
+          "shift",
+          "TAAAAT"
+        ]
+      ],
+      "quotas_before_zero_filter": [
+        3,
+        3,
+        2,
+        2
+      ]
+    },
+    {
+      "pairing": "zip",
+      "total": 5,
+      "combinations": [
+        [
+          "consensus",
+          "TTGACA",
+          "consensus",
+          "TATAAT"
+        ],
+        [
+          "shift",
+          "TTTACA",
+          "shift",
+          "TAAAAT"
+        ]
+      ],
+      "quotas_before_zero_filter": [
+        3,
+        2
+      ]
+    },
+    {
+      "pairing": "explicit_pairs",
+      "total": 3,
+      "combinations": [
+        [
+          "shift",
+          "TTTACA",
+          "consensus",
+          "TATAAT"
+        ],
+        [
+          "consensus",
+          "TTGACA",
+          "shift",
+          "TAAAAT"
+        ]
+      ],
+      "quotas_before_zero_filter": [
+        2,
+        1
+      ]
+    },
+    {
+      "pairing": "cross_product",
+      "total": 2,
+      "combinations": [
+        [
+          "consensus",
+          "TTGACA",
+          "consensus",
+          "TATAAT"
+        ],
+        [
+          "consensus",
+          "TTGACA",
+          "shift",
+          "TAAAAT"
+        ],
+        [
+          "shift",
+          "TTTACA",
+          "consensus",
+          "TATAAT"
+        ],
+        [
+          "shift",
+          "TTTACA",
+          "shift",
+          "TAAAAT"
+        ]
+      ],
+      "quotas_before_zero_filter": [
+        1,
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "intentional_differences": [
+    "Matrix axes and choices follow declared order; legacy defaults sort choice labels. The fixture declares labels in legacy sorted order for exact comparison.",
+    "Small totals require explicit inactive cell identities; all cells including zeros remain in the native plan. Legacy expand_generation_plans removes quota-zero cells.",
+    "Cell identities name axis choices; display templates do not determine native identity.",
+    "Cell seeds use matrix_cell_sha256.v1; no legacy random draw parity is claimed."
+  ]
+}

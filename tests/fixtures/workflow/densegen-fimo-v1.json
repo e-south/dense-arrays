@@ -1,0 +1,80 @@
+{
+  "source": {
+    "revision": "f2fe8eaef7edb48238e60d19ae25a72d47e48145", "revision_note": "# pragma: allowlist secret - public source fingerprint",
+    "path": "src/dnadesign/densegen/src/adapters/sources/pwm_fimo.py",
+    "sha256": "3ecd48dc34c11f8bfc36a707d5e04dbb0d760fb2c3e0d9a5d21ccff75f42bf8b", "sha256_note": "# pragma: allowlist secret - public source fingerprint",
+    "capture": "Unmodified writer, parser and aggregation AST; synthetic motif; identity normalization of an exactly unit background.",
+    "fimo_version": "5.5.9",
+    "scope": "Scores and earliest-position ties for exactly represented rows and a declared uniform background; coordinates remain source one-based inclusive."
+  },
+  "artifact": {
+    "schema_version": "1.0",
+    "producer": "synthetic-fixture",
+    "motif_id": "motif",
+    "alphabet": "ACGT",
+    "matrix_semantics": "probabilities",
+    "probabilities": [
+      {
+        "A": 0.7,
+        "C": 0.1,
+        "G": 0.1,
+        "T": 0.1
+      },
+      {
+        "A": 0.1,
+        "C": 0.7,
+        "G": 0.1,
+        "T": 0.1
+      }
+    ],
+    "background": {
+      "A": 0.25,
+      "C": 0.25,
+      "G": 0.25,
+      "T": 0.25
+    },
+    "log_odds": [
+      {
+        "A": 2,
+        "C": -1,
+        "G": -1,
+        "T": -1
+      },
+      {
+        "A": -1,
+        "C": 3,
+        "G": -1,
+        "T": -1
+      }
+    ]
+  },
+  "sequences": [
+    "TTGTAC",
+    "AAAAAA",
+    "ACACAC",
+    "CCCCCC"
+  ],
+  "hit_pvalue_max": 0.1,
+  "strands": "double",
+  "tsv": "motif_id\tmotif_alt_id\tsequence_name\tstart\tstop\tstrand\tscore\tp-value\tq-value\tmatched_sequence\nmotif\t\tcandidate_0\t3\t4\t-\t2.96167\t0.0625\t\tAC\nmotif\t\tcandidate_0\t5\t6\t+\t2.96167\t0.0625\t\tAC\nmotif\t\tcandidate_2\t1\t2\t+\t2.96167\t0.0625\t\tAC\nmotif\t\tcandidate_2\t3\t4\t+\t2.96167\t0.0625\t\tAC\nmotif\t\tcandidate_2\t5\t6\t+\t2.96167\t0.0625\t\tAC\n",
+  "expected": [
+    {
+      "sequence_name": "candidate_0",
+      "start": 3,
+      "stop": 4,
+      "strand": "-",
+      "score": 2.96167,
+      "matched_sequence": "AC"
+    },
+    null,
+    {
+      "sequence_name": "candidate_2",
+      "start": 1,
+      "stop": 2,
+      "strand": "+",
+      "score": 2.96167,
+      "matched_sequence": "AC"
+    },
+    null
+  ]
+}

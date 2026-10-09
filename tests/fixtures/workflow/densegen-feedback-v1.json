@@ -1,0 +1,50 @@
+{
+  "source": {
+    "revision": "f2fe8eaef7edb48238e60d19ae25a72d47e48145", "revision_note": "# pragma: allowlist secret - public source fingerprint",
+    "path": "src/dnadesign/densegen/src/core/sampler.py",
+    "sha256": "b62a9c0c9c0fb651b339797e2960881827d10b418f9720860b7ce27489304f2e", "sha256_note": "# pragma: allowlist secret - public source fingerprint",
+    "function": "compute_tf_weights",
+    "capture": "unmodified function AST with synthetic row protocol"
+  },
+  "parameters": {
+    "coverage_alpha": 3,
+    "coverage_power": 1,
+    "failure_alpha": 2,
+    "failure_power": 1
+  },
+  "parts": [
+    {
+      "part_id": "a",
+      "group": "A",
+      "sequence": "AAA",
+      "used": 3,
+      "failed": 0
+    },
+    {
+      "part_id": "b",
+      "group": "A",
+      "sequence": "CCC",
+      "used": 0,
+      "failed": 2
+    },
+    {
+      "part_id": "c",
+      "group": "B",
+      "sequence": "GGG",
+      "used": 5,
+      "failed": 1
+    }
+  ],
+  "group_weights": {
+    "A": 2.55,
+    "B": 0.5
+  },
+  "group_usage": {
+    "A": 3,
+    "B": 5
+  },
+  "group_failures": {
+    "A": 2,
+    "B": 1
+  }
+}

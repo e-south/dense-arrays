@@ -27,6 +27,7 @@ from rich.text import Text
 from .errors import OptimizationError
 from .optimizer import Optimizer
 from .solver import SolverControls
+from .workflow.cli import register
 
 if TYPE_CHECKING:
     from .solution import DenseArray
@@ -37,6 +38,7 @@ app = typer.Typer(
 )
 
 console = Console()
+register(app)
 
 
 class Strands(StrEnum):

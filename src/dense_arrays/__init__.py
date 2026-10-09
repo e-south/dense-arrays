@@ -1,8 +1,15 @@
-"""Pack DNA motif libraries and describe their realized placements.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/__init__.py
+
+Pack DNA motif libraries and describe their realized placements.
 
 Module Author(s): Virgile Andreani, Eric J. South
+Maintainer(s): Eric J. South
 Dunlop Lab
-"""
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 
@@ -19,6 +26,8 @@ if TYPE_CHECKING:
     )
     from .optimizer import Optimizer
     from .solution import DenseArray
+    from .workflow.execution import RunExecutionError
+    from .workflow.operations import export, inspect, plan, prepare, render, run
 
 __all__ = [
     "DenseArray",
@@ -26,8 +35,15 @@ __all__ = [
     "InvalidSolverResultError",
     "OptimizationError",
     "Optimizer",
+    "RunExecutionError",
     "SolverBackendError",
     "UnprovenSolutionError",
+    "export",
+    "inspect",
+    "plan",
+    "prepare",
+    "render",
+    "run",
 ]
 
 
@@ -47,5 +63,15 @@ def __getattr__(name: str) -> object:
     if name not in __all__:
         msg = f"module {__name__!r} has no attribute {name!r}"
         raise AttributeError(msg)
-    module = {"Optimizer": "optimizer", "DenseArray": "solution"}.get(name, "errors")
+    module = {
+        "Optimizer": "optimizer",
+        "DenseArray": "solution",
+        "RunExecutionError": "workflow.execution",
+        "plan": "workflow.operations",
+        "prepare": "workflow.operations",
+        "render": "workflow.operations",
+        "run": "workflow.operations",
+        "inspect": "workflow.operations",
+        "export": "workflow.operations",
+    }.get(name, "errors")
     return getattr(import_module(f"{__name__}.{module}"), name)

@@ -1,0 +1,87 @@
+{
+  "schema": "dense_arrays.differential_fixture.v1",
+  "source_revision": "f2fe8eaef7edb48238e60d19ae25a72d47e48145", "source_revision_note": "# pragma: allowlist secret - public source fingerprint",
+  "source_path": "src/dnadesign/densegen/src/core/sampler.py",
+  "source_sha256": "b62a9c0c9c0fb651b339797e2960881827d10b418f9720860b7ce27489304f2e", "source_sha256_note": "# pragma: allowlist secret - public source fingerprint",
+  "function": "_append_row",
+  "function_sha256": "f6c50f2d92d187ee5feda527f36b1a72a61a757c1dfd36038612607c9803f6e5", "function_sha256_note": "# pragma: allowlist secret - public source fingerprint",
+  "capture_scope": "Unmodified pinned membership append helper with fresh synthetic state and optional metadata disabled. Compares sequence/core uniqueness keys only; does not execute sampling or cap relaxation.",
+  "rows": [
+    {
+      "tf": "A",
+      "tfbs": "CAA",
+      "tfbs_core": "AA"
+    },
+    {
+      "tf": "A",
+      "tfbs": "GAA",
+      "tfbs_core": "AA"
+    },
+    {
+      "tf": "B",
+      "tfbs": "TAA",
+      "tfbs_core": "AA"
+    },
+    {
+      "tf": "B",
+      "tfbs": "CAA",
+      "tfbs_core": "C"
+    },
+    {
+      "tf": "A",
+      "tfbs": "CCC",
+      "tfbs_core": "CC"
+    }
+  ],
+  "cases": [
+    {
+      "unique_sequences": false,
+      "unique_cores": false,
+      "accepted": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "unique_sequences": true,
+      "unique_cores": false,
+      "accepted": [
+        true,
+        true,
+        true,
+        false,
+        true
+      ]
+    },
+    {
+      "unique_sequences": false,
+      "unique_cores": true,
+      "accepted": [
+        true,
+        false,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "unique_sequences": true,
+      "unique_cores": true,
+      "accepted": [
+        true,
+        false,
+        true,
+        false,
+        true
+      ]
+    }
+  ],
+  "intentional_changes": [
+    "Core keys use explicit half-open annotations and declared orientation; missing cores fail before sampling.",
+    "Joint selection preserves alternatives until uniqueness and hard group caps are resolved. Source first-row sequence deduplication can discard feasible alternatives.",
+    "Caps stay hard; there is no automatic relaxation. Constrained randomness and balance objectives have a separate policy version."
+  ]
+}

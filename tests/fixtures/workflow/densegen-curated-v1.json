@@ -1,0 +1,66 @@
+{
+  "historical_replay": false,
+  "input_csv": "part_id,sequence,group,source\na,ACGT,A,synthetic\nb,CGTA,A,synthetic\nc,TACC,B,synthetic\nd,ACGT,A,synthetic\n",
+  "intentional_differences": [
+    "Native part identity preserves provided site IDs; legacy tfbs_id is sequence-and-motif equivalence.",
+    "Native default DNA normalization is strict; legacy input automatically trims and uppercases."
+  ],
+  "normalized_rows": [
+    {
+      "motif_id": "fab0c73093ac7fedd7e07e7aa2780ce1518cbb4ea3d42dcfbc50e7ba39d302c9",
+      "site_id": "a",
+      "source": "synthetic",
+      "tf": "A",
+      "tfbs": "ACGT",
+      "tfbs_core": "ACGT",
+      "tfbs_id": "690a71f19bf0b574cd09abd760a8f183f73685fc3865ca0f4fb72eaf684f9930"
+    },
+    {
+      "motif_id": "fab0c73093ac7fedd7e07e7aa2780ce1518cbb4ea3d42dcfbc50e7ba39d302c9",
+      "site_id": "b",
+      "source": "synthetic",
+      "tf": "A",
+      "tfbs": "CGTA",
+      "tfbs_core": "CGTA",
+      "tfbs_id": "5b3c51b9d07a8d08a73e1548c21328d0f72924f9386fe4d5fd73f92904277e70"
+    },
+    {
+      "motif_id": "ac9d8e2111bcc0c68e0af86ef74d450af7a200f167324a2c345ccec62faec53a",
+      "site_id": "c",
+      "source": "synthetic",
+      "tf": "B",
+      "tfbs": "TACC",
+      "tfbs_core": "TACC",
+      "tfbs_id": "e0d9723a6139c47d43d404ebab628b237f2d21b8c69ca473d3f3c12646032dd9"
+    },
+    {
+      "motif_id": "fab0c73093ac7fedd7e07e7aa2780ce1518cbb4ea3d42dcfbc50e7ba39d302c9",
+      "site_id": "d",
+      "source": "synthetic",
+      "tf": "A",
+      "tfbs": "ACGT",
+      "tfbs_core": "ACGT",
+      "tfbs_id": "690a71f19bf0b574cd09abd760a8f183f73685fc3865ca0f4fb72eaf684f9930"
+    }
+  ],
+  "packing": {
+    "maximum": 12,
+    "optimal_occurrences": 4,
+    "required_groups": [
+      "A",
+      "B"
+    ],
+    "sequence": "ACGTACCACGT",
+    "strands": "single"
+  },
+  "producer": {
+    "dense_arrays_version": "0.2.0",
+    "repository": "dnadesign",
+    "revision": "2ab9b233ddb6c3a410ae67d1616ce73104bd1785", "revision_note": "# pragma: allowlist secret - public Git revision",
+    "source_sha256": {
+      "src/dnadesign/densegen/src/adapters/sources/binding_sites.py": {"sha256": "1786d9776111ac7ceccc1b3b797a0788a5d8e0a4e7811bcb24ce6383aa37e180", "note": "# pragma: allowlist secret - source fingerprint"},
+      "src/dnadesign/densegen/src/core/artifacts/ids.py": {"sha256": "b0a15729f46603e58b8a54a28b824e388831a45d75077244caeeeefbcf4af77c", "note": "# pragma: allowlist secret - source fingerprint"}
+    }
+  },
+  "schema": "dense_arrays.differential_fixture.v1"
+}

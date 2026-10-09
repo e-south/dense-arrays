@@ -1,0 +1,154 @@
+{
+  "schema": "dense_arrays.preparation_plan.v3",
+  "plan_id": "2603994c3e491b584958d048ff06c3c40eac94e64141b79b93fc99e5f9908835",
+  "policy": "independent_recipes.v1",
+  "request": {
+    "schema": "dense_arrays.preparation_set.v1",
+    "sequence_collisions": "error",
+    "recipes": [
+      {
+        "id": "one",
+        "request": {
+          "schema": "dense_arrays.prepare.v1",
+          "source": {
+            "kind": "background",
+            "base_probabilities": [
+              0.25,
+              0.25,
+              0.25,
+              0.25
+            ],
+            "group": "background"
+          },
+          "sampling": {
+            "strategy": "stochastic",
+            "length": {
+              "exact": 4
+            }
+          },
+          "budget": {
+            "candidates": 2,
+            "seconds": null,
+            "batch_size": 1000
+          },
+          "scoring": null,
+          "eligibility": {
+            "best_hit_score_min_exclusive": null
+          },
+          "uniqueness": {
+            "key": "sequence"
+          },
+          "retain": {
+            "count": 1,
+            "policy": "first_eligible",
+            "rank_by": null
+          },
+          "screening": [],
+          "seed": 0
+        }
+      }
+    ]
+  },
+  "recipes": [
+    {
+      "id": "one",
+      "plan": {
+        "schema": "dense_arrays.preparation_plan.v2",
+        "plan_id": "6d2e2ea001a1e5877bcbf7d221b47e49ab06be65bf874531365f24139e6c8494",
+        "request": {
+          "schema": "dense_arrays.prepare.v1",
+          "source": {
+            "kind": "background",
+            "base_probabilities": [
+              0.25,
+              0.25,
+              0.25,
+              0.25
+            ],
+            "group": "background"
+          },
+          "sampling": {
+            "strategy": "stochastic",
+            "length": {
+              "exact": 4
+            }
+          },
+          "budget": {
+            "candidates": 2,
+            "seconds": null,
+            "batch_size": 1000
+          },
+          "scoring": null,
+          "eligibility": {
+            "best_hit_score_min_exclusive": null
+          },
+          "uniqueness": {
+            "key": "sequence"
+          },
+          "retain": {
+            "count": 1,
+            "policy": "first_eligible",
+            "rank_by": null
+          },
+          "screening": [],
+          "seed": 0
+        },
+        "source": {
+          "kind": "background"
+        },
+        "policies": {
+          "sampling": "candidate_shake256.v1",
+          "representative": "best_score_then_first.v1",
+          "retention": "explicit_rank.v1",
+          "evidence": "full_candidates.v1"
+        },
+        "preview": {
+          "source_parts": 0,
+          "source_motifs": 0,
+          "retained_parts": null,
+          "requested_retention": 1,
+          "retained_count_status": "unknown",
+          "candidate_budget": 2,
+          "candidate_bases_bound": 8,
+          "required_tools": [],
+          "screening_stages": [
+            "sampling",
+            "eligibility",
+            "uniqueness",
+            "retention"
+          ]
+        }
+      }
+    }
+  ],
+  "preview": {
+    "source_parts": 0,
+    "source_motifs": 0,
+    "candidate_budget": 2,
+    "candidate_bases_bound": 8,
+    "requested_retention": 1,
+    "retained_parts": null,
+    "sequence_collisions": "error",
+    "retained_count_status": "unknown",
+    "required_tools": [],
+    "recipes": [
+      {
+        "id": "one",
+        "source_parts": 0,
+        "source_motifs": 0,
+        "retained_parts": null,
+        "requested_retention": 1,
+        "retained_count_status": "unknown",
+        "candidate_budget": 2,
+        "candidate_bases_bound": 8,
+        "required_tools": [],
+        "screening_stages": [
+          "sampling",
+          "eligibility",
+          "uniqueness",
+          "retention"
+        ]
+      }
+    ]
+  }
+}

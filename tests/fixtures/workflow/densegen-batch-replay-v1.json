@@ -1,0 +1,42 @@
+{
+  "schema": "dense_arrays.differential_fixture.v1",
+  "source_revision": "f2fe8eaef7edb48238e60d19ae25a72d47e48145", "source_revision_note": "# pragma: allowlist secret - public source fingerprint",
+  "source_path": "src/dnadesign/densegen/src/core/pipeline/stage_b_library_builder.py",
+  "source_sha256": "af7242b279c9b3ad6d75c8cd01ba550dc0a8a78abe27afef637acb921632574b", "source_sha256_note": "# pragma: allowlist secret - public source fingerprint",
+  "function": "_select_library_from_artifact",
+  "function_sha256": "80f015d544893025709789ca0fe5652680e495d68f8e7dbc0f2c3445fd509382", "function_sha256_note": "# pragma: allowlist secret - public source fingerprint",
+  "capture_scope": "Unmodified pinned artifact-selection method with frozen synthetic records; constraint validator is a recording stub, events disabled. Proves selection order and exhaustion only.",
+  "selected": [
+    {
+      "index": 1,
+      "sequences": [
+        "AAA"
+      ],
+      "cursor_after": 1
+    },
+    {
+      "index": 2,
+      "sequences": [
+        "CCC"
+      ],
+      "cursor_after": 2
+    },
+    {
+      "index": 3,
+      "sequences": [
+        "GGG"
+      ],
+      "cursor_after": 3
+    }
+  ],
+  "constraint_callback_indices": [
+    1,
+    2,
+    3
+  ],
+  "exhausted": "Library artifact exhausted for pool/cell (requested index=4, available=3). Build more libraries or reduce Stage-B resampling.",
+  "intentional_changes": [
+    "Native replay keeps per-batch attempt ordinals and resumes unconsumed work within a batch.",
+    "The end of a prepared schedule is a stopped incomplete outcome, not an uncaught exhaustion exception."
+  ]
+}

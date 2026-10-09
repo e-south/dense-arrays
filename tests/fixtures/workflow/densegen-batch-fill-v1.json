@@ -1,0 +1,43 @@
+{
+  "source_revision": "f2fe8eaef7edb48238e60d19ae25a72d47e48145", "source_revision_note": "# pragma: allowlist secret - public source fingerprint",
+  "source_path": "src/dnadesign/densegen/src/core/sampler.py",
+  "source_sha256": "b62a9c0c9c0fb651b339797e2960881827d10b418f9720860b7ce27489304f2e", "source_sha256_note": "# pragma: allowlist secret - public source fingerprint",
+  "function": "_fill_tf_balanced",
+  "function_sha256": "7689078c2204d6601fde686e90b590defa26d4779000c9cb02561bcceab8f192", "function_sha256_note": "# pragma: allowlist secret - public source fingerprint",
+  "scope": "Pinned filler loop; deterministic first-available unique-part callback. Not a full sampler parity fixture.",
+  "cases": [
+    {
+      "seed": 0,
+      "fixed": [],
+      "size": 2,
+      "legacy_part_ids": [
+        "a",
+        "c"
+      ],
+      "legacy_group_counts": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "seed": 1,
+      "fixed": [
+        "a"
+      ],
+      "size": 2,
+      "legacy_part_ids": [
+        "a",
+        "b"
+      ],
+      "legacy_group_counts": {
+        "x": 2
+      }
+    }
+  ],
+  "successor_policy": "part_priority_sha256.v1",
+  "intentional_changes": [
+    "Identity-keyed SHA256 priorities replace mutable RNG draw order.",
+    "Select the least represented available group, including fixed selections in its count.",
+    "Only supplied part identities are unique; sequence/core deduplication remains explicit future policy."
+  ]
+}

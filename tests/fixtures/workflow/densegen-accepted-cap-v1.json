@@ -1,0 +1,35 @@
+{
+  "schema": "dense_arrays.differential_fixture.v1",
+  "source_revision": "f2fe8eaef7edb48238e60d19ae25a72d47e48145", "source_revision_note": "# pragma: allowlist secret - public source fingerprint",
+  "source_path": "src/dnadesign/densegen/src/core/pipeline/stage_b_runtime_callbacks.py",
+  "source_sha256": "425cc90cc68aac3469302df07157b9a636e654026612c365375d9d1e00ecc083", "source_sha256_note": "# pragma: allowlist secret - public source fingerprint",
+  "predicate": "local_generated >= max_per_subsample or global_generated >= quota",
+  "predicate_sha256": "3066af94a2ad52b683e998e6a60e491e2a47892396a4836276eb6216edff2ff3", "predicate_sha256_note": "# pragma: allowlist secret - public source fingerprint",
+  "capture_scope": "Unmodified pinned stop predicate evaluated after accepted synthetic candidates in two two-candidate batches; does not execute persistence, screening or the full runtime.",
+  "generation_cases": [
+    {
+      "cap": 1,
+      "target": 4,
+      "expected_accepted": 2
+    },
+    {
+      "cap": 2,
+      "target": 4,
+      "expected_accepted": 4
+    },
+    {
+      "cap": 2,
+      "target": 3,
+      "expected_accepted": 3
+    },
+    {
+      "cap": 2,
+      "target": 1,
+      "expected_accepted": 1
+    }
+  ],
+  "intentional_changes": [
+    "An explicit accepted cap applies to every prepared schedule; it is not silently replaced by a cell quota based on a pool strategy.",
+    "Attempt caps independently bound batches that accept no designs."
+  ]
+}
