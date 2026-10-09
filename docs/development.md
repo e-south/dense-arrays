@@ -51,12 +51,14 @@ readers to a guide, and keep signature details in [the API reference](api.md).
 Run changed examples in the locked environment. Examples that add constraints
 must construct a fresh optimizer before solving.
 
-`tests/test_documentation.py` executes the Python examples in `quickstart.md`,
-`constraints.md`, and `playback.md`, then builds the site strictly and checks
-built links, assets, and anchors. Keep examples on each page runnable in order;
-temporary playback outputs are isolated by the test. The linked presentation
-example continues from the playback guide's `plan` and output directory and
-also needs a manual run when changed.
+`tests/test_documentation.py` executes the Python examples in the first-array,
+constraints, playback and saved-library guides, including their linked export,
+assembly and quality examples. Its page list names the additional workflow
+guides covered by the test. It also builds the site strictly and checks links,
+assets and anchors. Keep examples on each page runnable in order; test outputs
+use temporary directories. Run changed preparation examples separately, with
+FIMO when scoring is requested. The linked playback presentation example also
+needs a manual run when changed.
 
 Preview documentation with `uv run mkdocs serve`; `uv run mkdocs build --strict`
 writes the static site to `public/`. Shared documentation images live in

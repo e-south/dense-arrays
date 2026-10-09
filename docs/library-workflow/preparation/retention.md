@@ -10,9 +10,11 @@ Prerequisites: create `motif.json` and `pwm_recipe` using the [motif guide](moti
 
 ## Retain score and core diversity
 
-`policy="mmr"` greedily balances score relevance and similarity to the parts
-already selected. Set an explicit `pool_size`, `relevance_weight` in `(0, 1]`,
-and `score_scaling`. Larger relevance weights favor score more strongly.
+Maximal marginal relevance (`policy="mmr"`) selects parts one at a time,
+balancing their scores against similarity to cores already selected.
+`pool_size` bounds the representatives considered; `score_scaling` puts their
+scores on a common scale. Set `relevance_weight` in `(0, 1]`: larger values
+favor higher scores, while smaller values favor less similar cores.
 
 ```python
 # MMR compares eligible cores within this one motif/scoring model.
@@ -30,19 +32,19 @@ mmr_recipe = pwm_recipe.with_changes(
         ),
     ),
 )
-# Resolve the request and bind its input records before execution.
+# Resolve the score scale, choice-pool cap and MMR work bound.
 mmr_plan = da.plan(mmr_recipe)
 # Save the resolved plan with its input bindings; keep the destination new.
 mmr_plan.write("mmr.plan.json")
-# Prepare the declared parts or batch and save its identities for reuse.
+# Sample and score candidates, then choose four cores using MMR.
 mmr_pool = da.prepare(mmr_plan, out="pools/python-mmr")
 print(da.inspect(mmr_pool, view="quality").to_dict())
 ```
 
 ```bash
-# Prepare the declared pool or offered batch.
+# Prepare a pool with MMR retention.
 dense-arrays prepare mmr.plan.json --out pools/cli-mmr
-# Read saved evidence; --verify also checks its integrity.
+# Read candidate yield and recorded retention evidence.
 dense-arrays inspect pools/cli-mmr --view quality
 ```
 
@@ -73,12 +75,12 @@ relative_mmr = mmr_recipe.with_changes(
         ),
     ),
 )
-# Resolve the request and bind its input records before execution.
+# Resolve the multiplier against the retained target and maximum.
 relative_plan = da.plan(relative_mmr)
 assert relative_plan.preview["retention"]["pool_limit"] == 24
 # Save the resolved plan with its input bindings; keep the destination new.
 relative_plan.write("relative-mmr.plan.json")
-# Prepare the declared parts or batch and save its identities for reuse.
+# Retain four cores from at most 24 admitted representatives.
 relative_pool = da.prepare(relative_plan, out="pools/python-relative-mmr")
 print(da.inspect(relative_pool, view="quality").to_dict()["retention"])
 ```
@@ -86,11 +88,11 @@ print(da.inspect(relative_pool, view="quality").to_dict()["retention"])
 ```bash
 # Validate inputs and inspect or save the resolved plan.
 dense-arrays plan relative-mmr.plan.json
-# Prepare the declared pool or offered batch.
+# Prepare parts using the resolved choice-pool cap.
 dense-arrays prepare relative-mmr.plan.json --out pools/cli-relative-mmr
-# Read saved evidence; --verify also checks its integrity.
+# Read candidate yield and recorded retention evidence.
 dense-arrays inspect pools/cli-relative-mmr --view quality
-# Write the declared selection or document to a new destination.
+# Save the pool quality report as JSON.
 dense-arrays export pools/cli-relative-mmr --view quality --out relative-mmr-quality.json
 ```
 
@@ -112,6 +114,8 @@ The planning preview gives the resolved limit and a conservative core-distance
 work bound. Candidate mining keeps its separate budget. Score bands do not control
 admission, and no score threshold is relaxed automatically.
 
+## How MMR selects cores
+
 Two relevance scales are available:
 
 - `fraction_of_max_clipped` uses the recorded raw-score/theoretical-maximum
@@ -121,7 +125,8 @@ Two relevance scales are available:
   works with a zero maximum unless a ratio cutoff is also requested.
 
 The `pwm_tolerant_hamming` distance compares motif-oriented cores at matching
-positions. For position distribution `P_i` and artifact background `B`, its
+positions. It is a model-weighted distance, rather than a count of differing
+bases. For position distribution `P_i` and artifact background `B`, its
 weight is `1 − clip(D_KL(P_i || B) / −log2(min(B)), 0, 1)`. A mismatch receives
 less weight at a position that differs more strongly from that background.
 With a uniform background this emphasizes more variable positions. With a
@@ -159,36 +164,36 @@ from dense_arrays.reporting import CandidateFilter
 
 # Bands describe the eligible score population; they do not alter retention.
 band_recipe = pwm_recipe.with_changes(score_bands=parts.ScoreBands((0.1, 0.5)))
-# Resolve the request and bind its input records before execution.
+# Record the band boundaries; observed counts are unknown before sampling.
 band_plan = da.plan(band_recipe)
 assert band_plan.preview["score_bands"]["counts"] is None
 # Save the resolved plan with its input bindings; keep the destination new.
 band_plan.write("bands.plan.json")
-# Prepare the declared parts or batch and save its identities for reuse.
+# Prepare parts and summarize eligible and retained scores in each band.
 band_pool = da.prepare(band_plan, out="pools/python-bands")
 band_quality = da.inspect(band_pool, view="quality").to_dict()
 for band in band_quality["score_bands"]["bands"]:
     print(band["band"], band["count"], band["retained"], band["scores"])
 
 upper_band = CandidateFilter(score_bands=(1,))
-# Write the example input or request so it can also be used from the CLI.
+# Save the upper-band filter for the CLI export.
 Path("upper-band.json").write_text(json.dumps(upper_band.to_dict()))
-# Publish the declared records to a new destination.
+# Export candidates belonging to the upper score band.
 da.export(
     band_pool, view="candidates", select=upper_band, all=True, out="upper-parts.json"
 )
 ```
 
 ```bash
-# Prepare the declared pool or offered batch.
+# Prepare a pool with score-band reporting.
 dense-arrays prepare bands.plan.json --out pools/cli-bands
-# Read saved evidence; --verify also checks its integrity.
+# Read candidate yield and recorded retention evidence.
 dense-arrays inspect pools/cli-bands --view quality
-# Write the declared selection or document to a new destination.
+# Export every candidate in the selected upper score band.
 dense-arrays export pools/cli-bands --view candidates --selection upper-band.json --all --out cli-upper-parts.json
-# Write the declared selection or document to a new destination.
+# Save the pool quality report as JSON.
 dense-arrays export pools/cli-bands --view quality --out bands-quality.json
-# Read saved evidence; --verify also checks its integrity.
+# Reopen the exported report without reading the pool.
 dense-arrays inspect bands-quality.json --view quality
 ```
 

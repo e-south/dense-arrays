@@ -6,10 +6,10 @@ author: Eric J. South
 
 # Prepare a sampled pool
 
-Prepare reusable DNA parts from a background distribution or a supplied motif.
-Keep candidate effort, eligibility, uniqueness and retained count separate.
-Planning binds inputs and limits; preparation saves candidates, decisions and
-retained parts in an immutable pool. Use a new output directory for each run.
+Prepare a saved pool of reusable DNA parts from a background distribution or
+motif model. A recipe defines how candidates are generated, screened,
+deduplicated and retained. Planning checks the inputs and limits; preparation
+saves candidate decisions and retained parts in a new pool directory.
 
 | Task | Guide | Inputs |
 | --- | --- | --- |
@@ -24,12 +24,12 @@ retained parts in an immutable pool. Use a new output directory for each run.
 | Make a preparation figure | [Preparation quality](preparation-quality.md) | Saved pool or quality report |
 
 For an existing binding-site table, start with [curated parts and pools](preparation/curated.md).
-The examples use synthetic sequences and models to demonstrate the computation;
-they do not establish binding or expression activity.
 
 ## Generate background parts
 
-Save `background.yaml`:
+In a new working directory with the [library workflow installed](../installation.md#use-the-library-workflow),
+save `background.yaml`. This recipe examines up to 200 candidates, each 20 bases
+long, and retains eight distinct sequences that satisfy the GC range.
 
 ```yaml
 schema: dense_arrays.prepare.v1  # Request type and wire-format version.
@@ -44,15 +44,15 @@ seed: 7  # Seed for versioned candidate streams.
 ```
 
 ```bash
-# Validate inputs and inspect or save the resolved plan.
+# Check the recipe and save its resolved inputs and limits.
 dense-arrays plan background.yaml --out background.plan.json
-# Prepare the declared pool or offered batch.
+# Generate candidates and save eight retained parts.
 dense-arrays prepare background.plan.json --out pools/background
-# Read saved evidence; --verify also checks its integrity.
+# Compare candidate, eligible and retained counts.
 dense-arrays inspect pools/background --view quality
-# Read saved evidence; --verify also checks its integrity.
+# List every retained part and its sequence.
 dense-arrays inspect pools/background --view parts --all --json
-# Read saved evidence; --verify also checks its integrity.
+# Verify the pool's saved records and accounting.
 dense-arrays inspect pools/background --verify
 ```
 
@@ -61,7 +61,6 @@ The matching Python request is:
 ```python
 import dense_arrays as da
 
-# Use the typed requests and operations needed by this example.
 from dense_arrays import parts, planning
 
 recipe = parts.PreparationSpec(
@@ -77,9 +76,9 @@ recipe = parts.PreparationSpec(
 # Planning binds inputs and limits; preparation writes the immutable pool.
 preview = da.plan(recipe)
 assert preview.preview["retained_count_status"] == "unknown"
-# Prepare the declared parts or batch and save its identities for reuse.
+# Save the candidates, decisions and retained parts in a separate Python output.
 pool = da.prepare(preview, out="pools/python-background")
-# Read saved composition and search metrics.
+# Check that the pool contains all eight requested parts.
 quality = da.inspect(pool, view="quality")
 assert quality.to_dict()["counts"]["retained"] == 8
 ```

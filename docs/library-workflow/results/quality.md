@@ -20,44 +20,41 @@ with da.inspect(result, view="designs", limit=1).records() as records:
 selected = reporting.DesignFilter(design_ids=(design.reference,))  # Reusable predicate.
 ```
 
-## Explain shortfalls and assess a library
+## Find why generation stopped
 
 Inspect the run's recorded failures and the composition of accepted designs:
 
 ```bash
-# Read or verify saved evidence without generating again.
+# Read the stopping reason and suggested next action.
 dense-arrays inspect runs/first --view diagnostics --limit 20
-# Read or verify saved evidence without generating again.
-dense-arrays inspect runs/first --view attempts --outcome rejected --limit 10
-# Read or verify saved evidence without generating again.
+# Include accepted, rejected and no-candidate attempts in the first inspection.
+dense-arrays inspect runs/first --view attempts --limit 10
+# Report composition for the accepted designs.
 dense-arrays inspect runs/first --view quality --limit 20 --json
-# Render saved evidence to a new image.
+# Plot the same library-level metrics.
 dense-arrays render runs/first --view library-quality --out quality.png
 ```
 
 Diagnostics report stable codes, requirement references, observed/expected
 values, proof scope, and a next action. A forbidden match includes its final
 coordinates, strand, and intersecting part or padding intervals. An attempt
-limit explains a shortfall; it does not prove global infeasibility. Reason totals
-can overlap, while attempt outcomes are mutually exclusive.
+limit leaves feasibility unresolved. Reason totals can overlap, while attempt
+outcomes are mutually exclusive. Once you know the recorded outcomes, narrow
+the attempt page with `--outcome rejected` or another outcome of interest.
 
 ```python
-# Use the typed requests and operations needed by this example.
-from dense_arrays import reporting
-
 diagnostics = da.inspect(
     result, view="diagnostics", limit=20
 )  # Bound displayed reasons.
 print(diagnostics.cost.to_dict())  # descriptor available before the scan
 print(diagnostics.to_dict())
-# Inspect rejected attempts separately from accepted library members.
-rejected = da.inspect(
+# Read the attempt history, including attempts that produced no candidate.
+attempts = da.inspect(
     result,
     view="attempts",
-    select=reporting.AttemptFilter(outcomes=("rejected",)),
     all=True,
 )
-with rejected.records() as records:
+with attempts.records() as records:
     for attempt in records:
         print(attempt.attempt_id, attempt.outcome)
         if attempt.candidate is not None:
@@ -72,6 +69,27 @@ assert metrics["attainment"]["accepted"] == summary.accepted
 # Draw the selected saved evidence without generating new sequences.
 da.render(quality, view="library-quality", out="python-quality.png")
 ```
+
+### Examine a shortfall
+
+This request asks for two distinct designs from one 16-base part in a 16-base
+array. Only one design is available, so generation saves it and exits with code
+**3**. Use a new output directory:
+
+```bash
+# Request two designs from a pool that supports only one distinct sequence.
+dense-arrays run --motif ACGTTGCAAGTCCTGA --length 16 --count 2 --strands single --seed 7 --out runs/shortfall --json
+# Explain why the saved run stopped short of its target.
+dense-arrays inspect runs/shortfall --view diagnostics --limit 20
+# Read the accepted attempt and the attempt that produced no candidate.
+dense-arrays inspect runs/shortfall --view attempts --limit 10
+```
+
+The summary reports one accepted design and `batch_exhausted`. The second
+attempt has outcome `no_candidate`, so a query restricted to `rejected` would
+hide it. The accepted design remains available for inspection and export.
+
+## Interpret attempt evidence
 
 `attempt.candidate` contains the original packing and the last evaluated final
 sequence, with their placements. Accepted, rejected and duplicate candidates
@@ -91,6 +109,8 @@ values within a field mean OR; fields combine with AND. It also applies to
 diagnostics, whose report names the filtered attempt population while retaining
 the original run target. A declared `dense_arrays.attempt-filter.v1` file can be
 passed through `--selection`; filter files and convenience flags are exclusive.
+
+## Assess accepted designs
 
 Quality reports cover the designs selected by their `DesignFilter`, or all
 accepted designs when no filter is supplied. They name

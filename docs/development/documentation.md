@@ -39,8 +39,9 @@ projects through `uv init`, `uv add` and `uv run`; keep contributor `uv sync`
 commands in the development guide. Use Pixi when a project needs Python and
 external executables together. State which released version provides a feature.
 
-Use synthetic binding-site-sized sequences for workflow examples and label
-their biological limits. Keep tiny sequences only when they expose a specific
+Use binding-site-sized sequences for workflow examples and identify synthetic
+inputs where they are introduced. Explain scientific limits where readers
+interpret scores or choose a method. Keep tiny sequences only when they expose a specific
 mathematical boundary. Comment each meaningful step in teaching code: explain
 input choices, parameter units, saved outputs and checks beside the relevant
 statement. Keep CSV and JSON examples valid; explain their fields in prose.
@@ -114,7 +115,10 @@ Give a fresh reader or agent a task, not the answer's file path:
 2. “Require two entries from one motif group and one from another group.”
 3. “Render saved placements as a PNG, find the MP4 export command, and
    determine whether the order was solver-recorded.”
-4. From `src/dense_arrays/playback/`: “Find the owner and tests for rejecting a
+4. “Prepare a pool of 20-base parts, inspect retained candidates, and plot
+   candidate yield.”
+5. “Generate a saved library, explain a shortfall, and export its accepted designs.”
+6. From `src/dense_arrays/playback/`: “Find the owner and tests for rejecting a
    malformed serialized placement before rendering.”
 
 Record the actual pages read, commands attempted, missing prerequisites, and

@@ -21,8 +21,8 @@ from dense_arrays import (
 ## Assemble and render an exact-length design
 
 Choose a final length and declare whether padding is allowed. `Assembly()`
-without padding requires the packing itself to fill that length. It never
-invents missing bases. This example adds bounded right padding:
+without padding requires the packing itself to fill that length. This example
+allows up to 20 right-padding proposals for each packing:
 
 ```python
 # Pack three 16-base sites before adding bounded right padding.
@@ -67,8 +67,7 @@ realized intervals are exempt. GC limits use fractions, without rounding a
 candidate into acceptance. `scope="padding"` requires a padding policy; zero
 added bases are reported as `not_applicable`.
 
-For PNG rendering, install the [playback extra](../../installation.md#optional-features). Rendering reads persisted placements and requirement
-evidence; it does not solve or repeat final screening:
+Render the saved placements and requirement results:
 
 ```python
 # Draw the selected saved design without solving again.
@@ -94,7 +93,22 @@ fail before output; the command never chooses an implicit first design.
 Native runs, portable bundles and combined sources retain the selected design's
 own cell plan. A saved panel also retains its original source revision.
 
-Use `library-quality` below for aggregate reporting. Negative spacing is valid
-generation evidence, but playback v1 cannot represent it; rendering fails before
-creating output. Existing [playback APIs](../../playback.md) remain available for their
-supported saved-record and media formats.
+For an aggregate figure, use [library quality](../results/quality.md).
+Playback v1 supports nonnegative spacing; designs with overlapping fixed
+elements can be inspected and exported, but rendering them fails before output.
+The [playback guide](../../playback.md) covers saved placement files and animations.
+
+## Interpret padding outcomes
+
+One solver attempt can test several padding proposals. The saved counts
+distinguish these trials from solver attempts. `screening_rejection` records a
+failed final screen; `padding_trials_exhausted` records a bounded padding search
+that found no passing proposal. Review the named rule or increase the trial
+allowance in a new request when more padding search is useful.
+
+After an accepted, duplicate or rejected candidate, generation excludes that
+packing path and moves to another. It explores bounded padding proposals for
+each path, so a shortfall can leave other assembled sequences unexplored.
+Padding uses a versioned SHAKE-256 stream bound to the seed, design combination,
+batch, attempt and trial. The assembly record retains the coordinate transform,
+stream identity and trial; changing the stream policy creates a new version.

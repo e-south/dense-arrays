@@ -23,6 +23,12 @@ composition of accepted designs independently of packing search.
 | `search="exact", packing_preference="underused_parts"` | Favor below-mean proposed usage while maximizing occurrences. | The occurrence objective remains primary. |
 | `search="greedy"` | Choose one deterministic greedy packing per offered batch. | Validated placements and final screens; optimality is unproven. |
 
+Exact enumeration searches the offered packing paths; it does not enumerate
+arbitrary gaps or every possible DNA sequence. The seed controls sampling and
+padding streams, while the solver determines the order of equal packing optima.
+See [assembly](generation/assembly.md#interpret-padding-outcomes) for how each
+packing proceeds through padding and final screening.
+
 ## Use the same request in Python and the CLI
 
 Run this example in a new directory:

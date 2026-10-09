@@ -6,40 +6,31 @@ author: Eric J. South
 
 # Generate a saved library
 
-Generate designs into an explicit directory, then inspect their sequences,
-placements and search outcomes without rerunning the solver. See
-[resource limits](library-workflow/resources.md) to bound candidate and model sizes.
-Start with explicit
-parts or [prepare a sampled pool](library-workflow/preparation.md) from a motif
-or a declared background distribution.
+Generate a library, inspect its sequences and binding-site placements, and save
+results for later analysis. The same requests work in Python and the CLI.
 
-Follow [installation](installation.md#use-the-library-workflow) for the library
-workflow. Run each example in a new working directory; output destinations must not already exist. The base installation
-includes CBC and YAML/JSON request parsing. Rendering uses the optional
-`playback` extra.
-
-For a complete table-based example with two combinations, bounded resampling
-and portable results, use [Build a curated library](library-workflow/curated-example.md).
+Follow [installation](installation.md#use-the-library-workflow), then run these
+examples from a new working directory. Each output path is created by the
+command that uses it. The base installation includes CBC and request-file
+support; figures use the optional `playback` extra.
 
 ## Generate and inspect one design
 
 ```bash
-# Generate into a new directory with explicit bounds.
+# Pack four 16-base motifs into a saved design of at most 40 bases.
 dense-arrays run --motif ACGTTGCAAGTCCTGA --motif AGTCCTGATCGTACCG \
   --motif TCGTACCGATGCTTAG --motif ATGCTTAGGACGTTCA \
   --length 40 --count 1 --seed 7 --out runs/first
-# Read or verify saved evidence without generating again.
+# Verify the saved sequence, placements and attempt counts.
 dense-arrays inspect runs/first --verify
-# Read or verify saved evidence without generating again.
+# Show the accepted design and its recorded placements.
 dense-arrays inspect runs/first --view designs --limit 1 --json
 ```
 
-`--length` is a maximum. Use an explicit assembly request below for exact final
-length. A successful receipt reports accepted/target designs and
-the destination. An incomplete search preserves its accepted prefix and reports
-why it stopped. Repeating the command does not overwrite an existing run.
-Use an explicit [packing preference](library-workflow/search.md) to favor underused
-parts while preserving occurrence count as the primary objective.
+`--length` sets a maximum. For a fixed final length and optional padding, use an
+[assembly request](library-workflow/generation/assembly.md). The receipt shows
+accepted and requested counts, the run directory, and why generation stopped.
+Use a new destination for another run.
 
 The equivalent Python operations return typed values:
 
@@ -48,7 +39,7 @@ from pathlib import Path
 
 import dense_arrays as da
 
-# Use the typed requests and operations needed by this example.
+# Describe the same part collection and length limit in Python.
 from dense_arrays import parts, planning
 
 # Declare inputs and bounds before running the solver.
@@ -68,12 +59,8 @@ print(dict(preview.preview))  # Read resolved counts, constraints and effort lim
 result = da.run(preview, out=Path("runs/python-first"))  # Create a new run directory.
 summary = da.inspect(result, verify=True)  # Recount and verify saved records.
 assert summary.accepted == summary.target == 1  # Confirm the target was reached.
-assert summary.producer.solver.name == "CBC"  # Read the solver used during execution.
-print(summary.producer.to_dict())  # Show recorded software and platform versions.
 with da.inspect(result, view="designs", limit=1).records() as records:
-    design = next(
-        records
-    )  # Take the one requested design; context exit closes the reader.
+    design = next(records)  # Read one design; the context manager closes the reader.
     print(design.reference, design.realized.sequence)  # Keep identity beside DNA.
     for placement in design.realized.placements:  # Check every recorded interval.
         assert (
@@ -82,17 +69,9 @@ with da.inspect(result, view="designs", limit=1).records() as records:
         )
 ```
 
-A record view holds no open file. Each `records()` call creates an independent
-iterator at the same committed revision. Use its context manager when stopping
-early; exhaustion also closes its reader.
-
-Run and pool summaries record the Dense Arrays, Python and OR-Tools versions,
-plus operating-system family and machine architecture. A run records its solver
-name and reported version after building the model. Preparation and failures
-before model creation have no solver identity. Inspection shows these recorded
-values without querying the current solver; `--json` includes the complete
-producer record. Versions help diagnose differences between executions; they
-do not establish deterministic replay or identify unpublished source edits.
+The `with` block closes the record reader when finished, including when you stop
+early. See [record inspection](library-workflow/results/inspection.md) for
+pagination, work limits and recorded software versions.
 
 ## Choose the next task
 
@@ -108,68 +87,27 @@ do not establish deterministic replay or identify unpublished source edits.
 
 ## Interpret completion and failures
 
-The default search enumerates exact packing paths with proven optimality for
-each offered model. [Greedy search](library-workflow/search.md#generate-a-greedy-proposal)
-provides one unproven packing per offered batch. Neither method enumerates
-arbitrary gaps or every DNA sequence.
-Different paths can produce the same final DNA; within a cell, the run accepts
-only the first occurrence of an exact final sequence.
+Check the saved summary before choosing the next step:
 
-Defaults are one requested design, double-strand eligibility, seed zero,
-1,000 attempts, 300 accumulated active seconds and 30 seconds per solve. These limits bound effort; they do not guarantee completion. Time limits are cooperative; model construction and
-cleanup are not hard wall-clock deadlines. Exact packing enumeration does not
-draw randomly; recording a seed does not promise solver tie order. Padding uses
-a versioned SHAKE-256 stream bound to seed, cell, batch, attempt and trial. The
-assembly record retains the coordinate transform, stream identity and trial.
-Changing a policy deliberately changes its version; historical runs are not
-reinterpreted as the new policy.
-
-A solver attempt can make several padding proposals. Their count is separate
-from solver attempts. A failed final screen records `screening_rejection`; a
-bounded padding search records `padding_trials_exhausted`. Neither establishes
-that all possible assembled sequences are infeasible. Accepted sequences are
-unique after assembly; the policy excludes a packing path after its
-accepted, duplicate or rejected candidate and does not enumerate every padding.
-
-| Observation | Meaning |
+| Result | Next step |
 | --- | --- |
-| `completed` / `target_attained` | The original accepted-design target was reached. |
-| `stopped` / `attempt_limit` or `active_time_limit` | Effort ended with a visible shortfall. |
-| `batch_infeasible` | CBC proved no path for the offered initial model. |
-| `batch_exhausted` | No further path remains after this batch's exclusions. |
-| `batch_schedule_exhausted` | The declared schedule ended below target; this does not prove global infeasibility. |
-| `solver_unproven` or `solver_unknown` | No qualifying optimal result; an unknown cause stays unknown. |
-| `failed` | Execution or backend failure; inspect any committed prefix. |
+| `completed` / `target_attained` | Inspect, select or export the accepted designs. |
+| `stopped` | Read the stopping reason and accepted count, then [inspect the diagnostics](library-workflow/results/quality.md). |
+| `batch_infeasible` or `batch_exhausted` | Review the offered parts and constraints; [search outcomes](reference/optimizer.md#solver-outcomes) distinguish infeasibility from exhausted alternatives. |
+| `failed` | Inspect the saved run for the execution error and any committed designs. |
 
-`inspect --verify` checks record checksums, coordinates, part identities,
-requirements, design/attempt joins and count reconciliation. Plain summary
-inspection reads bounded metadata instead of scanning the library. Record
-views default to 100 rows. A clean interruption can
-[resume its original request](library-workflow/recovery.md) when measured time,
-remaining budgets and saved packing evidence permit continuation. Abrupt exits
-with unknown active time require a new linked request.
+The default request asks for one design, considers both strands, and permits
+1,000 attempts, 300 active seconds and 30 seconds per solve. See
+[resource limits](library-workflow/resources.md) to size larger requests. Limits
+can stop a run below its target; time allowances are cooperative.
 
-Verification accepts the same read caps and exposes `verification_cost` before
-execution. Its returned `verification` names the checked plan/attempt/design or
-preparation/part boundary, record count and checked UTF-8 JSON bytes. This does
-not count physical SQLite/index bytes or reproduce generation. In Python,
-`artifacts.RunHandle(path, run_id, revision=N)` pins reads, exports and rendering
-to a committed prefix while a writer continues.
+Accepted sequences are unique within each design combination. Exact search
+maximizes placed occurrences within the offered packing model. Use the
+[search guide](library-workflow/search.md) for greedy proposals, part-use
+preferences and the interpretation of solver outcomes.
 
-Machine output uses `--json`; receipts and diagnostics otherwise use stderr,
-while plan/inspection reports use stdout. Workflow exit codes are `0` for a
-successful operation, `2` for invalid input or a rejected selection shortfall,
-`3` for a generation shortfall or an explicitly allowed partial selection export,
-`4` for execution failure and `130` for interruption. Inspecting a valid stopped
-run succeeds; its status still says stopped. Integrity and read-limit failures
-also exit `4`. Before streaming begins, `--json` domain failures emit a
-`dense_arrays.error.v1` envelope with code, message, exit code and affected
-artifact when known. If generation raises after saving run state, the CLI reports
-`execution_error` with that run's path; Python raises `RunExecutionError` with
-an inspectable `run` handle and the original exception as its cause.
-After streaming begins, diagnostics remain on stderr and
-the incomplete data prefix is not followed by an unrelated error object.
-
-For low-level transient solving, use [Optimizer](reference/optimizer.md).
-For parts from motif models, use [sampled preparation](library-workflow/preparation.md).
-For figures and reusable reports, choose a [result view](reference/outputs.md).
+`inspect --verify` checks saved identities, coordinates, requirements and
+accounting. Summary inspection reads the recorded totals. For an interrupted
+run, the [recovery guide](library-workflow/recovery.md) explains when to resume
+and when to start a linked request. The [CLI reference](reference/cli.md#exit-codes-and-machine-output)
+explains exit codes and JSON errors.

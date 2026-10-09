@@ -6,42 +6,49 @@ author: Eric J. South
 
 # Inspect and reuse prepared parts
 
-Prerequisites: continue from the [background first recipe](../preparation.md#generate-background-parts), where `pool` is the completed prepared collection. Optional score-band queries require a PWM pool produced by the [retention guide](retention.md).
+Continue from the [background first recipe](../preparation.md#generate-background-parts),
+where `pool` is the completed prepared collection.
 
 ## Inspect candidate decisions
 
-Use `candidates` to explain what happened before retention. Each row binds its
-pool identity to the original one-based candidate index, complete sequence,
-rejection reasons, representative index, rank and any recorded scoring or MMR
-evidence. Candidate indices and representative links are local to that pool.
-Retained-part ordinals use retention order and are a separate coordinate.
+Inspect a retained candidate to see its original sequence, candidate index and
+selection outcome. Candidate indices follow sampling order; retained-part
+ordinals follow retention order. Outcome and reason filters help investigate
+shortfalls after you have seen which decisions the pool contains.
 
 ```python
 from dense_arrays.reporting import CandidateFilter
 
 # Inspect saved decisions; this does not sample candidates or run FIMO.
-rejected_page = da.inspect(
+retained_page = da.inspect(
     pool,
     view="candidates",
-    select=CandidateFilter(outcomes=("eligibility_rejected",)),
+    select=CandidateFilter(outcomes=("retained",)),
     limit=5,
 )
-with rejected_page.records() as decisions:
-    rejected_examples = [row.to_dict() for row in decisions]
+with retained_page.records() as decisions:
+    retained_examples = [row.to_dict() for row in decisions]
     continuation = decisions.next_cursor
 
-# Publish the declared records to a new destination.
+# Export all candidate decisions, including those not retained.
 da.export(pool, view="candidates", all=True, out="background-candidates.json")
 ```
 
 ```bash
-# Read saved evidence; --verify also checks its integrity.
-dense-arrays inspect pools/background --view candidates --outcome eligibility_rejected --limit 5
-# Read saved evidence; --verify also checks its integrity.
+# Show the first five retained candidates.
+dense-arrays inspect pools/background --view candidates --outcome retained --limit 5
+# Read the original candidate at sampling index one.
 dense-arrays inspect pools/background --view candidates --candidate-index 1 --json
-# Write the declared selection or document to a new destination.
+# Export every candidate decision as JSON.
 dense-arrays export pools/background --view candidates --all --out cli-background-candidates.json
 ```
+
+Each row includes its pool identity, complete sequence, rejection reasons,
+representative index, rank and any recorded scoring or MMR evidence. Candidate
+indices and representative links are local to that pool. To examine rejected
+candidates, choose `outcomes=("eligibility_rejected",)` or CLI
+`--outcome eligibility_rejected`; use the quality report's observed reason codes
+to narrow the query further.
 
 `CandidateFilter` accepts `indices`, `outcomes`, `reasons`, optional set
 `recipes` and recipe-local `score_bands`. Pass a saved predicate with
@@ -76,7 +83,7 @@ design = planning.DesignSpec(
     length=planning.Length(maximum=40),
     strands="single",
 )
-# Generate under the declared bounds into a new output directory.
+# Pack the retained parts into an array at most 40 bases long.
 run = da.run(design, out="runs/prepared")
 assert da.inspect(run, verify=True).accepted == 1
 # Publish the scoped quality report to a new destination.
@@ -93,17 +100,17 @@ indices alone are local to their pool.
 Export quality once to share its counts independently of the pool directory:
 
 ```python
-# Read saved composition and search metrics.
+# Reopen candidate-yield and retention counts from the exported report.
 recorded_report = da.inspect("background-quality.json", view="quality")
 assert recorded_report.to_dict()["pool_id"] == pool.pool_id
-# Publish the declared records to a new destination.
+# Save a copy that preserves the report values and identities.
 da.export(recorded_report, out="background-quality-copy.json")
 ```
 
 ```bash
-# Read saved evidence; --verify also checks its integrity.
+# Read the quality report independently of the source pool.
 dense-arrays inspect background-quality.json --view quality
-# Write the declared selection or document to a new destination.
+# Save another copy of the recorded report.
 dense-arrays export background-quality.json --view quality --out cli-background-quality-copy.json
 ```
 

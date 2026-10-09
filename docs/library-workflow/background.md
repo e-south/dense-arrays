@@ -14,7 +14,6 @@ suffixes once, then reuses those counts for every candidate in the recipe.
 ```python
 import dense_arrays as da
 
-# Use the typed requests and operations needed by this example.
 from dense_arrays import parts, planning
 
 recipe = parts.PreparationSpec(
@@ -32,11 +31,11 @@ recipe = parts.PreparationSpec(
     retain=parts.Retention(count=20, policy="first_eligible"),
     seed=7,
 )
-# Resolve the request and bind its input records before execution.
+# Check the GC and exclusion rules and bind the construction limits.
 resolved = da.plan(recipe)
 # Save the resolved plan with its input bindings; keep the destination new.
 resolved.write("background.plan.json")
-# Prepare the declared parts or batch and save its identities for reuse.
+# Generate constrained candidates and retain 20 distinct parts.
 pool = da.prepare(resolved, out="pools/python-background")
 report = da.inspect(pool, view="quality").to_dict()
 assert report["construction"]["status"] == "feasible"
@@ -49,11 +48,11 @@ Use the same saved plan through the CLI:
 ```bash
 # Validate inputs and inspect or save the resolved plan.
 dense-arrays plan background.plan.json
-# Prepare the declared pool or offered batch.
+# Prepare a separate pool from the same saved plan.
 dense-arrays prepare background.plan.json --out pools/cli-background
-# Read saved evidence; --verify also checks its integrity.
+# Read construction status and candidate counts.
 dense-arrays inspect pools/cli-background --view quality
-# Read saved evidence; --verify also checks its integrity.
+# Verify saved decisions, constraints and retained-part records.
 dense-arrays inspect pools/cli-background --verify
 ```
 
@@ -72,12 +71,11 @@ own table during `prepare`; there is no global cache.
 
 ## Choose the distribution
 
-`Background.base_probabilities` owns the ordered A/C/G/T distribution. Conditional
-sampling preserves those probability ratios subject to the compiled rules.
-Uniform bases at a fixed length produce uniform valid sequences. Nonuniform
-bases produce background-weighted valid sequences. Zero-probability bases remain
-outside sampling support. Exact integer masses preserve the normalized decimal
-probability ratios recorded in the request.
+`Background.base_probabilities` gives the ordered A/C/G/T probabilities before
+constraints. Conditional sampling conditions that distribution on valid
+sequences. Equal base probabilities at a fixed length give every valid sequence
+equal probability; unequal probabilities preserve the sequences' relative
+background weights. Bases with zero probability are never sampled.
 
 `LengthRange(minimum, maximum)` supplies a uniform **prior** over lengths. Joint
 conditioning on sequence validity can change that distribution: for lengths one
@@ -85,16 +83,9 @@ or two with forward `AA` forbidden, length probabilities become `16/31` and
 `15/31`. The preview labels this as a uniform prior conditioned on constraints.
 This strategy draws length and sequence together.
 
-Randomness is versioned as `conditional_background_shake256.v1` and bound to
-model, seed and candidate index. Batch size, retention, effort limits and later
-candidate-budget increases preserve the existing sequence prefix when counting
-completes. Changing the compiled rules, length range or base probabilities
-changes the model and its stream. Draws are with replacement; uniqueness and
-retention remain separate stages.
-
-The default `stochastic` strategy remains independent candidate sampling followed
-by screening. Existing requests retain that behavior. Conditional sampling
-requires a `Background` source; PWM proposals have their own
+Draws are with replacement; uniqueness and retention remain separate stages.
+Use the default `stochastic` strategy for independent candidate sampling followed
+by screening. Conditional sampling requires a `Background` source; PWM proposals have their own
 [construction strategies](preparation/motifs.md#choose-a-pwm-proposal-strategy).
 
 ## Bound work and interpret outcomes
@@ -124,8 +115,8 @@ from integer mass storage. There is no silent switch to another generator.
 | `limited` | A state, mass or time cap stopped counting | Save `construction_limited` with its specific cause; feasibility remains unknown |
 
 The proof concerns the declared base support, length bounds and compiled rules.
-It makes no biological feasibility claim. Increase the named limit or revise the
-constraints in a new request when counting is limited. Construction failures
+Increase the named limit or revise the constraints in a new request when
+counting is limited. Construction failures
 produce an incomplete pool and CLI exit **3**. They do not become candidate
 rejections. A zero mining target stops before construction begins.
 
@@ -136,6 +127,13 @@ Part validity does not establish that joins or padding in a later assembled
 design satisfy final-sequence constraints.
 
 ## Inspect saved evidence
+
+Exact integer masses preserve the normalized decimal probability ratios
+recorded in the request. Randomness is versioned as
+`conditional_background_shake256.v1` and bound to model, seed and candidate index.
+Batch size, retention, effort limits and later candidate-budget increases
+preserve the existing sequence prefix when counting completes. Changing the
+compiled rules, length range or base probabilities changes the model and its stream.
 
 Quality reports expose a separate `construction` record containing model ID,
 policy, status, cause and work counts. Its hexadecimal `mass` is the exact

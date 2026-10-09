@@ -6,27 +6,28 @@ description: Inspect candidate yield, recorded selection distances and score ban
 # Plot preparation quality
 
 Use `preparation-quality` to see where candidates were lost and what was retained.
-The figure reads a sampled pool or its exported quality report. Install the
-`playback` extra to write PNG figures.
+Continue from the [background recipe](preparation.md#generate-background-parts),
+which saves `pools/background`, and install the
+[playback extra](../installation.md#optional-features) to write PNG figures.
 
 ```bash
-# Render a figure from the selected saved records.
-dense-arrays render pool --view preparation-quality --out preparation.png
-# Write the declared selection or document to a new destination.
-dense-arrays export pool --view quality --out preparation-quality.json
-# Render a figure from the selected saved records.
+# Plot candidate yield from the saved pool.
+dense-arrays render pools/background --view preparation-quality --out preparation.png
+# Save the quality report for sharing independently of the pool.
+dense-arrays export pools/background --view quality --out preparation-quality.json
+# Draw the same figure from the exported report.
 dense-arrays render preparation-quality.json --view preparation-quality --out shared.png
 ```
 
 ```python
 import dense_arrays as da
 
-# Read saved composition and search metrics.
-report = da.inspect("pool", view="quality")
+# Read candidate counts and retention evidence from the saved pool.
+report = da.inspect("pools/background", view="quality")
 print(report.cost)
-# Draw the selected saved evidence without generating new sequences.
+# Plot the counts and selection evidence in this report.
 da.render(report, view="preparation-quality", out="preparation-python.png")
-# Publish the declared records to a new destination.
+# Save the same report as portable JSON.
 da.export(report, out="preparation-quality-python.json")
 ```
 
@@ -48,7 +49,7 @@ unavailable. It does not substitute zeros. Sequence uniqueness, core uniqueness
 and selection distances are separate properties; representative counts alone
 do not measure core diversity.
 
-Live reports verify saved candidate decisions and retained-part joins. MMR
+Reports read from a pool verify saved candidate decisions and retained-part joins. MMR
 verification repeats selection comparisons under `ReadLimits.pairs`, without
 sampling or invoking FIMO. Use `--max-pairs` in the CLI, or bind `read_limits`
 when inspecting a pool in Python. Exported reports retain their recorded

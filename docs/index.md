@@ -7,17 +7,18 @@ description: Prepare binding-site parts, generate constrained DNA libraries, and
 
 ![Dense Arrays — overlapping motifs within a sequence-length limit](assets/dense-arrays-banner.svg)
 
-Pack DNA binding sites into short sequences by sharing compatible bases.
-Dense Arrays records the selected parts, their positions and orientations, and
-why generation stopped. Use the same operations from Python or the command line.
+Design nucleotide sequences with densely packed DNA-protein binding sites.
+Prepare input pools, generate libraries under your constraints, and inspect
+sequences with their recorded site positions and orientations. Python and the
+command line use the same operations.
 
 ## Start here
 
 [Install Dense Arrays](installation.md), then [create your first array](quickstart.md).
-For a saved library with reusable input files, start with
+To [generate a saved library](library-workflow.md), use the
+[source workflow installation](installation.md#use-the-library-workflow).
+For a larger table-based workflow with multiple design combinations, follow
 [the curated binding-site example](library-workflow/curated-example.md).
-Examples use synthetic sequences at binding-site scale to explain the computation;
-they do not establish biological activity.
 
 ## Prepare parts
 

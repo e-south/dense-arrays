@@ -94,6 +94,28 @@ plots sampled-pool yield, recorded MMR distances and score bands. Use
 [preparation figures](../library-workflow/preparation-quality.md) for portable
 reports and metric scope.
 
+## Exit codes and machine output
+
+Use `--json` for machine-readable plans, reports and errors. Plan and inspection
+results go to stdout; human-readable receipts and diagnostics go to stderr.
+`export --out -` writes the exported data to stdout.
+
+| Exit code | Meaning |
+| --- | --- |
+| `0` | The operation succeeded. Inspecting a valid stopped run also succeeds; its report retains the stopped state. |
+| `2` | Invalid input or a selection shortfall rejected by the requested policy. |
+| `3` | Generation or preparation ended below its target, or a partial selection export was explicitly allowed. |
+| `4` | Execution, integrity or read-limit failure. |
+| `130` | Interrupted execution. |
+
+Before streaming begins, JSON domain errors use `dense_arrays.error.v1`, with
+`code`, `message`, `exit_code` and the affected artifact when known. An execution
+failure after a run was saved includes its path. Python exposes the same saved
+run through `RunExecutionError.run`, with the original exception as its cause.
+
+After streaming begins, errors go to stderr and leave the data prefix on stdout.
+Check the exit code before treating streamed output as complete.
+
 ## Optimize motifs
 
 `optimize` and `solutions` return results directly to the terminal:

@@ -65,10 +65,14 @@ The `docs` and `dev` extras support documentation and contributor checks; see
 
 ### Install from source
 
-From the root of a checkout containing the [library workflow](library-workflow.md),
-create a separate environment and install that checkout:
+The library workflow is available on `feat/library-workflow`. Clone that branch,
+then create an environment for the checkout. These commands require Git:
 
 ```bash
+# Download the source that provides the library workflow.
+git clone --branch feat/library-workflow https://github.com/e-south/dense-arrays.git
+cd dense-arrays
+
 # Create and select an environment for this checkout.
 python3.12 -m venv .venv
 source .venv/bin/activate
@@ -82,7 +86,8 @@ dense-arrays plan --help
 
 Use `python -m pip install .` if you do not need those extras. This installs a
 snapshot of the local source; rerun the installation after updating the checkout.
-Record its commit alongside results while using unreleased features.
+If you already have the workflow checkout, start with the environment commands
+from its root directory.
 
 ## Configure FIMO for motif scoring
 

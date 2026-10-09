@@ -10,10 +10,15 @@ Prerequisites: create the background `recipe` using the [first recipe](../prepar
 
 ## Exclude qualifying motif hits
 
-Add `PWMExclusion` to a recipe's sequence screens. Each rule binds one or more
-neutral motif artifacts and an explicit FIMO configuration. The rule rejects a
-candidate if any of its motifs has a qualifying hit. GC and literal rules
-continue to report their own failures.
+Add `PWMExclusion` to reject prepared parts with qualifying hits to specified
+motif models. Each rule declares its scoring threshold and strand policy.
+GC and literal rules continue to report their own failures.
+
+These screens apply to individual parts before assembly. Generation checks
+declared literal and GC rules on the final sequence; it does not rerun
+`PWMExclusion`. Joins and padding can introduce additional motif hits. When
+final-library motif exclusion is required, scan the exported sequences with
+the declared motif models and scoring policy.
 
 ```python
 # Screen complete prepared parts, including flanks, using an explicit model.
@@ -28,19 +33,19 @@ screened_recipe = recipe.with_changes(
         ),
     ),
 )
-# Resolve the request and bind its input records before execution.
+# Bind the exclusion model and scorer, then check scoring limits.
 screened_plan = da.plan(screened_recipe)
 # Save the resolved plan with its input bindings; keep the destination new.
 screened_plan.write("screened.plan.json")
-# Prepare the declared parts or batch and save its identities for reuse.
+# Generate candidates and exclude those with qualifying motif hits.
 screened_pool = da.prepare(screened_plan, out="pools/python-screened")
 print(da.inspect(screened_pool, view="quality").to_dict())
 ```
 
 ```bash
-# Prepare the declared pool or offered batch.
+# Apply the same motif exclusion while preparing the CLI pool.
 dense-arrays prepare screened.plan.json --out pools/cli-screened
-# Read saved evidence; --verify also checks its integrity.
+# Read retention counts and the reasons candidates were rejected.
 dense-arrays inspect pools/cli-screened --view quality
 ```
 
@@ -57,16 +62,9 @@ makes a requested ratio undefined and records an execution error. It cannot be
 counted as a passed or rejected candidate. `any_hit` needs no ratio.
 
 Only hits admitted by `hit_pvalue_max` and the declared strand policy enter
-these checks. An absent qualifying hit passes the rule; it does not establish
-absence of all possible binding sites. Screens apply to the complete candidate
-sequence and preserve forward/reverse hit coordinates separately from any core
-used to generate that candidate.
-
-Preparation exclusions qualify individual parts. Generation checks declared
-literal and GC rules on the final sequence, but does not rerun `PWMExclusion`
-after assembly. Joins and padding can introduce additional motif hits. When
-final-library motif exclusion is required, scan the exported final sequences
-with the declared motif models and scoring policy.
+these checks. Passing means no qualifying hit met the rule's rejection criterion.
+Screens cover the complete candidate, including flanks, and preserve
+forward/reverse hit coordinates separately from any core used to generate it.
 
 Planning resolves all motif files and tools, checks per-batch scorer limits and
 previews the total exclusion-window bound, including one calibration per motif

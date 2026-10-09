@@ -8,10 +8,9 @@ author: Eric J. South
 
 ## Create a motif artifact
 
-These files use a synthetic 12-position motif, `ACGTTGCAAGTC`. This synthetic model
-illustrates binding-site preparation; its sequence is not an experimentally
-validated binding site. Replace the artifact with a sourced motif for biological
-design. Run the code in a new directory with Dense Arrays and
+This example prepares parts from a synthetic 12-position model with consensus
+`ACGTTGCAAGTC`. Run the code in a new directory with the
+[library workflow](../../installation.md#use-the-library-workflow) and
 [optional FIMO scoring](../../installation.md#configure-fimo-for-motif-scoring) installed.
 
 ```python
@@ -21,7 +20,6 @@ from pathlib import Path
 
 import dense_arrays as da
 
-# Use the typed requests and operations needed by this example.
 from dense_arrays import parts, planning
 
 consensus = "ACGTTGCAAGTC"
@@ -46,16 +44,17 @@ motif_document = {
         for row in probabilities
     ],
 }
-# Write the example input or request so it can also be used from the CLI.
+# Save the model probabilities, background and score matrix.
 Path("motif.json").write_text(json.dumps(motif_document, indent=2))
 ```
 
 ## Sample a motif
 
-Use the synthetic 12-position artifact created above or a sourced motif no wider
-than the declared 20-base candidate. The candidate includes the complete motif
-and eight sampled flanking bases in total. The threshold below is a permissive
-computational example; choose it for your declared scoring task.
+For the model above, each 20-base candidate contains twelve bases drawn from the
+motif probabilities and eight from the background distribution. The motif's
+position is sampled within the candidate. FIMO scans the complete sequence;
+the example's permissive p-value threshold applies to each motif-width window.
+You can substitute a sourced motif that fits within the declared candidate length.
 
 Save `pwm.yaml`:
 
@@ -74,11 +73,11 @@ seed: 7  # Seed for versioned candidate streams.
 ```bash
 # Validate inputs and inspect or save the resolved plan.
 dense-arrays plan pwm.yaml --out pwm.plan.json
-# Prepare the declared pool or offered batch.
+# Sample and score candidates, then retain the eight highest-scoring parts.
 dense-arrays prepare pwm.plan.json --out pools/cli-pwm
-# Read saved evidence; --verify also checks its integrity.
+# Read candidate yield and retention counts.
 dense-arrays inspect pools/cli-pwm --view quality --json
-# Write the declared selection or document to a new destination.
+# Export the pool quality report as JSON.
 dense-arrays export pools/cli-pwm --view quality --out pwm-quality.json
 ```
 
@@ -87,7 +86,6 @@ The matching Python request is independent of the background example:
 ```python
 import dense_arrays as da
 
-# Use the typed requests and operations needed by this example.
 from dense_arrays import parts, planning
 
 pwm_recipe = parts.PreparationSpec(
@@ -103,11 +101,11 @@ pwm_recipe = parts.PreparationSpec(
     retain=parts.Retention(count=8, policy="top_score", rank_by="best_hit_score"),
     seed=7,
 )
-# Resolve the request and bind its input records before execution.
+# Check the motif and FIMO, then resolve sampling and scoring settings.
 pwm_plan = da.plan(pwm_recipe)
 # Save the resolved plan with its input bindings; keep the destination new.
 pwm_plan.write("pwm-python.plan.json")
-# Prepare the declared parts or batch and save its identities for reuse.
+# Sample, score and retain eight parts in the Python output pool.
 pwm_pool = da.prepare(pwm_plan, out="pools/python-pwm")
 print(da.inspect(pwm_pool, view="quality").to_dict())
 ```
@@ -120,23 +118,25 @@ stream, so changing batch size preserves proposals. Score and retention changes
 do not redraw the same candidate stream. The sampling algorithm version is
 recorded in the plan.
 
-Preflight reads the motif and detects FIMO through a version query; it performs
-no sampling or scoring. Execution rechecks source and executable bytes. The
-CLI reports scorer preflight failures with exit **4** and, with `--json`,
-`code: scoring_error` and a separate `reason`, such as `unavailable`.
-No output destination is created when preflight fails. The
-best qualifying hit defines the retained part's motif-oriented core and its
-zero-based, half-open coordinates. Raw score, score per core base, theoretical
-maximum, fraction of maximum and p-value retain separate labels. See the
+The best qualifying hit defines the retained part's motif-oriented core and its
+zero-based, half-open coordinates. This hit can differ from the sampled motif's
+insertion position. Raw score, score per core base, theoretical maximum,
+fraction of maximum and p-value retain separate labels. See the
 [scoring reference](../../reference/motif-scoring.md#score-candidates-with-fimo)
 for background and numerical interpretation.
+
+Planning reads the motif and checks FIMO's version before any sampling or
+scoring. Execution rechecks the source and executable bytes. The
+CLI reports scorer preflight failures with exit **4** and, with `--json`,
+`code: scoring_error` and a separate `reason`, such as `unavailable`.
+No output destination is created when preflight fails.
 
 `Uniqueness(key="core")` groups equal oriented cores. `key="sequence"` groups
 identical complete candidates. Representatives use the highest recorded score,
 then earliest candidate index. `top_score` ranks those representatives by the
 same order; `first_eligible` retains them by candidate index. Equal sequences in
 different groups are an error. Each recipe contains one motif per source; use
-a preparation set below to combine independently configured recipes.
+a [preparation set](sets.md) to combine independently configured recipes.
 
 ## Import a MEME or JASPAR motif
 
@@ -157,14 +157,14 @@ meme_rows = [
     " ".join(str(counts[base][position] / 10) for base in bases)
     for position in range(len(consensus))
 ]
-# Write the example input or request so it can also be used from the CLI.
+# Write the probability matrix in MEME format.
 Path("example.meme").write_text(
     "MEME version 5\nALPHABET= ACGT\n\nMOTIF example\n"
     "letter-probability matrix: alength= 4 w= 12 nsites= 10\n"
     + "\n".join(meme_rows)
     + "\n"
 )
-# Write the example input or request so it can also be used from the CLI.
+# Write the equivalent counts in JASPAR format.
 Path("example.jaspar").write_text(
     ">example\n"
     + "\n".join(f"{base} [ {' '.join(map(str, counts[base]))} ]" for base in bases)
@@ -185,13 +185,13 @@ for input_format in ("meme", "jaspar"):
 ```bash
 # Validate inputs and inspect or save the resolved plan.
 dense-arrays plan meme.plan.json
-# Prepare the declared pool or offered batch.
+# Prepare parts from the imported MEME model.
 dense-arrays prepare meme.plan.json --out pools/cli-meme
-# Prepare the declared pool or offered batch.
+# Prepare parts from the equivalent JASPAR model.
 dense-arrays prepare jaspar.plan.json --out pools/cli-jaspar
-# Read saved evidence; --verify also checks its integrity.
+# Verify saved candidates, scoring observations and retained parts.
 dense-arrays inspect pools/cli-meme --verify
-# Read saved evidence; --verify also checks its integrity.
+# Verify saved candidates, scoring observations and retained parts.
 dense-arrays inspect pools/cli-jaspar --verify
 ```
 
@@ -249,9 +249,9 @@ for strategy in ("consensus", "background"):
 ```bash
 # Validate inputs and inspect or save the resolved plan.
 dense-arrays plan pwm-consensus.plan.json
-# Prepare the declared pool or offered batch.
+# Prepare consensus cores with sampled flanks and offsets.
 dense-arrays prepare pwm-consensus.plan.json --out pools/cli-consensus-proposals
-# Prepare the declared pool or offered batch.
+# Draw complete background candidates and score them against the motif.
 dense-arrays prepare pwm-background.plan.json --out pools/cli-background-proposals
 ```
 

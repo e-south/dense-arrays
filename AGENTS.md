@@ -22,12 +22,12 @@ Choose the route for the task; do not load every reference:
 | Task | Start here |
 | --- | --- |
 | Install or create an array | `README.md` → `docs/installation.md` → `docs/quickstart.md` |
-| Generate or inspect a persisted library | `docs/library-workflow.md` → `docs/architecture/README.md` |
+| Generate or inspect a saved library | `docs/library-workflow.md` and its task guides |
 | Add positional or motif-group requirements | `docs/constraints.md` |
 | Render saved placements | `docs/playback.md` |
 | Change library-workflow contracts | `docs/architecture/library-workflow/index.md` → domain, operations, artifacts or delivery; verification requirements are in delivery |
 | Change implementation or tests | `docs/architecture/README.md` task-to-file map |
-| Change placement JSON or interpretation | `docs/architecture/solution-playback.md` → serialization row in the code map |
+| Change placement JSON or interpretation | `docs/architecture/solution-playback.md` → “Plan JSON and evidence/geometry validation” in `docs/architecture/README.md` |
 | Revise documentation | `docs/development/documentation.md` |
 | Review historical engineering evidence | `maintenance/history/improvement-plan.md` and its linked audit |
 
