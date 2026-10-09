@@ -35,6 +35,14 @@ the [playback guide](../playback.md). Those views explain recorded geometry and
 an order reconstructed from placement coordinates. They do not add missing
 construction evidence.
 
+For a custom population figure, [export placements](../library-workflow/bundles.md)
+or [save quality metrics](../library-workflow/handoffs.md#reuse-saved-metrics).
+Placement tables support positional coverage, overlap and strand summaries;
+quality JSON supplies the recorded composition distributions and denominators.
+Choose the quantity explicitly: annotation counts can exceed the number of
+designs because placements may overlap. The fraction of distinct designs
+covering a position is a different measure. Neither measures protein binding.
+
 ## Summaries and records
 
 | Question | Inspection view | Scope and next step |
@@ -56,3 +64,8 @@ CLI examples. `dense-arrays inspect --help`, `export --help` and `render --help`
 list supported options and read limits. Live preparation-quality verification
 may repeat MMR comparisons within its pair-work allowance; detached quality
 reports read recorded metrics only.
+
+For larger libraries, set [record and identity limits](../library-workflow/results/inspection.md#bound-record-inspection)
+for the complete query. A quality report scans its declared population even
+when `--limit` displays only a few usage rows. Save the resulting quality JSON
+to render it again without repeating the source scan.

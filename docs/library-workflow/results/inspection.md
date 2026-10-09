@@ -38,6 +38,13 @@ exit status. Verification uses the same explicit read limits and checks the
 complete declared evidence boundary. Its `verification_cost` describes the
 additional work before the scan; exceeding a cap fails verification.
 
+For a quality report, budget for accepted designs and available attempt
+histories across all supplied sources. Distinct sequences, parts and source
+identities also consume retained state. The report's `cost` descriptor shows
+the scope before computation. Increasing `--limit` only changes the displayed
+usage page; it does not change the population or either work cap. The Python
+equivalent is `read_limits=reporting.ReadLimits(records=..., identities=...)`.
+
 A completed record page includes `next_cursor` when another page may exist.
 Pass it as `--after TOKEN` (Python `after=token`) with the same view and filter.
 The token retains the source revision even if generation subsequently advances.
