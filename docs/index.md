@@ -47,6 +47,7 @@ For a larger table-based workflow with multiple design combinations, follow
 
 | Task | Guide |
 | --- | --- |
+| Share existing sequences and placements | [Supplied-array collections](library-workflow/arrays.md) |
 | Choose a summary, diagnostic, figure or export | [Result views](reference/outputs.md) |
 | Save requests, plans and compare quality reports | [Reports and reusable requests](library-workflow/handoffs.md) |
 | Select a fixed-size panel with reproducible membership | [Library selection](library-workflow/selection.md) |

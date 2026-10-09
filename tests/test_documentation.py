@@ -47,6 +47,7 @@ def _environment(tmp_path: Path) -> dict[str, str]:
         "library-workflow/selection.md",
         "library-workflow/search.md",
         "library-workflow/tables.md",
+        "library-workflow/arrays.md",
     ],
 )
 def test_guide_python_examples(page: str | tuple[str, ...], tmp_path: Path):

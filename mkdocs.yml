@@ -9,6 +9,7 @@ nav:
   - First array: quickstart.md
   - Saved libraries:
       - Generate, inspect and export: library-workflow.md
+      - Share supplied arrays: library-workflow/arrays.md
       - Build a curated library: library-workflow/curated-example.md
       - Import part tables: library-workflow/tables.md
       - Prepare curated pools: library-workflow/preparation/curated.md

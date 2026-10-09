@@ -86,6 +86,7 @@ work and identity entries; a displayed page size does not bound report scope.
 | Task | Types and route |
 | --- | --- |
 | Explain attainment and search loss | `DiagnosticReport`, `QualityReport`, `AttemptFilter`; [shortfalls and quality](library-workflow/results/quality.md). |
+| Share supplied arrays | `arrays.ArrayCollection`, `ArrayFilter`, `CollectionView`; [collections guide](library-workflow/arrays.md). |
 | Read accepted sequences and placements | `DesignFilter`, `SequenceRecord`, `PlacementRecord`; [record selection and exports](library-workflow/results/export.md). |
 | Select a seeded panel or per-cell quota | `LibrarySelection`, `Take`, `SelectionSnapshot`; [saved panels](library-workflow/selection.md). |
 | Compare quality with explicit populations | `QualityComparison`, `MetricDifference`, `QualitySnapshot`; [quality comparisons](library-workflow/handoffs.md#compare-library-quality). |

@@ -19,7 +19,7 @@ should identify the actual revision used for its results.
 
 1. Run the [development gate](../development.md#local-verification), inspect the
    wheel and source archive, and smoke-test a fresh installed wheel outside the
-   checkout. Include a solved array and the playback CLI; building alone is not
+   checkout. Include a solved array and the rendering CLI; building alone is not
    an installation check.
 2. Merge through a reviewed PR and require successful main-push CI for that exact
    commit. Check GitHub and PyPI for an unused version before creating its tag.

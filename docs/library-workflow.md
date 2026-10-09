@@ -14,6 +14,8 @@ examples from a new working directory. Each output path is created by the
 command that uses it. The base installation includes CBC and request-file
 support; figures use the optional `playback` extra.
 
+Already have sequences and placements? [Save them as an array collection](library-workflow/arrays.md).
+
 ## Generate and inspect one design
 
 ```bash
