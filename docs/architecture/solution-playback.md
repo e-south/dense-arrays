@@ -14,12 +14,11 @@ and evidence. Exact solver trace capture is not implemented.
 
 `dense-arrays` owns renderer-independent realized-array and playback-plan
 contracts, deterministic reconstruction, validation, and reference renderers.
-Producer packages own translation from their persisted schemas. A study owns
+Callers supply native `RealizedArray` records. A study owns
 selected record identities, domain labels, captions, and review evidence.
 
-BaseRender may provide sequence frames or video-publication integration. It
-does not own graph semantics, solver claims, or the playback clock. Installing
-Dense Arrays does not require BaseRender, DenseGen, or a study repository.
+Optional frame callbacks provide sequence illustrations. Dense Arrays retains
+graph semantics, solver evidence and the playback clock.
 
 ## What the order means
 
@@ -36,8 +35,8 @@ equal start, then stable placement ID. Each step names the preceding step as
 its predecessor. This reference describes coordinate ordering; it does not
 claim a recorded solver edge. A `layout_only` view suppresses active traversal.
 
-`solver_selected` remains an enum value reserved for a future exact-trace
-schema. Constructing or loading a v1 plan with that authority is rejected.
+The reserved `solver_selected` enum value is unsupported in v1. Constructing
+or loading a v1 plan with that authority is rejected.
 
 ## Record and plan validation
 
@@ -88,7 +87,7 @@ placement. Both use the same fixed image shape and two-frame validation/cache
 contract. The producer owns its neutral annotations and fixed crop; Dense
 Arrays blends successive images in place without moving nucleotide glyphs.
 
-Adapters can supply `PlaybackNotice` records through
+Callers can supply `PlaybackNotice` records through
 `reconstruct_playback(realized, notices=...)`. Dense Arrays preserves explicit
 caller evidence and rejects conflicting reserved authority/order codes. It
 does not infer biological identity or coordinate-recovery methods from labels,
@@ -96,11 +95,10 @@ IDs, or metadata keys. Caller-authored prose remains the caller's evidence.
 
 ## Producer handoffs
 
-A producer translates its records to `RealizedArray`; a recipe selects labels,
-colors, captions, and outputs. For example, a DenseGen adapter can translate
-persisted feature coordinates and fixed-element relationships. Producer-specific
-coordinate fields remain metadata unless the adapter explicitly converts them
-to realized-sequence coordinates. Dense Arrays does not guess that conversion.
+Callers provide `RealizedArray` values with feature coordinates and fixed-element
+relationships in the declared realized-sequence coordinate system. A recipe
+selects labels, colors, captions and outputs. Other coordinate fields remain
+metadata; labels and metadata do not change the coordinates Dense Arrays reads.
 
 Endpoint recipes pin source-table digests and record IDs. They own source
 verification, record selection, biological interpretation, and publication
@@ -108,19 +106,19 @@ bundles. A recipe can publish normalized input and plan JSON, MP4, a
 poster, and a manifest of input/output digests and versions. The package CLI
 renders requested files; it does not create that manifest or publish a site.
 
-Existing consumers must review the [migration requirements](../migration.md)
-before updating their integration. Updating this package does not migrate
-external adapters automatically.
+Use the [realized-array reference](../reference/realized.md) for input fields
+and the [playback reference](../reference/playback.md) for construction and
+validation failures.
 
-## Future trace work
+## Trace boundary
 
-The current data flow is:
+Playback consumes this data flow:
 
 ```text
 Producer record -> RealizedArray -> reconstructed PlaybackPlan -> renderer
 ```
 
-A future exact trace needs its own versioned validation and migration decision:
+An exact solver trace would require a separate versioned validation contract:
 
 ```text
 Solver result -> exact solution trace -> solver-selected plan -> renderer
@@ -128,3 +126,7 @@ Solver result -> exact solution trace -> solver-selected plan -> renderer
 
 That extension is outside v1. The reusable renderer input remains an explicit,
 validated plan.
+
+## Future trace work
+
+See the [trace boundary](#trace-boundary).

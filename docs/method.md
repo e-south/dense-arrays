@@ -58,9 +58,11 @@ subsequent transitions each add eight bases, producing starts at 0, 8, 16, and
 24. A result in this orientation retains these input-order offsets.
 
 The exact model counts selected entries along its path. A motif that happens
-to occur inside another selected motif does not receive an additional
+to occur strictly inside another selected motif does not receive an additional
 placement through the overlap metric. For example, `ACGTTGCAAGTCCTGA` contains
 `TTGCAAGTCC`, but a 16-base limit gives one selected entry in the exact model.
+Suffix-aligned entries can share an endpoint: selecting `ACGT` followed by `CGT`
+uses a start-to-start shift of one base and counts two entries in four bases.
 Repeated identical strings also require distinct path placements. Use the
 returned motif count and offsets when reporting selected entries; a search
 for all substring matches answers a different question.

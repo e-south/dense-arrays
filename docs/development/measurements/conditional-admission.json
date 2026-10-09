@@ -1,0 +1,432 @@
+{
+  "environment": {
+    "python": "3.14.7",
+    "platform": "macOS-26.5-arm64-arm-64bit-Mach-O"
+  },
+  "method": "Three paired warm timing runs per variant; separate cProfile; three tracemalloc runs per variant, each preceded by gc.collect(). Decimal MB. Python allocations only.",
+  "change": "Remove the redundant admitted-state set; charge each unexpanded, uncompleted DFS frame once. Children strictly decrease remaining sequence length.",
+  "workloads": {
+    "compile_draw_100": {
+      "length": 100,
+      "probabilities": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+      ],
+      "gc": [
+        0.48,
+        0.52
+      ],
+      "forbidden": [
+        "AAA",
+        "CCC",
+        "GGG",
+        "TTT",
+        "GAATTC",
+        "GGATCC"
+      ],
+      "draws": 100,
+      "seed": 7
+    },
+    "native": {
+      "same_distribution_as": "compile_draw_100",
+      "candidates": 100,
+      "batch_size": 25,
+      "retained": 100,
+      "includes": [
+        "preparation",
+        "verification",
+        "candidate records",
+        "quality report"
+      ]
+    },
+    "deep_chains": {
+      "lengths": [
+        1500,
+        10000
+      ],
+      "probabilities": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "constraints": []
+    }
+  },
+  "cases": [
+    {
+      "case": "compile_draw_100",
+      "seconds": {
+        "baseline": [
+          0.2019014590041479,
+          0.20958116599649657,
+          0.2045946659927722
+        ],
+        "prototype": [
+          0.20198137500847224,
+          0.2082525840087328,
+          0.19730612498824485
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.2045946659927722,
+        "prototype": 0.20198137500847224
+      },
+      "traced_peak_bytes": {
+        "baseline": [
+          8247765,
+          8247741,
+          8247717
+        ],
+        "prototype": [
+          6169299,
+          6168811,
+          6168715
+        ]
+      },
+      "semantic_equality": true,
+      "evidence": {
+        "report": {
+          "schema": "dense_arrays.conditional_construction.v1",
+          "policy": "conditional_background_shake256.v1",
+          "model_id": "cef4f12e608638d67ac58c14a5cb8f4e9fd5e361f0c048f66e8258989565b460",
+          "status": "feasible",
+          "reason": "completed",
+          "states": 40555,
+          "automaton_states": 22,
+          "mass_bits": 3235453,
+          "mass": "0x8d84cf13c02e2ced2af9e868d5e716d2256d2008427161d3"
+        },
+        "mass_entries": 40554
+      }
+    },
+    {
+      "case": "native_prepare_verify_100",
+      "seconds": {
+        "baseline": [
+          0.2544905410031788,
+          0.25300179100304376,
+          0.25187316599476617
+        ],
+        "prototype": [
+          0.24166962500021327,
+          0.2450345830002334,
+          0.23923587499302812
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.25300179100304376,
+        "prototype": 0.24166962500021327
+      },
+      "traced_peak_bytes": {
+        "baseline": [
+          8384913,
+          8384797,
+          8384781
+        ],
+        "prototype": [
+          6443880,
+          6443720,
+          6443720
+        ]
+      },
+      "semantic_equality": true,
+      "evidence": {
+        "plan_id": "e3c89e986e048b660da75b3039c0a0e0f109ab17337c48ad3134b26371646fe7",
+        "pool_id": "d8b1adea8188a84bea4eac59533c36261d8967871525ecf09216965340a3bc2f",
+        "counts": {
+          "duplicate_discarded": 0,
+          "eligibility_rejected": 0,
+          "eligible": 100,
+          "eligible_unique": 100,
+          "execution_error": 0,
+          "not_selected": 0,
+          "processed": 100,
+          "retained": 100
+        }
+      }
+    },
+    {
+      "case": "single_support_deep_chain",
+      "seconds": {
+        "baseline": [
+          0.006241666997084394,
+          0.006091749994084239,
+          0.005926625002757646
+        ],
+        "prototype": [
+          0.00603770800807979,
+          0.005762665998190641,
+          0.005917208996834233
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.006091749994084239,
+        "prototype": 0.005917208996834233
+      },
+      "traced_peak_bytes": {
+        "baseline": [
+          502397,
+          502397,
+          502397
+        ],
+        "prototype": [
+          371165,
+          371109,
+          371109
+        ]
+      },
+      "semantic_equality": true,
+      "evidence": {
+        "report": {
+          "schema": "dense_arrays.conditional_construction.v1",
+          "policy": "conditional_background_shake256.v1",
+          "model_id": "8e891863d768cbf0fc71be8919f4a98967b7d88c763a4f4d6f7954fe27bea0e9",
+          "status": "feasible",
+          "reason": "completed",
+          "states": 1502,
+          "automaton_states": 1,
+          "mass_bits": 1504,
+          "mass": "0x1"
+        },
+        "mass_entries": 1501
+      }
+    },
+    {
+      "case": "single_support_10000",
+      "seconds": {
+        "baseline": [
+          0.04185008301283233,
+          0.040475624991813675,
+          0.042088165995664895
+        ],
+        "prototype": [
+          0.04053720799856819,
+          0.04164366700570099,
+          0.03969866699480917
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.04185008301283233,
+        "prototype": 0.04053720799856819
+      },
+      "traced_peak_bytes": {
+        "baseline": [
+          2548525,
+          2548525,
+          2548525
+        ],
+        "prototype": [
+          2024077,
+          2024021,
+          2024021
+        ]
+      },
+      "semantic_equality": true,
+      "evidence": {
+        "report": {
+          "schema": "dense_arrays.conditional_construction.v1",
+          "policy": "conditional_background_shake256.v1",
+          "model_id": "13e76c87164dc60c4d181700f766db2f45721765bd89bd81fcb490aa2a6790a6",
+          "status": "feasible",
+          "reason": "completed",
+          "states": 10002,
+          "automaton_states": 1,
+          "mass_bits": 10004,
+          "mass": "0x1"
+        },
+        "mass_entries": 10001
+      }
+    }
+  ],
+  "oracles": {
+    "weighted": [
+      {
+        "case": {
+          "length": 3,
+          "weights": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "gc": [
+            1,
+            2
+          ],
+          "words": [
+            "AA"
+          ]
+        },
+        "sequences": 44,
+        "mass": 740,
+        "baseline_prototype_equal": true
+      },
+      {
+        "case": {
+          "length": 4,
+          "weights": [
+            2,
+            1,
+            1,
+            0
+          ],
+          "gc": [
+            1,
+            3
+          ],
+          "words": [
+            "CG",
+            "TA"
+          ]
+        },
+        "sequences": 49,
+        "mass": 188,
+        "baseline_prototype_equal": true
+      },
+      {
+        "case": {
+          "length": 4,
+          "weights": [
+            0,
+            1,
+            1,
+            0
+          ],
+          "gc": [
+            0,
+            4
+          ],
+          "words": [
+            "CC",
+            "GG"
+          ]
+        },
+        "sequences": 2,
+        "mass": 2,
+        "baseline_prototype_equal": true
+      }
+    ],
+    "ranged_mass": 31,
+    "limits": [
+      {
+        "schema": "dense_arrays.conditional_construction.v1",
+        "policy": "conditional_background_shake256.v1",
+        "model_id": "cef4f12e608638d67ac58c14a5cb8f4e9fd5e361f0c048f66e8258989565b460",
+        "status": "limited",
+        "reason": "states",
+        "states": 100,
+        "automaton_states": 22,
+        "mass_bits": 10,
+        "mass": null
+      },
+      {
+        "schema": "dense_arrays.conditional_construction.v1",
+        "policy": "conditional_background_shake256.v1",
+        "model_id": "cef4f12e608638d67ac58c14a5cb8f4e9fd5e361f0c048f66e8258989565b460",
+        "status": "limited",
+        "reason": "mass_bits",
+        "states": 302,
+        "automaton_states": 22,
+        "mass_bits": 1000,
+        "mass": null
+      },
+      {
+        "schema": "dense_arrays.conditional_construction.v1",
+        "policy": "conditional_background_shake256.v1",
+        "model_id": "cef4f12e608638d67ac58c14a5cb8f4e9fd5e361f0c048f66e8258989565b460",
+        "status": "limited",
+        "reason": "automaton_states",
+        "states": 0,
+        "automaton_states": 1,
+        "mass_bits": 0,
+        "mass": null
+      },
+      {
+        "schema": "dense_arrays.conditional_construction.v1",
+        "policy": "conditional_background_shake256.v1",
+        "model_id": "cef4f12e608638d67ac58c14a5cb8f4e9fd5e361f0c048f66e8258989565b460",
+        "status": "limited",
+        "reason": "time_budget",
+        "states": 0,
+        "automaton_states": 0,
+        "mass_bits": 0,
+        "mass": null
+      },
+      {
+        "schema": "dense_arrays.conditional_construction.v1",
+        "policy": "conditional_background_shake256.v1",
+        "model_id": "af5c25dbd9353c9f59fb6c492e2efea0078a5e78d68e38dc4248a2166e1ac219",
+        "status": "infeasible",
+        "reason": "completed",
+        "states": 2,
+        "automaton_states": 5,
+        "mass_bits": 4,
+        "mass": "0x0"
+      }
+    ],
+    "all_mass_maps_and_reports_equal": true
+  },
+  "resource_validation": {
+    "cap_comparisons": 1500,
+    "time_cutoffs": 6,
+    "repeated_root": {
+      "mass": 256,
+      "states": 5,
+      "mass_bits": 25,
+      "table": [
+        [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          1
+        ],
+        [
+          [
+            1,
+            0,
+            0,
+            1
+          ],
+          4
+        ],
+        [
+          [
+            2,
+            0,
+            0,
+            2
+          ],
+          16
+        ],
+        [
+          [
+            3,
+            0,
+            0,
+            3
+          ],
+          64
+        ],
+        [
+          [
+            4,
+            0,
+            0,
+            4
+          ],
+          256
+        ]
+      ]
+    }
+  },
+  "limits": [
+    "Synthetic local fixtures; no general throughput or whole-process memory claim.",
+    "Elapsed limits remain cooperative; outputs and work counts are unchanged."
+  ]
+}

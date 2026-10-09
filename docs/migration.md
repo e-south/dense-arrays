@@ -1,104 +1,93 @@
 ---
-title: Update an existing caller
-description: Adapt integrations to strict inputs, distinct solver outcomes, and explicit playback presentation.
+title: Input and record compatibility
+description: Integrate Dense Arrays with explicit input validation, solver outcomes and saved-record contracts.
 author: Eric J. South
 ---
 
-# Update an existing caller
+# Input and record compatibility
 
-Before upgrading, check the interfaces your integration uses: optimization,
-saved placements, or media export. Stricter validation can reject inputs and
-settings that older versions accepted. The sections below identify what to
-change and which failures to handle.
+Pin the Dense Arrays version used by your analysis. Check the inputs, exceptions
+and record schemas your code consumes before changing that version. Package
+versions and persisted schema versions are separate identifiers.
 
-## Optimization callers
+## Optimization inputs and outcomes
 
-Pass actual integer lengths, counts, indices, and interval bounds; booleans
-and fractional values are rejected. Positional intervals are an integer,
-`None`, or an ordered two-item tuple. Position bounds are non-negative;
-negative spacers remain available for intentional overlap. Use nonempty
-uppercase `A/C/G/T` motifs and valid regulator labels.
+Pass actual integer lengths, counts, indices and interval bounds. Booleans and
+fractional values are rejected. Positional intervals are an integer, `None`, or
+an ordered two-item tuple. Position bounds are non-negative; negative spacers
+request intentional overlap. Motifs contain nonempty uppercase `A/C/G/T` DNA.
 
-The optimizer snapshots its input library. Its returned library and model
-configuration views are independent copies, and results are immutable.
-Create a fresh optimizer to change the packing problem. Rejected bias, weight,
-and forbid operations leave state unchanged.
+The optimizer snapshots its input library. Returned configuration views are
+independent copies and results are immutable. Create a fresh optimizer to change
+the packing problem. Rejected bias, weight and forbid operations leave state
+unchanged.
 
-Catch `InfeasibleError` for absence of a feasible result. Catch
-`OptimizationError` for backend execution, unproven optimality, or malformed
-solver-output failures; its subclasses distinguish these cases. Both names are
-exported from `dense_arrays`. Iteration now propagates execution failures,
-including a failure after an earlier result. Do not treat every failure as an
-empty iterator. See the [outcome table](reference/optimizer.md#solver-outcomes).
+Catch `InfeasibleError` when the offered model has no feasible result.
+`OptimizationError` subclasses distinguish backend failures, unproven optimality
+and invalid solver output. Both names are exported from `dense_arrays`.
+Enumeration propagates execution failures, including failures after an earlier
+result. An exception does not mean normal enumeration exhaustion; see the
+[solver outcome table](reference/optimizer.md#solver-outcomes).
 
-`approximate()` rejects constraints, side biases, and model weight/forbid
-changes. Use exact methods for those requirements. Counts follow selected
-entries and occurrences; incidental contained substrings do not add entries.
-A library entry may be selected in only one orientation. Review code that
-compared heuristic substring counts with exact counts.
+`approximate()` rejects constraints, side biases and modified models. Use exact
+methods for those requirements. Counts refer to selected entries; incidental
+contained substrings add no entries. Each supplied entry can be selected in
+only one orientation.
 
-## Persisted records and adapters
+## Persisted records
 
-Use nonblank string IDs and supplied labels, supported enum values, and integer
-coordinates. Numeric IDs and fractional or boolean coordinates are rejected.
-`RealizedArray` validates sequence alignment and references during construction;
-move error handling to that boundary instead of waiting for reconstruction.
+Use nonblank string IDs, supported enum values and integer coordinates.
+`RealizedArray` validates sequence alignment and references during construction.
+Handle malformed input at that boundary, before reconstructing playback.
 
-Metadata and provenance must contain JSON values with string keys and finite
-numbers. Nested values are immutable snapshots. Serialize through the public
-`dumps_*()` helpers for JSON text or `*_to_dict()` for ordinary JSON-compatible
-dictionaries. Do not assume `dict(record.provenance)` recursively thaws the snapshot.
+Metadata and provenance contain JSON values with string keys and finite numbers.
+Nested values are immutable snapshots. Use public `dumps_*()` helpers for JSON
+text or `*_to_dict()` for JSON-compatible dictionaries. A shallow
+`dict(record.provenance)` does not recursively convert nested snapshots.
 
-Saved v1 plans must match coordinate ordering, predecessor references, exact
-newly covered spans, and actual constraint evaluations. `solver_selected` is
-reserved and rejected. A valid `passed=False` constraint remains acceptable;
-do not replace it with an inaccurate success flag to make a plan load.
+Saved playback plans must match coordinate ordering, predecessor references,
+newly covered spans and constraint evaluations. Their authority is
+`placement_reconstructed`; they do not claim solver-recorded chronology.
+A legitimate `passed=False` requirement remains valid evidence. Keep that failure
+when saving or reconstructing a record.
 
-Adapters own coordinate conversion and evidence for recovery procedures.
-Metadata such as `offset_raw` does not cause the compiler to assert that
-recovery occurred. Pass explicit `PlaybackNotice` records with `notices=` when
-that qualification is justified. Producers also retain responsibility for
-verifying source bytes and digests.
+Coordinate conversion belongs to the producer of the record. If a conversion
+requires qualification, supply explicit `PlaybackNotice` records with `notices=`.
+Metadata labels alone do not establish how a record was recovered. Producers
+also verify source bytes and digests before making provenance claims.
 
-## Presentation
+For generated-library compatibility, see the
+[artifact schema contracts](architecture/library-workflow/artifacts.md#schema-compatibility).
+Unknown schemas and policies fail explicitly rather than being reinterpreted.
+
+## Presentation and export
 
 Import `PlaybackDocument` from `dense_arrays.playback` or
 `dense_arrays.playback.presentation`. Use public render functions; private
-renderer drawing/export helpers are not compatibility interfaces.
+renderer helpers are not compatibility interfaces.
 
-Supply placement-ID label/color maps and caller-authored legend entries.
-Generic profiles are `categorical`, `uniform`, and `constraints`; study-specific
-profiles such as `secg` are rejected. `graph_detail="none"` requires
-`graph_fraction=0`. Replace `graph_detail="inset"` with `"reduced"` and keep
-the same `graph_fraction` to preserve the traversal-only layout. Supply
-`PlaybackPresentation.legend_entries` directly; there is no profile-derived
-legend helper. Review
-[media presentation settings](reference/playback-presentation.md) and validate
-producer raster frames against their requested-step, shape, and dtype rules.
-Titles, subtitles, and full evidence are stored in
-[native media metadata](reference/playback-presentation.md#read-the-evidence).
-A producer callback can be evaluated lazily, so it must
-return valid frames throughout the requested render.
+Supply placement-ID label and color maps and explicit legend entries. Available
+profiles are `categorical`, `uniform` and `constraints`.
+`graph_detail="none"` requires `graph_fraction=0`; `"reduced"` draws the traversal
+layout. See [presentation settings](reference/playback-presentation.md).
+Callback frames must satisfy the requested-step, shape and dtype contracts every
+time they are evaluated, including during lazy rendering.
 
-## Export handling
+The playback CLI requires at least one of `--poster`, `--mp4` or `--gif`.
+Overwriting an existing media file requires `--replace`. Outputs are rendered
+before publication and published atomically per file. Check exit status and
+stderr for any partial publication caused by a filesystem failure. An existing
+file or earlier terminal output alone does not establish success.
 
-The CLI requires at least one of `--poster`, `--mp4`, or `--gif`, and
-`--replace` to overwrite existing files. It rejects aliases
-and collisions, renders all requested outputs before publication, and publishes
-atomically per file. Check its exit code and stderr, including reported partial
-publication on a filesystem failure. Do not infer successful completion from
-an existing artifact or earlier terminal output.
+Workflow exports use create-only destinations. Their receipts bind source
+identity and selected membership; the [export guide](library-workflow/results/export.md)
+describes checksums, coordinate joins and streamed-output failures.
 
-## External consumer checklist
+## Check an integration
 
-Verify the migration in each consumer's environment:
+1. Record the package version and the schemas your application accepts.
+2. Check public imports and representative saved records against that version.
+3. Exercise a successful case and relevant invalid-input, solver and export failures.
+4. Inspect the final sequence, placements or media together with their recorded evidence.
 
-1. Pin the Dense Arrays version or commit being adopted.
-2. Check public imports, adapters, saved fixtures, palettes, and callback frames
-   against that version. If an old plan fails validation, reconstruct it from
-   the pinned realized placements, preserving legitimate failed requirements.
-3. Run one successful case and relevant invalid-input and export-failure cases.
-4. Inspect the exported media and its evidence before publishing recipe outputs.
-
-Consumer owners perform these checks in their repositories. Updating Dense
-Arrays alone does not migrate external adapters, notebooks, recipes, or artifacts.
+Keep interpretation of Dense Arrays records with the receiving application.

@@ -1,0 +1,87 @@
+{
+  "proposal_comparisons": 9000,
+  "runtime": {
+    "python": "3.14.7",
+    "platform": "macOS-26.5-arm64-arm-64bit-Mach-O",
+    "ortools": "9.15.6755"
+  },
+  "workloads": [
+    {
+      "length": 20,
+      "count": 1000,
+      "seconds": {
+        "before": [
+          0.1519105409970507,
+          0.14877908299968112,
+          0.14835420900635654
+        ],
+        "after": [
+          0.13090091699996265,
+          0.12807362499734154,
+          0.1296305000068969
+        ]
+      },
+      "traced_peak_bytes": {
+        "before": 1354578,
+        "after": 1354930
+      },
+      "semantic_records_equal": true,
+      "pool_id": "7a355f386f58ce714d661959d8dee7dd3f14e25a5c39ea45f79db7bd3fb5081d",
+      "median_seconds": {
+        "before": 0.14877908299968112,
+        "after": 0.1296305000068969
+      }
+    },
+    {
+      "length": 100,
+      "count": 1000,
+      "seconds": {
+        "before": [
+          0.28024070800165646,
+          0.27627720800228417,
+          0.278688250000414
+        ],
+        "after": [
+          0.1716390000001411,
+          0.1762793750021956,
+          0.1796067499963101
+        ]
+      },
+      "traced_peak_bytes": {
+        "before": 1440236,
+        "after": 1441476
+      },
+      "semantic_records_equal": true,
+      "pool_id": "fd1e94f86c576b5f7912e772b79bd21fb9340544e7a6bec2c98e3325fbf5b77b",
+      "median_seconds": {
+        "before": 0.278688250000414,
+        "after": 0.1762793750021956
+      }
+    }
+  ],
+  "workload": {
+    "background_probabilities": [
+      0.2,
+      0.3,
+      0.3,
+      0.2
+    ],
+    "gc_min": 0.25,
+    "gc_max": 0.75,
+    "retain": 100,
+    "batch_size": 100,
+    "operations": [
+      "plan",
+      "prepare",
+      "inspect with verification",
+      "quality report serialization"
+    ],
+    "repetitions": 3,
+    "timing": "perf_counter after imports and warmup; tracemalloc runs separately",
+    "change": "Reuse only the background categorical distribution within each proposal; motif rows are prepared on demand and used once. Arithmetic and entropy are unchanged.",
+    "seed": 7,
+    "retention_policy": "first_eligible",
+    "sampling_strategy": "stochastic",
+    "uniqueness": "sequence"
+  }
+}

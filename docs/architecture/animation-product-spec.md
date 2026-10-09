@@ -1,21 +1,21 @@
 ---
 title: Playback product brief
-description: Visual and accessibility goals for publication playback, with implementation status kept separate.
+description: Visual, accessibility and publication requirements for figures from persisted placements.
 ---
 
 # Playback product brief
 
-This brief records visual and publication goals. The runtime validates v1
-placement evidence, stores authority in metadata, and displays ambiguous/gapped
-ordering qualifications and failed requirements. These checks do not certify every figure against the typography,
-contrast, and publication goals below. Use the [playback contract](solution-playback.md)
-for enforced semantics and the [development gate](../development.md) for review.
+Playback figures preserve placement evidence, ambiguous or gapped ordering,
+and failed requirements. Review typography, contrast and publication context
+alongside those data guarantees. The [playback contract](solution-playback.md)
+defines validated semantics; the [development gate](../development.md) defines
+repository review checks.
 
 ## Purpose
 
 Dense-array playback explains how an ordered set of overlapping sequence
-features realizes a compact DNA sequence. It is a publication surface, not a
-dashboard and not a visualization of optimizer search.
+features realizes a compact DNA sequence. Its graph and duplex explain
+persisted placement geometry.
 
 The animation has two synchronized representations:
 
@@ -33,15 +33,14 @@ Version 1 plans use `authority=placement_reconstructed`. Their order is
 derived from persisted placements. Playback must not describe this as the solver search, candidate
 graph, or exact solver-selected path.
 
-A future solver-authoritative trace may use the same renderer once dense-arrays
-captures the selected oriented path at solve time. Exact trace capture is not a
-prerequisite for using existing realized arrays.
+Exact solver-trace capture is unsupported. Realized arrays provide the sequence
+and placement evidence needed for reconstructed playback.
 
 ## Product hierarchy
 
 The public package owns neutral contracts, validation, reconstruction,
-serialization, layout, and reference renderers. Producer adapters and recipes
-remain outside this repository.
+serialization, layout and reference renderers. Callers supply native realized
+records; recipes own record selection and publication.
 
 Three presentation tiers exercise the same public surface:
 
@@ -52,9 +51,9 @@ Three presentation tiers exercise the same public surface:
 3. **Study application** uses study-owned identities and labels to explain a
    specific promoter architecture.
 
-DenseGen can supply the first two recipes. Study selection, biological labels,
-and interpretation belong to the owning study repository. These are caller
-examples, not package dependencies or prerequisites for generic playback.
+Generic examples use supplied sequences and placements. Study applications add
+selected records, biological labels and interpretation through caller-owned
+recipes.
 
 ## Visual contract
 

@@ -12,9 +12,8 @@ Persisted record schemas retain their own versions. Never move a published tag
 or replace a published distribution.
 
 The distribution is `dense-arrays`; imports remain `dense_arrays`. The historical
-GitLab `paper` branch describes source installation of version 0.1.0. It is a
-frozen paper route, not the source of current 0.2.0 releases. Preserve both
-authors' credits and identify the actual revision used by each downstream study.
+GitLab `paper` branch describes source installation of version 0.1.0. Preserve that frozen source and both authors' credits. Each downstream study
+should identify the actual revision used for its results.
 
 ## Qualify and publish
 

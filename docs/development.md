@@ -5,30 +5,33 @@ description: Find focused checks, run the full local gate, and preview documenta
 
 # Develop Dense Arrays
 
-Start from the [source checkout](quickstart.md#install-from-source). Read the
+Start from the [source checkout](installation.md#install-from-source). Read the
 [architecture map](architecture/README.md) before changing module boundaries,
 and the [playback contract](architecture/solution-playback.md) before changing
 serialized placements, reconstruction, or rendering.
 
 Choose a focused test from the [task-to-file map](architecture/README.md#find-the-files-for-a-change).
 For documentation, use the [writing and routing guide](development/documentation.md).
-The [baseline audit](development/audit.md) and
-[completed hardening record](development/improvement-plan.md) preserve the
-September 2026 findings, repairs, and verification.
+
+For optimizer changes, use the [model-building measurements](development/optimizer-performance.md)
+and their constraint-parity checks before comparing end-to-end execution time.
 
 ## Local verification
 
-Run the full gate from the repository root before handoff:
+Run these checks from the repository root. `uv sync` manages the checkout’s
+`.venv` from `pyproject.toml` and `uv.lock`; `uv run` selects that environment:
 
 ```bash
-uv sync --frozen --extra dev --extra playback --extra docs
-uv run pre-commit run --all-files
-uv run ruff check .
-uv run ruff format --check .
-uv run pytest -q
-uv run mkdocs build --strict
+uv sync --frozen --extra dev --extra playback --extra docs  # Reproduce the locked tool environment.
+uv run pre-commit run --all-files  # Check tracked source, secrets and formatting.
+uv run ruff check .  # Check Python correctness and style rules.
+uv run ruff format --check .  # Verify formatting without rewriting files.
+uv run pytest -q  # Exercise behavior, failure paths and guide examples.
+uv run mkdocs build --strict  # Reject broken documentation configuration.
+
+# Audit the exact locked versions and hashes across optional features.
 uv export --frozen --all-extras --no-emit-project | uv run pip-audit -r /dev/stdin --require-hashes --disable-pip --progress-spinner off
-uv build
+uv build  # Build the wheel and source distribution.
 ```
 
 To run checks when committing, install the hooks with
