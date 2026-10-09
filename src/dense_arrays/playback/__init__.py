@@ -1,4 +1,14 @@
-"""Public, renderer-independent dense-array playback contracts."""
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/__init__.py
+
+Public, renderer-independent dense-array playback contracts.
+
+Module Author(s): Eric J. South
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from .models import (
     PLAYBACK_PLAN_SCHEMA_VERSION,

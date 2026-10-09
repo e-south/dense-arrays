@@ -1,7 +1,14 @@
-"""Finite timing contracts and shared media frame scheduling.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/frame_schedule.py
+
+Finite timing contracts and shared media frame scheduling.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 

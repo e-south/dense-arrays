@@ -1,7 +1,14 @@
-"""Own media writer lifecycle, staged output publication, and figure cleanup.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/export.py
+
+Own media writer lifecycle, staged output publication, and figure cleanup.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 

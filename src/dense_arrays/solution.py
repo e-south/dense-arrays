@@ -1,8 +1,15 @@
-"""Immutable, contiguous motif-placement results for dense arrays.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/solution.py
+
+Immutable, contiguous motif-placement results for dense arrays.
 
 Module Author(s): Virgile Andreani, Eric J. South
+Maintainer(s): Eric J. South
 Dunlop Lab
-"""
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 

@@ -1,7 +1,14 @@
-"""Public raster media exports for synchronized placement playback.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/matplotlib_renderer.py
+
+Public raster media exports for synchronized placement playback.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 

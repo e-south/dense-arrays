@@ -1,7 +1,14 @@
-"""Evaluate quadratic centerlines, subcurves, and arc-length timing.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/graph/curves.py
+
+Evaluate quadratic centerlines, subcurves, and arc-length timing.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 

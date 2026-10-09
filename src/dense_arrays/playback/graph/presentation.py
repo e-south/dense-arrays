@@ -1,7 +1,14 @@
-"""Explicit display choices applied after semantic graph projection.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/graph/presentation.py
+
+Explicit display choices applied after semantic graph projection.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from ..models import PlaybackStep
 from ..theme import step_color as resolve_step_color

@@ -1,7 +1,14 @@
-"""Measure node occupancy and curve intersections in scene coordinates.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/graph/obstacles.py
+
+Measure node occupancy and curve intersections in scene coordinates.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 

@@ -1,7 +1,14 @@
-"""Renderer-neutral documents and visible placement evidence.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/presentation.py
+
+Renderer-neutral documents and visible placement evidence.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 

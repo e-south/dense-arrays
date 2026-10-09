@@ -1,7 +1,14 @@
-"""Public contracts for a persisted, realized dense array.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/realized.py
+
+Public contracts for a persisted, realized dense array.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 
