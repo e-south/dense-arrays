@@ -27,14 +27,25 @@ from rich.text import Text
 from .errors import OptimizationError
 from .optimizer import Optimizer
 from .solver import SolverControls
-from .workflow.cli import register
+from .workflow.cli import HELP_EPILOG, register
 
 if TYPE_CHECKING:
     from .solution import DenseArray
 
 app = typer.Typer(
     add_completion=False,
-    help="Design densely packed DNA arrays from motif libraries.",
+    help="""Design densely packed DNA arrays and save reusable libraries.
+
+    Example: dense-arrays run --motif ACGTTGCAAGTC --length 12 --out run
+
+    Inputs: explicit motif sequences or versioned YAML/JSON request files.
+
+    Outputs: prepared pools, saved runs, reports, exports or figures.
+
+    On failure: use COMMAND --help for input and output rules; inspect saved
+    results before retrying. Workflow output destinations must be new.
+    """,
+    epilog=HELP_EPILOG,
 )
 
 console = Console()

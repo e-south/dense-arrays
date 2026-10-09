@@ -14,18 +14,29 @@ interfaces share requests, validation and Dense Arrays records. Start with the
 
 ```python
 import dense_arrays as da
+from dense_arrays import parts, planning
 
-# Planning validates and binds the inputs without generating sequences.
-resolved = da.plan("design.yaml")
+# Two synthetic 16-base sites share eight bases and fit within 24 bases.
+request = planning.DesignSpec(
+    parts=(
+        parts.Part("upstream", "ACGTTGCAAGTCCTGA"),
+        parts.Part("downstream", "AGTCCTGATCGTACCG"),
+    ),
+    length=planning.Length(maximum=24),
+)
+# Planning validates the typed request without generating sequences.
+resolved = da.plan(request)
 # A new destination retains accepted designs and the attempt history.
 run = da.run(resolved, out="runs/library")
 # Inspection reads that saved evidence; it does not repeat generation.
 quality = da.inspect(run, view="quality")
+print(quality.to_dict()["attainment"])  # Read accepted and requested counts.
 ```
 
-This example expects a `design.yaml` request and its declared input files. Use
-[the curated-parts example](library-workflow/preparation/curated.md) to create them. Output paths
-must be new. See [installation](installation.md) for solver and optional dependencies.
+Run this example in a new working directory with the
+[library workflow installed](installation.md#use-the-library-workflow).
+It creates `runs/library`. For file inputs and reusable pools, follow
+[the curated-parts guide](library-workflow/preparation/curated.md).
 
 | Operation | Main typed inputs | Result and next task |
 | --- | --- | --- |
@@ -57,6 +68,12 @@ live in `parts`, `planning`, `artifacts` and `reporting`.
 when execution fails after saving the run state. Its cause preserves the
 original exception. Input errors before run creation retain their original types;
 keyboard interruption remains `KeyboardInterrupt`.
+
+When an occurrence minimum exceeds the available parts, `planning.PlanningError`
+carries a `.diagnostic` with the requirement ID, requested minimum, available
+count and input references. Direct table inputs include one-based data rows.
+The CLI returns the same record under `diagnostic` with `--json` and exits with
+status 2. Add matching parts or revise the minimum before generating.
 
 ## Inspect, select and share
 
@@ -91,6 +108,7 @@ unknown. Accepted-design exports retain their own population.
 | Task | Types and route |
 | --- | --- |
 | Import curated parts and annotations | `parts.Part`, `PartTable`, `PartFilter`; [table inputs](library-workflow/tables.md). CSV/TSV use the base install; Parquet/XLSX require the `tables` extra. |
+| Diagnose invalid input rows | `parts.TableImportError`, `RowDiagnostic`; [table diagnostics](library-workflow/tables.md#correct-invalid-rows). |
 | Sample motif candidates and retain eligible parts | `PWMArtifact`, `PreparationSpec`, `Sampling`, `CandidateBudget`, `FimoScoring`, `Eligibility`, `Uniqueness`, `Retention`; [sampled pools](library-workflow/preparation.md). |
 | Declare proposal lengths and strategies | `Sampling`, `LengthRange`, `planning.Length`; [proposal strategies](library-workflow/preparation/motifs.md#choose-a-pwm-proposal-strategy) and [candidate lengths](library-workflow/preparation/windows.md#vary-candidate-length). |
 | Generate constrained backgrounds | `Background`, `ConditionalLimits`; [background sampling](library-workflow/background.md). |

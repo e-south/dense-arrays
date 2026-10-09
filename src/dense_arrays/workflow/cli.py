@@ -63,6 +63,21 @@ from dense_arrays.workflow.presentation import (
 from dense_arrays.workflow.queries import query_filter
 from dense_arrays.workflow.selections import selection_cost
 
+HELP_EPILOG = """Capabilities | Requirements
+
+Supported in base | CSV/TSV parts, packing, inspection and text exports.
+
+Optional dependency | Excel/Parquet: tables extra; PNG: playback extra;
+FIMO scoring: MEME Suite executable.
+
+Not implemented | Playback of an exact solver trace.
+
+Documentation: https://dunloplab.gitlab.io/dense-arrays/library-workflow/
+
+Versioned example files (v1 requests; save the three inputs together):
+https://dunloplab.gitlab.io/dense-arrays/library-workflow/curated-example/
+"""
+
 
 def plan_command(
     source: Annotated[
@@ -88,7 +103,17 @@ def plan_command(
         int | None, typer.Option(help="Maximum parent identity entries retained.")
     ] = None,
 ) -> None:
-    """Preview inputs, requirements and effort without running a solver."""
+    """Preview inputs, requirements and effort without running a solver.
+
+    Example: dense-arrays plan design.yaml --out plan.json
+
+    Inputs: a YAML/JSON request or saved plan and its declared source files.
+
+    Outputs: a preview on stdout; --out creates a resolved plan file.
+
+    On failure: fix the named input or requirement, then plan again.
+    If the output exists, choose a new path.
+    """
     with diagnostics(json_output=json_output):
         if out is not None and out.exists():
             msg = f"output destination already exists: {out}"
@@ -172,7 +197,17 @@ def prepare_command(  # noqa: PLR0913 - shared preparation and batch options
         bool, typer.Option("--json", help="Versioned JSON receipt on stdout.")
     ] = False,
 ) -> None:
-    """Prepare curated, PWM or background parts, or a candidate-batch plan."""
+    """Prepare curated, PWM or background parts, or a candidate-batch plan.
+
+    Example: dense-arrays prepare prepare.yaml --out pool
+
+    Inputs: a preparation request/plan; batch sampling takes a generation plan.
+
+    Outputs: a reusable pool directory, or a batch plan with --batch-size.
+
+    On failure: inspect an incomplete pool with --view quality before retrying.
+    Choose a new destination; install FIMO only for recipes that require it.
+    """
     with diagnostics(json_output=json_output):
         if out.exists() or out.is_symlink():
             msg = f"output destination already exists: {out}"
@@ -278,7 +313,18 @@ def run_command(  # noqa: PLR0913 - explicit CLI options share one request
         bool, typer.Option("--json", help="Versioned JSON receipt on stdout.")
     ] = False,
 ) -> None:
-    """Generate a bounded collection and preserve results for inspection."""
+    """Generate a bounded collection and preserve results for inspection.
+
+    Example: dense-arrays run design.yaml --out run
+
+    Inputs: a design/matrix/extension request, saved plan, or inline motifs.
+
+    Outputs: a native run directory with accepted designs and attempt evidence.
+
+    On failure: inspect run --view diagnostics to explain a shortfall.
+    Use run --resume run only for unchanged interrupted work; new requests
+    need a new output directory.
+    """
     with diagnostics(json_output=json_output):
         if resume is not None:
             if any(
@@ -435,7 +481,18 @@ def inspect_command(  # noqa: PLR0913 - explicit CLI options share one query
         bool, typer.Option("--json", help="Versioned JSON report on stdout.")
     ] = False,
 ) -> None:
-    """Inspect committed results without solving, writing or repairing."""
+    """Read saved evidence without generating, exporting or repairing.
+
+    Example: dense-arrays inspect run --verify
+
+    Inputs: saved runs, bundles, pools, requests or plans; views vary by input.
+
+    Outputs: a bounded report on stdout; --json selects versioned JSON.
+
+    On failure: choose a matching view/filter; narrow the selection or raise
+    an explicit read limit only after reviewing the reported cost.
+    Use export to save data.
+    """
     with diagnostics(json_output=json_output):
         source = artifact[0] if len(artifact) == 1 else artifact
         selected = query_filter(
@@ -520,12 +577,12 @@ def register(app: typer.Typer) -> None:
     """Register the shared workflow operations on the command-line application."""
     from dense_arrays.workflow.export_cli import export_command  # noqa: PLC0415
 
-    app.command("plan")(plan_command)
-    app.command("prepare")(prepare_command)
-    app.command("run")(run_command)
-    app.command("inspect")(inspect_command)
-    app.command("render")(render_command)
-    app.command("export")(export_command)
+    app.command("plan", epilog=HELP_EPILOG)(plan_command)
+    app.command("prepare", epilog=HELP_EPILOG)(prepare_command)
+    app.command("run", epilog=HELP_EPILOG)(run_command)
+    app.command("inspect", epilog=HELP_EPILOG)(inspect_command)
+    app.command("render", epilog=HELP_EPILOG)(render_command)
+    app.command("export", epilog=HELP_EPILOG)(export_command)
 
 
 def render_command(  # noqa: PLR0913 - shared rendering options
@@ -562,7 +619,17 @@ def render_command(  # noqa: PLR0913 - shared rendering options
         bool, typer.Option("--json", help="Versioned receipt on stdout.")
     ] = False,
 ) -> None:
-    """Render stored placements and requirement evidence without generating again."""
+    """Render stored placements and requirement evidence without generating again.
+
+    Example: dense-arrays render run --view library-quality --out quality.png
+
+    Inputs: saved run, bundle, sampled pool or quality report evidence.
+
+    Outputs: one PNG at a new path; no designs are generated.
+
+    On failure: install the playback extra for missing rendering dependencies.
+    For a design view, use inspect --view designs to select exactly one ID.
+    """
     with diagnostics(json_output=json_output):
         caps = {
             key: value

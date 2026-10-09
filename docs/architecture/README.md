@@ -19,6 +19,7 @@ presentation. Find the owner of the behavior before editing:
 | `artifacts/` | Native records, exclusive output ownership, transactional revisions and publication |
 | `reporting/` | Snapshot queries, diagnostics, quality metrics, integrity verification and native-to-playback projection |
 | `workflow/` | Shared operations, execution sequencing and thin CLI translation |
+| `diagnostics` | Immutable diagnostic records shared by validation and inspection |
 | `realized`, `_record_validation` | Producer-neutral placements, JSON snapshots, and sequence alignment |
 | `playback.models`, `playback.validation` | Supported plan fields and cross-record geometry/evidence checks |
 | `playback.reconstruction`, `playback.serialization` | Deterministic compilation and strict JSON boundaries |
@@ -49,6 +50,8 @@ Public entrypoints stay small; helper modules own the listed decisions.
 | Result construction or terminal layout | `solution.py` | `test_core_contracts.py`, `test_optimize.py`, `test_cli.py` |
 | Optimizer command inputs or errors | `cli.py` | `test_cli.py` |
 | Curated input, workflow planning and persisted generation | `parts/`, `planning/`, `generation/`, `workflow/` | `workflow/` |
+| Table row errors and impossible occurrence counts | `parts/tables/diagnostics.py`, `parts/ingestion.py`; `planning/diagnostics.py`, `validation.py`; `diagnostics.py` | `workflow/inputs/test_import_diagnostics.py`, `workflow/test_planning_diagnostics.py` |
+| Command help, examples and feature requirements | `cli.py`; `workflow/cli.py`, `export_cli.py` | `workflow/test_help.py` |
 | Bounded matrix expansion, source selections, substitutions, requirement additions and allocation | `planning/matrices/`, `resolution.py`, `serialization.py`; `parts/bound.py`; `workflow/inputs.py`, `presentation.py` | `workflow/test_matrix_planning.py`, `workflow/test_matrix_sources.py`, `workflow/test_legacy_fixture.py`, `workflow/test_curated_example.py` |
 | Matrix execution, cell state and shared effort | `workflow/matrices.py`, `execution.py`; `artifacts/run_state.py`, `run_plans.py`, `store.py`; `reporting/verification.py` | `workflow/test_matrix_execution.py` |
 | Candidate-batch policies, compact models and executable replay | `planning/batches/`; `generation/batches/`; `workflow/batches.py`; `artifacts/store.py` | `workflow/test_batches.py` |

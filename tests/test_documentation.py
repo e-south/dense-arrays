@@ -28,6 +28,7 @@ def _environment(tmp_path: Path) -> dict[str, str]:
 @pytest.mark.parametrize(
     "page",
     [
+        "api.md",
         "quickstart.md",
         "constraints.md",
         "playback.md",

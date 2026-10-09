@@ -103,7 +103,17 @@ def export_command(  # noqa: PLR0913 - explicit paired query/output options
         typer.Option("--json", help="Versioned receipt; stderr when data uses stdout."),
     ] = False,
 ) -> None:
-    """Export records, editable requests, resolved plans or scoped JSON reports."""
+    """Export records, editable requests, resolved plans or scoped JSON reports.
+
+    Example: dense-arrays export run --all --out designs.json
+
+    Inputs: saved runs/bundles, one pool, or a request/plan file.
+
+    Outputs: a new file or bundle; --out - streams supported text data.
+
+    On failure: use --all for complete record exports, or supply a selection.
+    Match --view to --format and choose a new destination if it exists.
+    """
     with diagnostics(json_output=json_output and out != "-"):
         validate_format(view, format)
         selected = query_filter(
