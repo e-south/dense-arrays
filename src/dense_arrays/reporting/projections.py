@@ -15,6 +15,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING
 
+from dense_arrays.parts.geometry import core_interval
 from dense_arrays.realized import Orientation
 
 if TYPE_CHECKING:
@@ -83,16 +84,7 @@ def project(
     else:
         for placement in design.realized.placements:
             part = parts[placement.feature_id]
-            start, end, orientation = (
-                part.core_start,
-                part.core_end,
-                part.core_orientation,
-            )
-            if start is not None:
-                if placement.orientation == Orientation.REVERSE:
-                    start, end = len(part.sequence) - end, len(part.sequence) - start
-                    orientation = "reverse" if orientation == "forward" else "forward"
-                start, end = placement.start + start, placement.start + end
+            start, end, orientation = core_interval(part, placement)
             direction = {
                 Orientation.FORWARD: "forward",
                 Orientation.REVERSE: "reverse",

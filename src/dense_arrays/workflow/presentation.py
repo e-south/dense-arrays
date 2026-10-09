@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 import typer
 
 from dense_arrays._record_validation import canonical_json, mutable_json
+from dense_arrays.arrays import CollectionView
 from dense_arrays.artifacts.preparation.candidates import PoolCandidate
 from dense_arrays.parts import BoundParts, PreparationSet, PreparationSpec
 from dense_arrays.planning import (
@@ -393,7 +394,9 @@ def display_diagnostics(result: DiagnosticReport, *, json_output: bool) -> None:
         )
 
 
-def display_records(result: RecordView | LibraryView, *, json_output: bool) -> None:
+def display_records(
+    result: RecordView | LibraryView | CollectionView, *, json_output: bool
+) -> None:
     """Stream rows without materializing an unbounded CLI result list."""
     typer.echo("Read cost: " + canonical_json(result.cost.to_dict()), err=True)
     if json_output:
@@ -405,7 +408,7 @@ def display_records(result: RecordView | LibraryView, *, json_output: bool) -> N
                 "cost": result.cost.to_dict(),
                 **(
                     {"sources": list(result.sources)}
-                    if isinstance(result, (LibraryView, BundleView))
+                    if isinstance(result, (LibraryView, BundleView, CollectionView))
                     else {}
                 ),
             }
@@ -437,12 +440,19 @@ def display_records(result: RecordView | LibraryView, *, json_output: bool) -> N
 
 def display_summary(result: object, *, json_output: bool) -> None:
     """Present allocation and source status without exposing record membership."""
+    from dense_arrays.arrays import CollectionSummary  # noqa: PLC0415
     from dense_arrays.artifacts.bundles import BundleSummary  # noqa: PLC0415
     from dense_arrays.artifacts.pool_records import PoolSummary  # noqa: PLC0415
     from dense_arrays.reporting.selections import SelectionSnapshot  # noqa: PLC0415
 
     if json_output:
         typer.echo(canonical_json(result.to_dict()))
+    elif isinstance(result, CollectionSummary):
+        typer.echo(
+            f"Array collection: {result.arrays} arrays, "
+            f"{result.placements} placements, {result.parts} parts; "
+            f"verified: {result.verified}."
+        )
     elif isinstance(result, SelectionSnapshot):
         typer.echo(
             f"Selection: {result.selected} / {result.requested} requested; "

@@ -18,6 +18,7 @@ from typing import Annotated
 import typer
 
 from dense_arrays._record_validation import canonical_json
+from dense_arrays.arrays import CollectionView
 from dense_arrays.artifacts import RunHandle
 from dense_arrays.parts import Part, PreparationSet, PreparationSpec
 from dense_arrays.planning import (
@@ -375,10 +376,14 @@ def inspect_command(  # noqa: PLR0913 - explicit CLI options share one query
     artifact: Annotated[
         list[Path],
         typer.Argument(
-            help="Run/bundle paths, one pool, or a saved plan with --view plan/request."
+            help="Run, bundle, array collection, pool, or saved plan paths."
         ),
     ],
     *,
+    array_id: Annotated[
+        list[str] | None,
+        typer.Option("--array-id", help="Supplied array ID; repeatable."),
+    ] = None,
     view: Annotated[
         str,
         typer.Option(
@@ -386,7 +391,8 @@ def inspect_command(  # noqa: PLR0913 - explicit CLI options share one query
                 "summary; runs/bundles: designs, sequences, placements, batches, "
                 "quality, selection; bundles: plans, plan; "
                 "runs: attempts, diagnostics, plan, request; "
-                "pools: parts, candidates, quality; saved quality reports."
+                "pools: parts, candidates, quality; "
+                "array collections: arrays, parts, sequences, placements."
             )
         ),
     ] = "summary",
@@ -497,6 +503,8 @@ def inspect_command(  # noqa: PLR0913 - explicit CLI options share one query
         source = artifact[0] if len(artifact) == 1 else artifact
         selected = query_filter(
             view,
+            source=artifact[0] if len(artifact) == 1 else artifact,
+            array_id=array_id,
             selection=selection,
             design_id=design_id,
             cell=cell,
@@ -556,7 +564,9 @@ def inspect_command(  # noqa: PLR0913 - explicit CLI options share one query
             ),
         ):
             display_plan(result, json_output=json_output)
-        elif isinstance(result, (RecordView, LibraryView, BundleView, SelectionView)):
+        elif isinstance(
+            result, (RecordView, LibraryView, BundleView, SelectionView, CollectionView)
+        ):
             # A streamed page may already contain bytes; do not append an error object.
             with diagnostics():
                 display_records(result, json_output=json_output)
@@ -588,18 +598,24 @@ def register(app: typer.Typer) -> None:
 def render_command(  # noqa: PLR0913 - shared rendering options
     artifact: Annotated[
         list[Path],
-        typer.Argument(help="Run, bundle, sampled pool or saved quality report paths."),
+        typer.Argument(
+            help="Run, bundle, array collection, pool or quality report paths."
+        ),
     ],
     *,
     out: Annotated[Path, typer.Option(help="Create a PNG file.")],
     view: Annotated[
-        str, typer.Option(help="design, library-quality or preparation-quality.")
+        str, typer.Option(help="design, array, library-quality or preparation-quality.")
     ] = "design",
     selection: Annotated[
         Path | None,
         typer.Option(
             help="Filter or saved selection; design requires exactly one match."
         ),
+    ] = None,
+    array_id: Annotated[
+        list[str] | None,
+        typer.Option("--array-id", help="Supplied array ID; repeatable."),
     ] = None,
     design_id: Annotated[list[str] | None, typer.Option("--design-id")] = None,
     cell: Annotated[list[str] | None, typer.Option("--cell")] = None,
@@ -644,6 +660,8 @@ def render_command(  # noqa: PLR0913 - shared rendering options
         source = artifact[0] if len(artifact) == 1 else artifact
         selected = query_filter(
             "quality" if view == "library-quality" else view,
+            source=artifact[0] if len(artifact) == 1 else artifact,
+            array_id=array_id,
             selection=selection,
             design_id=design_id,
             cell=cell,
@@ -673,13 +691,17 @@ def render_command(  # noqa: PLR0913 - shared rendering options
                 ),
             )
             else limits,
-            select=selected if view == "design" else None,
+            select=selected if view in {"design", "array"} else None,
         )
         if json_output:
             typer.echo(canonical_json(receipt.to_dict()))
         else:
             population = (
-                "retained parts" if view == "preparation-quality" else "designs"
+                "retained parts"
+                if view == "preparation-quality"
+                else "arrays"
+                if view == "array"
+                else "designs"
             )
             typer.echo(
                 f"Rendered {receipt.view} for {receipt.records} {population}: "

@@ -15,6 +15,13 @@ from pathlib import Path
 from typing import TextIO
 
 from dense_arrays._record_validation import integer
+from dense_arrays.arrays import (
+    ArrayCollection,
+    ArrayFilter,
+    CollectionSummary,
+    CollectionView,
+)
+from dense_arrays.arrays.storage import is_collection
 from dense_arrays.artifacts import ExportReceipt, RunHandle
 from dense_arrays.artifacts.bundles.storage import is_bundle
 from dense_arrays.artifacts.cursors import Cursor
@@ -72,7 +79,10 @@ from dense_arrays.workflow.quality import handles_quality, inspect_quality
 
 
 def export(  # noqa: PLR0913 - paired Python/CLI query and output options
-    artifact: RunHandle
+    artifact: ArrayCollection
+    | CollectionSummary
+    | CollectionView
+    | RunHandle
     | SelectionSnapshot
     | PoolHandle
     | RecordView
@@ -106,7 +116,8 @@ def export(  # noqa: PLR0913 - paired Python/CLI query and output options
     out: str | Path | TextIO,
     format: str = "json",  # noqa: A002 - canonical public output option
     view: str | None = None,
-    select: PartFilter
+    select: ArrayFilter
+    | PartFilter
     | CandidateFilter
     | AttemptFilter
     | DesignFilter
@@ -163,7 +174,11 @@ def render(
     out: str | Path,
     view: str = "design",
     read_limits: ReadLimits | None = None,
-    select: DesignFilter | LibrarySelection | SelectionSnapshot | None = None,
+    select: ArrayFilter
+    | DesignFilter
+    | LibrarySelection
+    | SelectionSnapshot
+    | None = None,
 ) -> ExportReceipt:
     """Render persisted design or quality evidence without running generation."""
     from dense_arrays.reporting.rendering import (  # noqa: PLC0415
@@ -171,6 +186,17 @@ def render(
         render_quality,
         validate_design_destination,
     )
+
+    if is_collection(artifact):
+        from dense_arrays.arrays.rendering import render_array  # noqa: PLC0415
+
+        if view != "array":
+            msg = "supplied-array rendering requires view='array'"
+            raise ValueError(msg)
+        query = inspect(
+            artifact, view="arrays", select=select, limit=2, read_limits=read_limits
+        )
+        return render_array(query, Path(out).absolute())
 
     report_types = (
         QualityReport,
@@ -380,7 +406,8 @@ def inspect(  # noqa: PLR0913 - public query options share one operation
     view: str = "summary",
     verify: bool = False,
     limit: int | None = None,
-    select: PartFilter
+    select: ArrayFilter
+    | PartFilter
     | CandidateFilter
     | AttemptFilter
     | DesignFilter
@@ -404,7 +431,9 @@ def inspect(  # noqa: PLR0913 - public query options share one operation
     | tuple[RunHandle | str | Path, ...]
     | None = None,
 ) -> (
-    RunSummary
+    CollectionSummary
+    | CollectionView
+    | RunSummary
     | PoolSummary
     | BundleSummary
     | BundleView
@@ -433,6 +462,22 @@ def inspect(  # noqa: PLR0913 - public query options share one operation
         read_limits=read_limits,
         after=after,
     )
+
+    if is_collection(artifact):
+        from dense_arrays.arrays.inspection import inspect_collection  # noqa: PLC0415
+
+        return inspect_collection(
+            artifact,
+            view=view,
+            verify=verify,
+            limit=limit,
+            selected=select,
+            all_rows=all,
+            read_limits=read_limits or ReadLimits(),
+            after=cursor,
+            compare=compare,
+        )
+
     if handles_quality(artifact, view, compare):
         return inspect_quality(
             artifact,
@@ -498,16 +543,6 @@ def inspect(  # noqa: PLR0913 - public query options share one operation
     if compare is not None:
         msg = "comparison currently requires view='plan'"
         raise ValueError(msg)
-    if isinstance(artifact, (list, tuple)):
-        return _inspect_collection(
-            artifact,
-            view=view,
-            verify=verify,
-            limit=None if all else (100 if limit is None else limit),
-            selected=select,
-            read_limits=read_limits or ReadLimits(),
-            after=cursor,
-        )
     return _inspect_native(
         artifact,
         view=view,
@@ -532,6 +567,16 @@ def _inspect_native(  # noqa: PLR0913 - resolved public inspection options
     after: Cursor | None,
 ) -> RunSummary | PoolSummary | RecordView | QualityReport | DiagnosticReport:
     """Route one native directory to its pool or committed-run reader."""
+    if isinstance(artifact, (list, tuple)):
+        return _inspect_collection(
+            artifact,
+            view=view,
+            verify=verify,
+            limit=None if all_rows else (100 if limit is None else limit),
+            selected=selected,
+            read_limits=read_limits or ReadLimits(),
+            after=after,
+        )
     path = (
         artifact.path
         if isinstance(artifact, (RunHandle, PoolHandle))

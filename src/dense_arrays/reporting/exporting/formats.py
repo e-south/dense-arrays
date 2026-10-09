@@ -13,11 +13,22 @@ Maintainer(s): Eric J. South
 
 def validate_format(view: str, format_name: str) -> None:
     """Reject unsupported combinations before source population reads."""
-    if format_name not in {"json", "csv", "tsv", "fasta", "bundle", "selection"}:
-        msg = "supported export formats: json, csv, tsv, fasta, bundle, selection"
+    if format_name not in {
+        "json",
+        "csv",
+        "tsv",
+        "fasta",
+        "bundle",
+        "selection",
+        "jsonl",
+    }:
+        msg = (
+            "supported export formats: json, jsonl, csv, tsv, fasta, bundle, selection"
+        )
         raise ValueError(msg)
     if view not in {
         "designs",
+        "arrays",
         "sequences",
         "placements",
         "attempts",
@@ -38,12 +49,16 @@ def validate_format(view: str, format_name: str) -> None:
     if format_name == "fasta" and view != "sequences":
         msg = "FASTA requires view='sequences'"
         raise ValueError(msg)
-    if format_name == "bundle" and view != "designs":
-        msg = "bundle requires view='designs'"
+    if format_name == "bundle" and view not in {"designs", "arrays"}:
+        msg = "bundle requires view='designs' or view='arrays'"
         raise ValueError(msg)
     if format_name == "selection" and view not in {"designs", "selection"}:
         msg = "selection format requires designs or selection view"
         raise ValueError(msg)
     if format_name in {"csv", "tsv"} and view not in {"sequences", "placements"}:
         msg = "CSV/TSV require the scalar sequences or placements view"
+        raise ValueError(msg)
+
+    if format_name == "jsonl" and view != "arrays":
+        msg = "JSONL requires view='arrays'"
         raise ValueError(msg)

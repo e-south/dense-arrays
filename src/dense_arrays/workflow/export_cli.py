@@ -32,7 +32,9 @@ from dense_arrays.workflow.queries import query_filter
 def export_command(  # noqa: PLR0913 - explicit paired query/output options
     artifact: Annotated[
         list[Path],
-        typer.Argument(help="Run/bundle paths, one pool, or a request/plan file."),
+        typer.Argument(
+            help="Run, bundle, array collection, pool, or a request/plan file."
+        ),
     ],
     *,
     out: Annotated[
@@ -42,7 +44,7 @@ def export_command(  # noqa: PLR0913 - explicit paired query/output options
         str,
         typer.Option(
             help=(
-                "designs, sequences, placements, attempts, batches, parts, "
+                "arrays, designs, sequences, placements, attempts, batches, parts, "
                 "candidates; summary, request, plan, quality, diagnostics; "
                 "bundled plans."
             )
@@ -50,7 +52,12 @@ def export_command(  # noqa: PLR0913 - explicit paired query/output options
     ] = "designs",
     format: Annotated[  # noqa: A002 - paired public output option
         str,
-        typer.Option(help="json; scalar csv/tsv; sequences fasta; bundle; selection."),
+        typer.Option(
+            help=(
+                "json; arrays jsonl; scalar csv/tsv; "
+                "sequences fasta; bundle; selection."
+            )
+        ),
     ] = "json",
     all_rows: Annotated[
         bool,
@@ -70,6 +77,10 @@ def export_command(  # noqa: PLR0913 - explicit paired query/output options
     selection: Annotated[
         Path | None,
         typer.Option(help="Declared filter, allocation policy or saved snapshot."),
+    ] = None,
+    array_id: Annotated[
+        list[str] | None,
+        typer.Option("--array-id", help="Supplied array ID; repeatable."),
     ] = None,
     design_id: Annotated[list[str] | None, typer.Option("--design-id")] = None,
     plan_id: Annotated[list[str] | None, typer.Option("--plan-id")] = None,
@@ -118,6 +129,8 @@ def export_command(  # noqa: PLR0913 - explicit paired query/output options
         validate_format(view, format)
         selected = query_filter(
             view,
+            source=artifact[0] if len(artifact) == 1 else artifact,
+            array_id=array_id,
             selection=selection,
             design_id=design_id,
             cell=cell,

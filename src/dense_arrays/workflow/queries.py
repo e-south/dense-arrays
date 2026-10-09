@@ -12,6 +12,8 @@ Maintainer(s): Eric J. South
 
 from pathlib import Path
 
+from dense_arrays.arrays import ArrayFilter
+from dense_arrays.arrays.storage import is_collection
 from dense_arrays.parts import PartFilter
 from dense_arrays.reporting import (
     AttemptFilter,
@@ -25,6 +27,8 @@ from dense_arrays.workflow.inputs import read_selection
 def query_filter(  # noqa: PLR0913 - one shared set of CLI selection options
     view: str,
     *,
+    source: object = None,
+    array_id: list[str] | None = None,
     selection: Path | None = None,
     design_id: list[str] | None = None,
     cell: list[str] | None = None,
@@ -36,11 +40,20 @@ def query_filter(  # noqa: PLR0913 - one shared set of CLI selection options
     candidate_index: list[int] | None = None,
     recipe_id: list[str] | None = None,
     reason: list[str] | None = None,
-) -> CandidateFilter | PartFilter | AttemptFilter | DesignFilter | PlanFilter | None:
+) -> (
+    ArrayFilter
+    | CandidateFilter
+    | PartFilter
+    | AttemptFilter
+    | DesignFilter
+    | PlanFilter
+    | None
+):
     """Reject mixed predicates and file/flag precedence instead of guessing."""
     flags = any(
         value is not None
         for value in (
+            array_id,
             design_id,
             cell,
             part_id,
@@ -53,6 +66,31 @@ def query_filter(  # noqa: PLR0913 - one shared set of CLI selection options
             reason,
         )
     )
+    if array_id is not None or (is_collection(source) and view != "parts"):
+        if any(
+            value is not None
+            for value in (
+                selection,
+                design_id,
+                cell,
+                attempt_id,
+                outcome,
+                plan_id,
+                candidate_index,
+                recipe_id,
+                reason,
+            )
+        ):
+            msg = "array queries support --array-id, --part-id and --group"
+            raise ValueError(msg)
+        if not is_collection(source):
+            msg = "--array-id requires an array collection"
+            raise ValueError(msg)
+        return (
+            ArrayFilter(tuple(array_id or ()), tuple(part_id or ()), tuple(group or ()))
+            if flags
+            else None
+        )
     if selection is not None:
         if flags:
             msg = "--selection is exclusive with filter flags"

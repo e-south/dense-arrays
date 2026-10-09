@@ -165,6 +165,35 @@ def render_design(
     design = _selected_design(query, budget)
     plan, origin_plan = _selected_plan(query, design, budget)
     document = _document(design, plan)
+    rendered = publish_document(document, out)
+    return ExportReceipt(
+        str(out),
+        "png",
+        "design",
+        1,
+        tuple(
+            {
+                **source,
+                **(
+                    {"plan_id": origin_plan}
+                    if source.get("run_id") == design.run_id and origin_plan is not None
+                    else {}
+                ),
+            }
+            for source in query.sources
+        ),
+        (design.reference,),
+        tuple(rendered),
+        selection=query.snapshot.summary()
+        if isinstance(query, SelectionView)
+        else None,
+    )
+
+
+def publish_document(
+    document: PlaybackDocument, out: Path
+) -> tuple[dict[str, object], ...]:
+    """Publish one playback document with optional dependencies and atomic output."""
     try:
         for module in ("matplotlib.pyplot", "networkx", "PIL.Image"):
             import_module(module)
@@ -193,28 +222,7 @@ def render_design(
         )
 
     publish_exports(None, {"design.png": out}, publish, replace=False)
-    return ExportReceipt(
-        str(out),
-        "png",
-        "design",
-        1,
-        tuple(
-            {
-                **source,
-                **(
-                    {"plan_id": origin_plan}
-                    if source.get("run_id") == design.run_id and origin_plan is not None
-                    else {}
-                ),
-            }
-            for source in query.sources
-        ),
-        (design.reference,),
-        tuple(rendered),
-        selection=query.snapshot.summary()
-        if isinstance(query, SelectionView)
-        else None,
-    )
+    return tuple(rendered)
 
 
 def _selected_design(

@@ -16,6 +16,17 @@ from dataclasses import replace
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from dense_arrays.arrays import CollectionSummary, CollectionView
+from dense_arrays.arrays.exporting import (
+    SuppliedExport,
+    handles_export,
+)
+from dense_arrays.arrays.exporting import (
+    publish_export as publish_arrays,
+)
+from dense_arrays.arrays.exporting import (
+    resolve_export as resolve_arrays,
+)
 from dense_arrays.artifacts.reading import ReadCost
 from dense_arrays.reporting import LibraryView, ReadLimits, RecordView
 from dense_arrays.reporting.bundles import BundleView
@@ -85,9 +96,18 @@ def resolve_export(  # noqa: PLR0913 - shared operation and CLI options
     """Bind the declared scope once; reports keep their explicit display bounds."""
     from dense_arrays.workflow.operations import inspect  # noqa: PLC0415
 
-    if not isinstance(all_rows, bool):
-        msg = "all must be a boolean"
-        raise TypeError(msg)
+    if handles_export(artifact):
+        return resolve_arrays(
+            artifact,
+            view=view,
+            format_name=format_name,
+            all_rows=all_rows,
+            selected=selected,
+            read_limits=read_limits,
+            limit=limit,
+            compare=compare,
+        )
+    _validate_all(all_rows=all_rows)
     bound = isinstance(
         artifact, (RecordView, LibraryView, BundleView, SelectionView, DocumentView)
     )
@@ -99,11 +119,8 @@ def resolve_export(  # noqa: PLR0913 - shared operation and CLI options
         else document_view(artifact) or "designs"
     )
     validate_format(view, format_name)
-    bounded = (
-        isinstance(artifact, (SelectionSnapshot, SelectionView))
-        or isinstance(selected, SelectionSnapshot)
-        or (isinstance(selected, LibrarySelection) and selected.take is not None)
-    )
+    bounded = _bounded(artifact, selected)
+    # Bound selections declare their complete output scope.
     if bounded and all_rows:
         msg = "all contradicts an explicitly bounded or saved selection"
         raise ValueError(msg)
@@ -181,7 +198,7 @@ def export_cost(
 ) -> ReadCost:
     """Include evidence reads in the bundle publication estimate."""
     cost = query.cost
-    if format_name != "bundle":
+    if format_name != "bundle" or isinstance(query, (CollectionView, SuppliedExport)):
         return cost
     extra = (
         1 + 2 * len(query.summary.manifest["plans"])
@@ -214,6 +231,8 @@ def publish_export(
     out: str | Path | TextIO,
 ) -> ExportReceipt:
     """Write the same bound query described to either frontend."""
+    if isinstance(query, (SuppliedExport, CollectionView, CollectionSummary)):
+        return publish_arrays(query, format_name=format_name, out=out)
     if format_name == "bundle":
         from dense_arrays.reporting.exporting.bundles import (  # noqa: PLC0415
             export_bundle,
@@ -276,3 +295,18 @@ def _resolve_document(
     return DocumentView(
         value, view, read_limits or getattr(value, "read_limits", ReadLimits())
     )
+
+
+def _bounded(artifact: object, selected: object) -> bool:
+    """Recognize explicit finite selections before export scope validation."""
+    return (
+        isinstance(artifact, (SelectionSnapshot, SelectionView))
+        or isinstance(selected, SelectionSnapshot)
+        or (isinstance(selected, LibrarySelection) and selected.take is not None)
+    )
+
+
+def _validate_all(*, all_rows: bool) -> None:
+    if not isinstance(all_rows, bool):
+        msg = "all must be a boolean"
+        raise TypeError(msg)
