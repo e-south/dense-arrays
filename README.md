@@ -1,6 +1,7 @@
 # ![Dense Arrays — overlapping motifs within a sequence-length limit](https://raw.githubusercontent.com/e-south/dense-arrays/v0.3.0/docs/assets/dense-arrays-banner.png)
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)](https://github.com/e-south/dense-arrays/blob/main/pyproject.toml)
+[![PyPI version](https://img.shields.io/pypi/v/dense-arrays)](https://pypi.org/project/dense-arrays/)
 [![CI](https://github.com/e-south/dense-arrays/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/e-south/dense-arrays/actions/workflows/ci.yml)
 [![Documentation](https://img.shields.io/badge/docs-read-blue)](https://dunloplab.gitlab.io/dense-arrays)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](https://github.com/e-south/dense-arrays/blob/main/LICENSE)
@@ -28,7 +29,15 @@ dense-arrays optimize \
   --length 40 --strands double
 ```
 
-One optimum contains all four sites in 40 bases. The
+The result reports four placed sites and a 40-base sequence. For example:
+
+```text
+Optimal solution | score 4 | length 40 / 40 limit | compression 1.600
+TGAACGTCCTAAGCATCGGTACGATCAGGACTTGCAACGT
+```
+
+The terminal also draws the aligned sites; an equally optimal solution can use
+the reverse complement. The
 [first-array guide](https://github.com/e-south/dense-arrays/blob/main/docs/quickstart.md)
 explains the overlaps and shows the matching Python code.
 [Installation](https://github.com/e-south/dense-arrays/blob/main/docs/installation.md)

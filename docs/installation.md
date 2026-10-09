@@ -41,36 +41,46 @@ with `.venv\Scripts\Activate.ps1` instead of the `source` command.
 Continue with [your first array](quickstart.md). That example uses the published
 optimizer and needs no FIMO installation.
 
-The published [0.2.1 package](https://pypi.org/project/dense-arrays/0.2.1/)
-provides direct packing and playback. The parts-to-library workflow and `tables`
-extra described in this documentation require the source checkout containing
-those features; they are not in the published 0.2.1 distribution.
+The published [0.3.0 package](https://pypi.org/project/dense-arrays/0.3.0/)
+includes direct packing, part preparation, library generation and supplied-array
+collections. All workflow guides below use that release or later.
 
 ## Optional features
 
 Choose the dependencies required by your task:
 
-| Task | Installation | Availability |
-| --- | --- | --- |
-| Render placement images and GIFs | `python -m pip install "dense-arrays[playback]"` | Published package |
-| Write MP4 playback | Install `playback` and an FFmpeg executable on `PATH` | Published package |
-| Read Parquet and Excel part tables | `python -m pip install ".[tables]"` from the source checkout | Source workflow |
-| Use CSV or TSV part tables | No table extra | Source workflow |
-| Score sampled candidates with FIMO | Install the MEME Suite executable separately | Source workflow |
+| Task | Installation |
+| --- | --- |
+| Render placement images and GIFs | `python -m pip install "dense-arrays[playback]"` |
+| Write MP4 playback | Install `playback` and an FFmpeg executable on `PATH` |
+| Read Parquet and Excel part tables | `python -m pip install "dense-arrays[tables]"` |
+| Use CSV or TSV part tables | Included in the base package |
+| Score sampled candidates with FIMO | Install the MEME Suite executable separately |
 
 The `docs` and `dev` extras support documentation and contributor checks; see
 [development](development.md). FIMO is an external executable, not an extra.
 
 ## Use the library workflow
 
-### Install from source
-
-The library workflow is available on `feat/library-workflow`. Clone that branch,
-then create an environment for the checkout. These commands require Git:
+The base installation above includes the workflow. Add table readers and figures
+if your task needs them, then check the command:
 
 ```bash
-# Download the source that provides the library workflow.
-git clone --branch feat/library-workflow https://github.com/e-south/dense-arrays.git
+# Add optional table formats and rendering to the activated environment.
+python -m pip install "dense-arrays[tables,playback]>=0.3.0"
+# Show planning inputs and options before generating a library.
+dense-arrays plan --help
+```
+
+Continue with [Generate a saved library](library-workflow.md).
+
+## Install from source
+
+Use a source checkout when developing Dense Arrays. These commands require Git:
+
+```bash
+# Download the current development source.
+git clone https://github.com/e-south/dense-arrays.git
 cd dense-arrays
 
 # Create and select an environment for this checkout.
@@ -86,7 +96,7 @@ dense-arrays plan --help
 
 Use `python -m pip install .` if you do not need those extras. This installs a
 snapshot of the local source; rerun the installation after updating the checkout.
-If you already have the workflow checkout, start with the environment commands
+If you already have the checkout, start with the environment commands
 from its root directory.
 
 ## Configure FIMO for motif scoring
@@ -148,11 +158,11 @@ activation is unnecessary. Keep the manifest and lockfile with your analysis.
 The `--no-workspace` option keeps this project separate from any parent project.
 Run an existing Python script with `uv run python path/to/analysis.py`.
 
-To use a local workflow checkout instead of the published package, replace the
+To develop against a local checkout, replace the
 `uv add` command with this [path dependency](https://docs.astral.sh/uv/concepts/projects/dependencies/#path):
 
 ```bash
-# Replace ../dense-arrays with the path to the checkout containing the workflow.
+# Replace ../dense-arrays with the path to your development checkout.
 uv add "dense-arrays[tables,playback] @ ../dense-arrays"
 
 # Confirm that the selected source provides workflow planning.
@@ -164,8 +174,7 @@ uv run dense-arrays plan --help
 Use a [Pixi project](https://pixi.prefix.dev/latest/python/tutorial/) if you want
 one environment for Python packages and the MEME Suite executable. Bioconda's
 [`meme` package](https://bioconda.github.io/recipes/meme/README.html) includes FIMO.
-Choose a new project directory. Replace the absolute file URL below with the
-location of a checkout containing the workflow:
+Choose a new project directory:
 
 ```bash
 # Create a project using the channels that supply Python and MEME Suite.
@@ -175,8 +184,8 @@ cd array-project
 # Resolve Python and the MEME Suite command-line programs together.
 pixi add "python=3.12" meme
 
-# Add the local Python package through Pixi's PyPI dependency support.
-pixi add --pypi "dense-arrays @ file:///absolute/path/to/dense-arrays"
+# Add the published Python package through Pixi's PyPI dependency support.
+pixi add --pypi "dense-arrays>=0.3.0"
 
 # Confirm both commands are available in the same project environment.
 pixi run fimo --version

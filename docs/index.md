@@ -16,7 +16,7 @@ command line use the same operations.
 
 [Install Dense Arrays](installation.md), then [create your first array](quickstart.md).
 To [generate a saved library](library-workflow.md), use the
-[source workflow installation](installation.md#use-the-library-workflow).
+[published workflow installation](installation.md#use-the-library-workflow).
 For a larger table-based workflow with multiple design combinations, follow
 [the curated binding-site example](library-workflow/curated-example.md).
 
