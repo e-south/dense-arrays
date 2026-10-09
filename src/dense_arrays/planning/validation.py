@@ -12,6 +12,7 @@ Maintainer(s): Eric J. South
 
 from dense_arrays.constraints import count_bounds
 from dense_arrays.parts import PartSelector
+from dense_arrays.planning.diagnostics import insufficient_parts
 from dense_arrays.planning.models import DesignSpec
 from dense_arrays.planning.requirements import (
     GC,
@@ -105,10 +106,12 @@ def _validate_counts(request: DesignSpec, fixed_ids: set[str]) -> None:
         if isinstance(rule, Occurrences):
             try:
                 selected = rule.select.indices(request.parts)
-                count_bounds(rule.min, rule.max, len(selected))
             except ValueError as error:
                 msg = f"{rule.id}: {error}"
                 raise ValueError(msg) from error
+            if rule.min is not None and rule.min > len(selected):
+                raise insufficient_parts(rule, selected)
+            count_bounds(rule.min, rule.max, len(selected))
             mandatory = sum(request.parts[i].part_id in fixed_ids for i in selected)
             if rule.max is not None and mandatory > rule.max:
                 msg = f"{rule.id}: fixed occurrences exceed the maximum count"

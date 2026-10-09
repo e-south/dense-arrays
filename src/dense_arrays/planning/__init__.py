@@ -18,6 +18,7 @@ from .batches import (
     FeedbackSnapshot,
     Resampling,
 )
+from .diagnostics import PlanningError
 from .evidence import PlanEvidence
 from .extension import ExtensionSpec, ParentRun
 from .libraries import LibraryExclusion
@@ -61,6 +62,7 @@ __all__ = [
     "Padding",
     "ParentRun",
     "PlanEvidence",
+    "PlanningError",
     "PreparationPlan",
     "Resampling",
     "RunReference",

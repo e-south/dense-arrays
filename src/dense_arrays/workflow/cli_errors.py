@@ -23,6 +23,8 @@ from dense_arrays.artifacts.errors import ArtifactIntegrityError
 from dense_arrays.artifacts.recovery import RecoveryError
 from dense_arrays.errors import OptimizationError
 from dense_arrays.parts.scoring import ScoringError
+from dense_arrays.parts.tables.diagnostics import TableImportError
+from dense_arrays.planning.diagnostics import PlanningError
 from dense_arrays.reporting import ReadLimitError
 from dense_arrays.reporting.selections import SelectionShortfall
 from dense_arrays.workflow.execution import RunExecutionError
@@ -66,6 +68,8 @@ def diagnostics(*, json_output: bool = False) -> Iterator[None]:
         code = (
             err.code
             if isinstance(err, RecoveryError)
+            else err.diagnostic.code
+            if isinstance(err, PlanningError)
             else "selection_shortfall"
             if isinstance(err, SelectionShortfall)
             else "read_limit"
@@ -87,6 +91,16 @@ def diagnostics(*, json_output: bool = False) -> Iterator[None]:
                         "code": code,
                         "message": str(err),
                         "exit_code": exit_code,
+                        **(
+                            {"diagnostic": err.diagnostic.to_dict()}
+                            if isinstance(err, PlanningError)
+                            else {}
+                        ),
+                        **(
+                            {"import_report": err.to_dict()}
+                            if isinstance(err, TableImportError)
+                            else {}
+                        ),
                         **(
                             {"reason": err.reason}
                             if isinstance(err, ScoringError)

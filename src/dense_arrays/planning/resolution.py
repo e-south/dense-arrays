@@ -26,6 +26,7 @@ from dense_arrays.parts import BoundParts, Part, PartTable, PoolSource
 from dense_arrays.parts.ingestion import read_parts
 from dense_arrays.parts.provenance import ImportReport
 from dense_arrays.planning.batches.bindings import maximum_offered_parts
+from dense_arrays.planning.diagnostics import PlanningError
 from dense_arrays.planning.evidence import PlanEvidence
 from dense_arrays.planning.libraries import ParentLibrary
 from dense_arrays.planning.models import DesignSpec
@@ -339,12 +340,20 @@ def bind_design(request: DesignSpec, source: BoundParts) -> GenerationPlan:
             )
         )
     )
-    return GenerationPlan(
-        replace(request, parts=source.parts),
-        bindings,
-        source.import_report,
-        embedded_input_digests=source.input_digests if source.locations is None else (),
-    )
+    try:
+        return GenerationPlan(
+            replace(request, parts=source.parts),
+            bindings,
+            source.import_report,
+            embedded_input_digests=source.input_digests
+            if source.locations is None
+            else (),
+        )
+    except PlanningError as error:
+        located = error.with_source(source)
+        if located is error:
+            raise
+        raise located from error
 
 
 def resolve_source(

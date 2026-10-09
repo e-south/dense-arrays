@@ -126,3 +126,21 @@ These reduce parser overhead; they do not make total import memory constant.
 Missing optional readers fail before pool publication, with the required install
 extra in the error. A saved executable plan still checks its input fingerprint
 before running. Inspection of persisted parts uses their saved evidence.
+
+## Correct invalid rows
+
+A table with invalid part values raises `parts.TableImportError` before planning,
+preparation or generation creates output. Its `rows` and `invalid_rows` give
+complete counts; `diagnostics` contains the first 20 invalid rows in source order.
+Each diagnostic identifies the one-based logical row, field-to-column mappings,
+and validation failure. A duplicate part ID also names its first source row.
+
+Each invalid row contributes once, using the first validation failure found in
+that row. Fix the reported rows and repeat validation to find any further errors
+within them. `error.to_dict()` returns the counted report in Python. CLI failures
+retain exit code **2** and include the same `import_report` under `--json`;
+`omitted_rows` counts invalid rows beyond the displayed sample.
+
+Missing columns, unreadable files, unavailable readers and structural parser
+errors stop immediately: their remaining row population cannot be counted
+reliably. No failed import returns a partial pool.

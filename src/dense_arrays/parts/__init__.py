@@ -31,6 +31,7 @@ from .sampling import (
 )
 from .scoring.configuration import FimoScoring, ScoringLimits
 from .screening import PWMExclusion
+from .tables.diagnostics import RowDiagnostic, TableImportError
 
 __all__ = [
     "MMR",
@@ -57,8 +58,10 @@ __all__ = [
     "PreparationSet",
     "PreparationSpec",
     "Retention",
+    "RowDiagnostic",
     "Sampling",
     "ScoreBands",
     "ScoringLimits",
+    "TableImportError",
     "Uniqueness",
 ]
