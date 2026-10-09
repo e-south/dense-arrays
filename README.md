@@ -5,14 +5,14 @@
 [![Documentation](https://img.shields.io/badge/docs-read-blue)](https://dunloplab.gitlab.io/dense-arrays)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](https://github.com/e-south/dense-arrays/blob/main/LICENSE)
 
-Dense Arrays packs DNA binding sites into short sequences by sharing compatible
-bases. Prepare parts, generate constrained libraries, and inspect or export each
-sequence with the positions and orientations of its selected parts.
+Dense Arrays designs nucleotide sequences with densely packed DNA-protein binding
+sites. It uses optimal string packing to arrange overlapping sites on both DNA
+strands, with controls for sequence length, site placement, and library diversity.
 
 ## First array
 
-Use Python 3.12 or later. These four synthetic 16-base sites illustrate overlap;
-they are not experimentally validated binding sites.
+Use Python 3.12 or later. This example packs four synthetic 16-base motifs into a
+40-base array.
 
 ```bash
 python -m venv .venv                       # Create an isolated Python environment.
@@ -46,7 +46,6 @@ It also links the API, method, and contributor guides.
 Andreani V, South EJ, Dunlop MJ (2024). Generating information-dense promoter
 sequences with optimal string packing. *PLOS Computational Biology* 20(7):
 e1012276. [Paper](https://doi.org/10.1371/journal.pcbi.1012276).
-Record the package version with your results.
 
 [Report an issue](https://github.com/e-south/dense-arrays/issues) ·
 [Contribute](https://github.com/e-south/dense-arrays/blob/main/docs/development.md) ·
