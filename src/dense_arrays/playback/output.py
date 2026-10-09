@@ -1,7 +1,14 @@
-"""Stage requested exports before publishing files to distinct output paths.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/playback/output.py
+
+Stage requested exports before publishing files to distinct output paths.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 
@@ -20,7 +27,7 @@ def _same_file(left: Path, right: Path) -> bool:
 
 
 def _validate_outputs(
-    source: Path, outputs: Mapping[str, Path], *, replace: bool
+    source: Path | None, outputs: Mapping[str, Path], *, replace: bool
 ) -> dict[str, Path]:
     targets: dict[str, Path] = {}
     for name, path in outputs.items():
@@ -28,7 +35,7 @@ def _validate_outputs(
             msg = f"output path must not be a symlink: {path}"
             raise ValueError(msg)
         target = path.resolve()
-        if _same_file(source, target):
+        if source is not None and _same_file(source, target):
             msg = f"output path aliases the input: {path}"
             raise ValueError(msg)
         if any(_same_file(target, prior) for prior in targets.values()):
@@ -50,7 +57,7 @@ def _validate_outputs(
 
 
 def publish_exports(
-    source: Path,
+    source: Path | None,
     outputs: Mapping[str, Path],
     render: Callable[[Mapping[str, Path]], None],
     *,
@@ -60,8 +67,11 @@ def publish_exports(
 
     Rendering failures leave existing files untouched. Publication is atomic
     per file; a filesystem failure reports exactly which files were published.
+    In-memory documents have no source file; pass None for that case.
     """
-    targets = _validate_outputs(source.resolve(), outputs, replace=replace)
+    targets = _validate_outputs(
+        None if source is None else source.resolve(), outputs, replace=replace
+    )
     with ExitStack() as stack:
         staged: dict[str, Path] = {}
         for name, target in targets.items():
