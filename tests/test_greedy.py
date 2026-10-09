@@ -3,9 +3,39 @@
 Author: Eric J. South.
 """
 
+import json
+from pathlib import Path
+
 import pytest
 
 from dense_arrays import Optimizer
+
+
+def test_greedy_cooperative_deadline_stops_before_search():
+    from dense_arrays.greedy import realize_greedy  # noqa: PLC0415
+    from dense_arrays.problem import PackingProblem  # noqa: PLC0415
+
+    problem = PackingProblem.create(["AAA", "CCC"], 6, "single")
+    with pytest.raises(TimeoutError, match="greedy"):
+        realize_greedy(problem, deadline=0)
+
+
+def test_greedy_preserves_released_fixture_geometry():
+    fixture = json.loads(
+        (
+            Path(__file__).parent / "fixtures/workflow/dense-arrays-greedy-v1.json"
+        ).read_text()
+    )
+    for case in fixture["cases"]:
+        result = Optimizer(
+            case["library"], case["length"], case["strands"]
+        ).approximate()
+        assert {
+            "sequence": result.sequence,
+            "offsets_fwd": result.offsets_fwd,
+            "offsets_rev": result.offsets_rev,
+            "occurrences": result.nb_motifs,
+        } == case["expected"]
 
 
 @pytest.mark.parametrize(

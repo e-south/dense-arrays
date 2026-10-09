@@ -81,7 +81,7 @@ ignore = [
 # Keep the existing explicit media option signatures.
 "src/dense_arrays/playback/matplotlib_renderer.py" = ["PLR0913"]
 "src/dense_arrays/playback/export.py" = ["PLR0913"]
-"tests/test_*.py" = ["ANN201", "D103", "S101", "PLR2004", "FBT001"]
+"tests/**/test_*.py" = ["ANN201", "D103", "S101", "PLR2004", "FBT001"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"

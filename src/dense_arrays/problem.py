@@ -1,7 +1,14 @@
-"""Validated, immutable motif-packing problem inputs.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/problem.py
+
+Validated, immutable motif-packing problem inputs.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 
@@ -75,10 +82,16 @@ class PackingProblem:
     library: tuple[str, ...]
     sequence_length: int
     strands: str
+    length_mode: str = "maximum"
 
     @classmethod
     def create(
-        cls, library: Sequence[str], sequence_length: int, strands: str
+        cls,
+        library: Sequence[str],
+        sequence_length: int,
+        strands: str,
+        *,
+        length_mode: str = "maximum",
     ) -> PackingProblem:
         """Validate caller inputs before model allocation.
 
@@ -96,7 +109,10 @@ class PackingProblem:
         if not isinstance(strands, str) or strands not in {"single", "double"}:
             msg = "strands must be single or double"
             raise ValueError(msg)
-        return cls(motif_library(library), length, strands)
+        if not isinstance(length_mode, str) or length_mode not in {"maximum", "exact"}:
+            msg = "length_mode must be maximum or exact"
+            raise ValueError(msg)
+        return cls(motif_library(library), length, strands, length_mode)
 
     @property
     def oriented_library(self) -> tuple[str, ...]:

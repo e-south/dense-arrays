@@ -1,7 +1,14 @@
-"""Distinct outcomes of optimization and solver result validation.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/errors.py
+
+Distinct outcomes of optimization and solver result validation.
 
 Module Author(s): Eric J. South
-"""
+Maintainer(s): Eric J. South
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 
 class OptimizationError(RuntimeError):

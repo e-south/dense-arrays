@@ -1,8 +1,15 @@
-"""Design motif arrays and report solver outcomes from the command line.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/cli.py
+
+Design motif arrays and report solver outcomes from the command line.
 
 Module Author(s): Virgile Andreani, Eric J. South
+Maintainer(s): Eric J. South
 Dunlop Lab
-"""
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 
@@ -19,6 +26,7 @@ from rich.text import Text
 
 from .errors import OptimizationError
 from .optimizer import Optimizer
+from .solver import SolverControls
 
 if TYPE_CHECKING:
     from .solution import DenseArray
@@ -75,7 +83,7 @@ def _print_solution(title: str, solution: DenseArray) -> None:
 
 
 @app.command()
-def optimize(
+def optimize(  # noqa: PLR0913, PLR0917
     length: Annotated[
         int,
         typer.Option("--length", min=1, help="Target sequence length."),
@@ -92,6 +100,17 @@ def optimize(
         str,
         typer.Option("--solver", help="OR-Tools solver backend."),
     ] = "CBC",
+    solver_seconds: Annotated[
+        float | None,
+        typer.Option(
+            "--solver-seconds",
+            help="Cooperative time limit per solve, in seconds; not a total deadline.",
+        ),
+    ] = None,
+    solver_threads: Annotated[
+        int | None,
+        typer.Option("--solver-threads", min=1, help="Backend threads (SCIP only)."),
+    ] = None,
     motif: Annotated[
         list[str] | None,
         typer.Option("--motif", help="Motif sequence (repeatable)."),
@@ -116,9 +135,12 @@ def optimize(
         If input cannot be read or validated, or optimization fails.
     """
     try:
+        controls = SolverControls(
+            time_limit_seconds=solver_seconds, threads=solver_threads
+        )
         motifs = _load_motifs(motif, motifs_file)
         opt = Optimizer(motifs, sequence_length=length, strands=strands.value)
-        best = opt.optimal(solver=solver)
+        best = opt.optimal(solver=solver, controls=controls)
     except (OSError, ValueError, OptimizationError) as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(code=1) from exc
@@ -152,6 +174,17 @@ def solutions(  # noqa: PLR0913, PLR0917
         bool,
         typer.Option("--diverse", help="Return solutions in diversity-biased order."),
     ] = False,
+    solver_seconds: Annotated[
+        float | None,
+        typer.Option(
+            "--solver-seconds",
+            help="Cooperative time limit per solve, in seconds; not a total deadline.",
+        ),
+    ] = None,
+    solver_threads: Annotated[
+        int | None,
+        typer.Option("--solver-threads", min=1, help="Backend threads (SCIP only)."),
+    ] = None,
     motif: Annotated[
         list[str] | None,
         typer.Option("--motif", help="Motif sequence (repeatable)."),
@@ -168,7 +201,7 @@ def solutions(  # noqa: PLR0913, PLR0917
         ),
     ] = None,
 ) -> None:
-    """List multiple solutions in decreasing score order.
+    """List proven solutions under the requested objective policy.
 
     Raises
     ------
@@ -176,12 +209,15 @@ def solutions(  # noqa: PLR0913, PLR0917
         If input cannot be read or validated, or optimization fails.
     """
     try:
+        controls = SolverControls(
+            time_limit_seconds=solver_seconds, threads=solver_threads
+        )
         motifs = _load_motifs(motif, motifs_file)
         opt = Optimizer(motifs, sequence_length=length, strands=strands.value)
         iterator = (
-            opt.solutions_diverse(solver=solver)
+            opt.solutions_diverse(solver=solver, controls=controls)
             if diverse
-            else opt.solutions(solver=solver)
+            else opt.solutions(solver=solver, controls=controls)
         )
         solutions_iter = it.islice(iterator, max_solutions)
         any_solution = False

@@ -22,11 +22,15 @@ uv run dense-arrays-playback --help
 | `--length` | Required positive integer sequence-length limit |
 | `--strands` | `single` or `double`; defaults to `double` |
 | `--solver` | Backend name passed to OR-Tools; defaults to `CBC` |
+| `--solver-seconds` | Cooperative time limit for each solve; unset by default |
+| `--solver-threads` | Explicit backend thread count; supported for SCIP only |
 | `--max-solutions` | Maximum displayed results for `solutions`; defaults to 10 |
 | `--diverse` | Bias `solutions` toward less represented motif entries |
 
 Positional and regulator constraints use the [Python API](../constraints.md).
-There is no CLI solve-time limit; `--max-solutions` limits result count only.
+`--solver-seconds` applies to each solve, not the entire enumeration.
+The cooperative limit can be exceeded by the backend. `--max-solutions` limits
+result count only.
 Output is a terminal display. It is not the persisted placement JSON expected
 by playback.
 

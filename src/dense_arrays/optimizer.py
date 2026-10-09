@@ -1,8 +1,15 @@
-"""Optimization and enumeration of dense motif-packing paths.
+"""
+--------------------------------------------------------------------------------
+Dense Arrays
+dense-arrays/src/dense_arrays/optimizer.py
+
+Optimization and enumeration of dense motif-packing paths.
 
 Module Author(s): Virgile Andreani, Eric J. South
+Maintainer(s): Eric J. South
 Dunlop Lab
-"""
+--------------------------------------------------------------------------------
+"""  # noqa: D205, D400 - structured module header
 
 from __future__ import annotations
 
@@ -17,11 +24,18 @@ if TYPE_CHECKING:
 from ortools.linear_solver import pywraplp
 
 from .constraints import (
+    CountConstraint,
+    CoverageConstraint,
+    FixedOccurrence,
     PromoterConstraint,
     RegulatorRequirements,
+    SpacingConstraint,
+    _interval,
     _normalize_min_counts,
     _normalize_min_required,
     _normalize_regulator_mapping,
+    count_bounds,
+    occurrence_indices,
 )
 from .errors import (
     InfeasibleError,
@@ -30,9 +44,10 @@ from .errors import (
     UnprovenSolutionError,
 )
 from .greedy import realize_greedy
-from .model import ModelConfiguration, build_solver_model
+from .model import ModelConfiguration, build_solver_model, part_usage_weights
 from .problem import PackingProblem, discrete_integer
 from .solution import DenseArray
+from .solver import SolverControls, SolveReport, SolverIdentity, SolveStatus
 
 _INTEGER_TOLERANCE = 1e-6
 
@@ -50,6 +65,9 @@ class Optimizer:
     strands
         ``single`` selects forward entries; ``double`` permits either orientation
         of each entry, at most once. This problem configuration is immutable.
+    length_mode
+        ``maximum`` retains the packing bound. ``exact`` requires the packed
+        sequence itself to attain it, without generating padding.
 
     Raises
     ------
@@ -62,11 +80,19 @@ class Optimizer:
         library: list[str],
         sequence_length: int,
         strands: str = "double",
+        *,
+        length_mode: str = "maximum",
     ) -> None:
-        self._problem = PackingProblem.create(library, sequence_length, strands)
+        self._problem = PackingProblem.create(
+            library, sequence_length, strands, length_mode=length_mode
+        )
         self._adjacency = self._problem.adjacency
         self._promoters: tuple[PromoterConstraint, ...] = ()
         self._regulator_constraints: RegulatorRequirements | None = None
+        self._count_constraints: tuple[CountConstraint, ...] = ()
+        self._coverage_constraints: tuple[CoverageConstraint, ...] = ()
+        self._fixed_occurrences: tuple[FixedOccurrence, ...] = ()
+        self._spacing_constraints: tuple[SpacingConstraint, ...] = ()
         self.model = None
         self._model_modified = False
         self._ilefts: tuple[int, ...] = ()
@@ -86,6 +112,11 @@ class Optimizer:
     def strands(self) -> str:
         """The immutable strand policy."""
         return self._problem.strands
+
+    @property
+    def length_mode(self) -> str:
+        """The immutable maximum/exact interpretation of the packing length."""
+        return self._problem.length_mode
 
     @property
     def adjacency_matrix(self) -> list[list[int]]:
@@ -309,8 +340,106 @@ class Optimizer:
         """
         return self.nb_motifs * {"single": 1, "double": 2}[self.strands]
 
+    def add_count_constraint(
+        self,
+        indices: list[int],
+        *,
+        minimum: int | None = None,
+        maximum: int | None = None,
+    ) -> None:
+        """Bound selected supplied occurrences independently of string equality.
+
+        Bounds are inclusive, nonnegative integers. At least one is required.
+        Overlapping index sets impose separate requirements. Configure before
+        building the model; greedy solving cannot enforce these constraints.
+        """
+        self._ensure_model_not_built("Count constraints")
+        selected = occurrence_indices(indices, self.nb_motifs)
+        low, high = count_bounds(minimum, maximum, len(selected))
+        self._count_constraints += (CountConstraint(selected, low, high),)
+
+    def add_group_coverage(self, groups: list[list[int]], *, minimum: int) -> None:
+        """Require a minimum number of represented, disjoint occurrence groups."""
+        self._ensure_model_not_built("Group coverage constraints")
+        selected = tuple(occurrence_indices(group, self.nb_motifs) for group in groups)
+        count = discrete_integer(minimum, "minimum groups", minimum=1)
+        flattened = [index for group in selected for index in group]
+        if count > len(selected) or len(flattened) != len(set(flattened)):
+            msg = "coverage requires distinct groups and enough available groups"
+            raise ValueError(msg)
+        self._coverage_constraints += (CoverageConstraint(selected, count),)
+
+    def add_fixed_occurrence(
+        self,
+        index: int,
+        *,
+        orientation: str,
+        start: int | tuple[int | None, int | None] | None = None,
+        origin: str = "start",
+    ) -> None:
+        """Require an exact occurrence/strand without matching by sequence string.
+
+        Start windows are inclusive. ``origin="start"`` uses zero-based packing
+        coordinates; ``origin="end"`` uses signed positions relative to the
+        packed sequence's exclusive end. The generation layer translates final
+        assembly coordinates explicitly.
+        """
+        self._ensure_model_not_built("Fixed occurrences")
+        selected = occurrence_indices([index], self.nb_motifs)[0]
+        if orientation not in {"forward", "reverse"}:
+            msg = "fixed orientation must be forward or reverse"
+            raise ValueError(msg)
+        if orientation == "reverse" and self.strands == "single":
+            msg = "reverse fixed occurrence requires double-strand eligibility"
+            raise ValueError(msg)
+        if any(item.index == selected for item in self._fixed_occurrences):
+            msg = "a supplied occurrence can be fixed only once"
+            raise ValueError(msg)
+        if origin not in {"start", "end"}:
+            msg = "fixed coordinate origin must be start or end"
+            raise ValueError(msg)
+        interval = _interval(
+            start, "fixed start", minimum=0 if origin == "start" else None
+        )
+        if (
+            origin == "start"
+            and interval[0] is not None
+            and interval[0] + len(self.library[selected]) > self.sequence_length
+        ):
+            msg = "fixed start exceeds the sequence length bound"
+            raise ValueError(msg)
+        self._fixed_occurrences += (
+            FixedOccurrence(selected, orientation, interval, origin),
+        )
+
+    def add_spacing_constraint(
+        self,
+        upstream: int,
+        downstream: int,
+        *,
+        minimum: int,
+        maximum: int,
+    ) -> None:
+        """Constrain one declared fixed pair using signed end-to-start spacing."""
+        self._ensure_model_not_built("Spacing constraints")
+        pair = occurrence_indices([upstream, downstream], self.nb_motifs)
+        if not set(pair) <= {item.index for item in self._fixed_occurrences}:
+            msg = "spacing requires two declared fixed occurrences"
+            raise ValueError(msg)
+        if self._spacing_constraints:
+            msg = "only one fixed spacing pair is currently supported"
+            raise ValueError(msg)
+        low = discrete_integer(minimum, "spacing minimum")
+        high = discrete_integer(maximum, "spacing maximum")
+        interval = _interval((low, high), "spacing")
+        self._spacing_constraints = (SpacingConstraint(pair[0], pair[1], interval),)
+
     def build_model(
-        self: Self, solver: str = "CBC", solver_options: list[str] | None = None
+        self: Self,
+        solver: str = "CBC",
+        solver_options: list[str] | None = None,
+        *,
+        controls: SolverControls | None = None,
     ) -> None:
         """
         Create the solver instance and build the linear model.
@@ -333,9 +462,27 @@ class Optimizer:
             self._regulator_constraints,
             self._ilefts,
             self._irights,
+            self._count_constraints,
+            self._coverage_constraints,
+            self._fixed_occurrences,
+            self._spacing_constraints,
         )
-        self.model = build_solver_model(configuration, solver, solver_options)
+        self.model = build_solver_model(configuration, solver, solver_options, controls)
+        self._solver_name = solver
         self._model_modified = False
+
+    @property
+    def solver_identity(self) -> SolverIdentity | None:
+        """Describe the built backend without constructing or solving a model.
+
+        Returns
+        -------
+        SolverIdentity or None
+            Requested name and the backend's reported version; None before build.
+        """
+        if self.model is None:
+            return None
+        return SolverIdentity(self._solver_name, self.model.SolverVersion())
 
     def solve(self: Self) -> DenseArray:
         """
@@ -362,16 +509,50 @@ class Optimizer:
         solution : DenseArray
             The optimal solution.
         """
+        report = self.solve_report()
+        if report.solution is not None:
+            return report.solution
+        error_type = {
+            SolveStatus.INFEASIBLE: InfeasibleError,
+            SolveStatus.UNPROVEN: UnprovenSolutionError,
+            SolveStatus.INVALID_RESULT: InvalidSolverResultError,
+        }.get(report.status, SolverBackendError)
+        raise error_type(report.detail)
+
+    def solve_report(
+        self: Self, *, time_limit_seconds: float | None = None
+    ) -> SolveReport:
+        """Solve once and return typed evidence, preserving unknown causes.
+
+        Returns
+        -------
+        SolveReport
+            Backend status and, only after validation, an optimal solution.
+
+        Raises
+        ------
+        RuntimeError
+            If no model has been built.
+        """
         if self.model is None:
             msg = "Model not built: call `build_model(solver)` first"
             raise RuntimeError(msg)
 
+        if time_limit_seconds is not None:
+            controls = SolverControls(time_limit_seconds=time_limit_seconds)
+            self.model.SetTimeLimit(controls.time_limit_ms)
+
         # Solve the problem
         try:
             status = self.model.Solve()
-        except Exception as err:
+        except Exception as err:  # noqa: BLE001 - preserve backend failures as evidence
             msg = f"Solver backend execution failed: {err}"
-            raise SolverBackendError(msg) from err
+            return SolveReport(
+                SolveStatus.BACKEND_ERROR,
+                None,
+                termination_reason="backend_exception",
+                detail=msg,
+            )
 
         if status != pywraplp.Solver.OPTIMAL:
             status_messages = {
@@ -384,11 +565,27 @@ class Optimizer:
             msg = status_messages.get(
                 status, f"Solver ended with unknown status: {status}."
             )
-            error_type = {
-                pywraplp.Solver.INFEASIBLE: InfeasibleError,
-                pywraplp.Solver.FEASIBLE: UnprovenSolutionError,
-            }.get(status, SolverBackendError)
-            raise error_type(msg)
+            outcome = {
+                pywraplp.Solver.INFEASIBLE: SolveStatus.INFEASIBLE,
+                pywraplp.Solver.FEASIBLE: SolveStatus.UNPROVEN,
+                pywraplp.Solver.ABNORMAL: SolveStatus.BACKEND_ERROR,
+                pywraplp.Solver.UNBOUNDED: SolveStatus.BACKEND_ERROR,
+            }.get(status, SolveStatus.UNKNOWN)
+            return SolveReport(
+                outcome,
+                status,
+                proof_scope=(
+                    "offered_packing_model"
+                    if outcome is SolveStatus.INFEASIBLE
+                    else None
+                ),
+                termination_reason=(
+                    "proven_infeasible"
+                    if outcome is SolveStatus.INFEASIBLE
+                    else "unknown"
+                ),
+                detail=msg,
+            )
 
         try:
             path = self._selected_path()
@@ -402,12 +599,26 @@ class Optimizer:
                 offsets = offsets_fwd if node < self.nb_motifs else offsets_rev
                 offsets[node % self.nb_motifs] = offset
                 previous = node
-            return DenseArray(
+            solution = DenseArray(
                 self.library, self.sequence_length, offsets_fwd, offsets_rev
             )
-        except (ValueError, TypeError, AttributeError, KeyError, IndexError) as err:
+        except (
+            ValueError,
+            TypeError,
+            AttributeError,
+            KeyError,
+            IndexError,
+            InvalidSolverResultError,
+        ) as err:
             msg = f"Invalid solver result: {err}"
-            raise InvalidSolverResultError(msg) from err
+            return SolveReport(SolveStatus.INVALID_RESULT, status, detail=msg)
+        return SolveReport(
+            SolveStatus.OPTIMAL,
+            status,
+            solution,
+            proof_scope="offered_packing_model",
+            termination_reason="proven_optimal",
+        )
 
     def _selected_path(self) -> list[int]:
         selected = set()
@@ -472,6 +683,12 @@ class Optimizer:
             or solution.sequence_length != self.sequence_length
         ):
             msg = "Solution does not belong to this packing problem"
+            raise ValueError(msg)
+        if (
+            self.length_mode == "exact"
+            and len(solution.sequence) != self.sequence_length
+        ):
+            msg = "Solution violates this problem's exact packing length"
             raise ValueError(msg)
         if self.strands == "single" and any(
             o is not None for o in solution.offsets_rev
@@ -543,7 +760,11 @@ class Optimizer:
         self._model_modified = True
 
     def solutions(
-        self: Self, solver: str = "CBC", solver_options: list[str] | None = None
+        self: Self,
+        solver: str = "CBC",
+        solver_options: list[str] | None = None,
+        *,
+        controls: SolverControls | None = None,
     ) -> Iterator[DenseArray]:
         """
         Iterate over solutions in decreasing order of score.
@@ -560,13 +781,16 @@ class Optimizer:
         solver_options
             List of strings passed to the solver
             with `SetSolverSpecificParametersAsString`.
+        controls
+            Cooperative limits applied to each backend solve. They do not bound
+            total enumeration time. Unsupported controls raise `ValueError`.
 
         Yields
         ------
         solution :
             Solutions in decreasing order of score.
         """
-        self.build_model(solver, solver_options=solver_options)
+        self.build_model(solver, solver_options=solver_options, controls=controls)
 
         while True:
             try:
@@ -577,10 +801,18 @@ class Optimizer:
             self.forbid(sol)
 
     def solutions_diverse(
-        self: Self, solver: str = "CBC", solver_options: list[str] | None = None
+        self: Self,
+        solver: str = "CBC",
+        solver_options: list[str] | None = None,
+        *,
+        controls: SolverControls | None = None,
     ) -> Iterator[DenseArray]:
         """
-        Return an iterator of optimal solutions trying to minimize the bias in motifs.
+        Yield optimal packings under weights that favor underused motif entries.
+
+        Entry usage updates the objective after each yield. Each result is an
+        optimum for that iteration's weighted model; scores across iterations
+        need not decrease, and equal cumulative usage is not guaranteed.
 
         Only proven infeasibility ends iteration normally. Other solve failures
         propagate, including after a yielded result.
@@ -594,18 +826,19 @@ class Optimizer:
         solver_options
             List of strings passed to the solver
             with `SetSolverSpecificParametersAsString`.
+        controls
+            Cooperative limits applied to each backend solve. They do not bound
+            total enumeration time. Unsupported controls raise `ValueError`.
 
         Yields
         ------
         solution :
-            Solutions in decreasing order of score.
+            A packing proven optimal under the current motif weights.
         """
-        self.build_model(solver, solver_options=solver_options)
-
-        epsilon = 0.5 / self.nb_motifs
+        self.build_model(solver, solver_options=solver_options, controls=controls)
 
         motifs = [0] * self.nb_motifs
-        imins: list[int] = []
+        weights = (1.0,) * self.nb_motifs
         while True:
             try:
                 sol = self.solve()
@@ -621,15 +854,18 @@ class Optimizer:
                 if fwd is not None or rev is not None:
                     motifs[i] += 1
             # Update motif weights
-            for imin in imins:
-                self.set_motif_weight(imin, 1)
-            avg_abundance = sum(motifs) / len(motifs)
-            imins = [i for i, qty in enumerate(motifs) if qty < avg_abundance]
-            for imin in imins:
-                self.set_motif_weight(imin, 1 + epsilon)
+            updated = part_usage_weights(motifs)
+            for index, (before, after) in enumerate(zip(weights, updated, strict=True)):
+                if before != after:
+                    self.set_motif_weight(index, after)
+            weights = updated
 
     def optimal(
-        self: Self, solver: str = "CBC", solver_options: list[str] | None = None
+        self: Self,
+        solver: str = "CBC",
+        solver_options: list[str] | None = None,
+        *,
+        controls: SolverControls | None = None,
     ) -> DenseArray:
         """
         Return the optimal solution.
@@ -643,6 +879,9 @@ class Optimizer:
         solver_options
             List of strings passed to the solver
             with `SetSolverSpecificParametersAsString`.
+        controls
+            Cooperative limits applied to each backend solve. They do not bound
+            total enumeration time. Unsupported controls raise `ValueError`.
 
         Returns
         -------
@@ -655,7 +894,9 @@ class Optimizer:
             If no feasible solution exists.
         """
         try:
-            return next(self.solutions(solver, solver_options=solver_options))
+            return next(
+                self.solutions(solver, solver_options=solver_options, controls=controls)
+            )
         except StopIteration as err:
             msg = "No feasible solution was found."
             raise InfeasibleError(msg) from err
@@ -671,7 +912,8 @@ class Optimizer:
         Raises
         ------
         ValueError
-            If promoter/regulator requirements, side biases, or model changes
+            If exact length, promoter/regulator requirements, count/coverage
+            bounds, fixed occurrences, spacing, side biases, or model changes
             from ``forbid`` or ``set_motif_weight`` are configured.
         InfeasibleError
             If no motif fits the sequence length bound.
@@ -684,6 +926,11 @@ class Optimizer:
         if (
             self._promoters
             or self._regulator_constraints
+            or self._count_constraints
+            or self._coverage_constraints
+            or self._fixed_occurrences
+            or self._spacing_constraints
+            or self.length_mode == "exact"
             or self._ilefts
             or self._irights
             or self._model_modified
