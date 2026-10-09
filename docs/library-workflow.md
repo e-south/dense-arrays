@@ -29,6 +29,18 @@ dense-arrays inspect runs/first --verify
 dense-arrays inspect runs/first --view designs --limit 1 --json
 ```
 
+The run reports `Completed: 1 / 1 designs accepted; target_attained.` Verification
+then reports:
+
+```text
+Completed: 1 / 1 designs; target_attained.
+Attempts: 1; verified: True; resumable: False.
+```
+
+The saved design contains a 40-base sequence and four 16-base placements.
+Its identity, sequence and intervals appear together in the JSON record. The
+producer line identifies the installed package, Python and solver versions.
+
 `--length` sets a maximum. For a fixed final length and optional padding, use an
 [assembly request](library-workflow/generation/assembly.md). The receipt shows
 accepted and requested counts, the run directory, and why generation stopped.

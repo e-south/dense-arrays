@@ -100,6 +100,19 @@ dense-arrays export arrays --view sequences --all --format fasta --out arrays.fa
 dense-arrays render arrays --view array --array-id promoter-001 --out promoter.png
 ```
 
+The collection contains one 24-base array and two placements. Its placement
+table includes these intervals (ends are exclusive):
+
+| Part | Start | End | Orientation | Core start | Core end |
+| --- | ---: | ---: | --- | ---: | ---: |
+| `site-a` | 0 | 16 | forward | 2 | 13 |
+| `site-b` | 8 | 24 | forward | — | — |
+
+The second part has no supplied core annotation. Both placements share bases
+8–15 of the final array:
+
+![Two 16-base parts overlapping by eight bases within the supplied 24-base promoter](../assets/supplied-array-example.png)
+
 | View | Contents | Export formats |
 | --- | --- | --- |
 | `summary` | Counts, provenance, exporter and collection digest | JSON |

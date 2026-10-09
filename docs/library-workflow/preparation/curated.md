@@ -145,6 +145,18 @@ reused = da.run(
 assert da.inspect(reused, verify=True).accepted == 1
 ```
 
+The prepared pool contains these three records:
+
+| Part ID | Sequence | Group |
+| --- | --- | --- |
+| `a` | `ACGTTGCAAGTCCTGA` | A |
+| `b` | `AGTCCTGATCGTACCG` | A |
+| `d` | `ACGTTGCAAGTCCTGA` | A |
+
+Part `c` is outside the requested group. Parts `a` and `d` retain their separate
+identities even though their DNA matches. Reusing the pool produces one accepted
+design, which you can [export as DNA and placements](../results/export.md).
+
 A design file references the same pool with
 `parts: {pool: pools/curated, select: {groups: [A]}}`; relative paths resolve from
 that file. Pool inspection and reuse do not need the original table. Move the

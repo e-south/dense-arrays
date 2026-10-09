@@ -81,6 +81,26 @@ assert sequence_receipt.records == 1
 assert sequence_receipt.design_refs == placement_receipt.design_refs
 ```
 
+The sequence export has one row and the placement export has four. For the
+reverse-complement optimum, their main values are:
+
+| Sequence | Length | GC fraction |
+| --- | ---: | ---: |
+| `TGAACGTCCTAAGCATCGGTACGATCAGGACTTGCAACGT` | 40 | 0.5 |
+
+| Part ID | Start | End | Orientation |
+| --- | ---: | ---: | --- |
+| `row:1` | 24 | 40 | reverse |
+| `row:2` | 16 | 32 | reverse |
+| `row:3` | 8 | 24 | reverse |
+| `row:4` | 0 | 16 | reverse |
+
+These tables omit identity columns for space. Keep `design_ref` in the actual
+exports to join each placement to its sequence. A solver may return the equally
+valid forward arrangement; its sequence and intervals change together.
+
+## Filter a saved library
+
 `DesignFilter` accepts bare or full design IDs, cell references, part IDs, groups,
 and inclusive ranges over `length`, `gc_fraction`, `placement_count` and
 `packing_density`. Part/group filters match recorded placements; an incidental
@@ -94,6 +114,8 @@ predicates, or save `selected.to_dict()` as a declared
 Filter files and flags are exclusive. Filters apply to designs, sequences,
 placements and quality reports. Placement pagination
 can continue inside a design using the returned cursor, preserving row order.
+
+## Choose a format
 
 | Format | Supported views | Content |
 | --- | --- | --- |

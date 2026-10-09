@@ -135,6 +135,13 @@ Complete the [development gate](../development.md).
 
 ## Maintain the teaching media
 
+`first-library-quality.png` is the `python-quality.png` output from the
+saved-library and quality guides, run in order in a new directory.
+`supplied-array-example.png` is the `promoter.png` output from the supplied-array
+guide. Regenerate these stills from those examples and review their labels and
+coordinates before replacing the assets. Their adjacent tables describe the
+same example records.
+
 The playback guide maintains one MP4, its opening PNG, and its completed
 poster in `docs/assets/`. Regenerate them from the guide's Python example
 using `render_collection_mp4((document,), output / "playback.mp4")` with the

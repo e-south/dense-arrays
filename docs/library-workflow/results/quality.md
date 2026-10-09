@@ -35,6 +35,21 @@ dense-arrays inspect runs/first --view quality --limit 20 --json
 dense-arrays render runs/first --view library-quality --out quality.png
 ```
 
+For the first-library example, the report describes:
+
+| Measure | Result | Meaning |
+| --- | ---: | --- |
+| Accepted / requested | 1 / 1 | The target was reached. |
+| Length | 40 bases | The final sequence fills this example's limit. |
+| Placed occurrences | 4 | All four supplied entries appear. |
+| GC fraction | 0.5 | Half the final bases are G or C. |
+| Placement density | 1.0 | The union of placed intervals covers the whole sequence. |
+| Compression | 1.6 | The 64 supplied bases overlap within a 40-base span. |
+
+![Quality report for the four-site example: equal part use, GC fraction 0.5, full interval coverage and one accepted attempt](../../assets/first-library-quality.png)
+
+The figure summarizes the same saved report; it does not generate new designs.
+
 Diagnostics report stable codes, requirement references, observed/expected
 values, proof scope, and a next action. A forbidden match includes its final
 coordinates, strand, and intersecting part or padding intervals. An attempt
