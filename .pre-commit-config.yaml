@@ -11,6 +11,11 @@ repos:
       - id: check-merge-conflict
       - id: check-symlinks
       - id: check-added-large-files
+        exclude: ^docs/assets/showcase/packing-loop\.webp$
+      - id: check-added-large-files
+        name: Check bounded README animation
+        files: ^docs/assets/showcase/packing-loop\.webp$
+        args: [--maxkb=1024]
       - id: check-yaml
       - id: check-toml
       - id: debug-statements

@@ -23,6 +23,10 @@ if TYPE_CHECKING:
 
 SVG = "http://www.w3.org/2000/svg"
 XLINK = "http://www.w3.org/1999/xlink"
+CARD_WIDTH = 1440
+CARD_PADDING = 32
+PACKING_WIDTH = 2880
+PACKING_HEIGHT = 432
 ET.register_namespace("", SVG)
 
 
@@ -108,11 +112,17 @@ def insert_svg(parent: ET.Element, graphic: ET.Element, bounds: list[float]) -> 
     parent.append(item)
 
 
+def card_size(width: float, height: float) -> tuple[int, float]:
+    """Share the artwork frame between static and animated delivery formats."""
+    inner = CARD_WIDTH - 2 * CARD_PADDING
+    return CARD_WIDTH, height / width * inner + 2 * CARD_PADDING
+
+
 def card(graphic: ET.Element, width: float, height: float) -> bytes:
     """Add the reviewed rounded border and uniform padding."""
-    output_width, padding = 1440, 32
+    output_width, output_height = card_size(width, height)
+    padding = CARD_PADDING
     inner = output_width - 2 * padding
-    output_height = height / width * inner + 2 * padding
     root = ET.Element(
         f"{{{SVG}}}svg",
         {
@@ -141,44 +151,19 @@ def card(graphic: ET.Element, width: float, height: float) -> bytes:
 
 def poster_card(png: bytes) -> bytes:
     """Retain the complete graph/sequence raster at its measured 16 by 2.4 ratio."""
-    root = ET.Element(f"{{{SVG}}}svg", {"viewBox": "0 0 2880 432"})
+    root = ET.Element(
+        f"{{{SVG}}}svg", {"viewBox": f"0 0 {PACKING_WIDTH} {PACKING_HEIGHT}"}
+    )
     ET.SubElement(
         root,
         f"{{{SVG}}}image",
         {
-            "width": "2880",
-            "height": "432",
+            "width": str(PACKING_WIDTH),
+            "height": str(PACKING_HEIGHT),
             "href": "data:image/png;base64," + base64.b64encode(png).decode(),
         },
     )
-    result = ET.fromstring(card(root, 2880, 432))  # noqa: S314 - generated SVG
-    ET.SubElement(
-        result,
-        f"{{{SVG}}}rect",
-        {
-            "x": "1372",
-            "y": "7",
-            "width": "56",
-            "height": "25",
-            "rx": "6",
-            "fill": "white",
-            "stroke": "#b6c5d0",
-        },
-    )
-    text = ET.SubElement(
-        result,
-        f"{{{SVG}}}text",
-        {
-            "x": "1400",
-            "y": "24",
-            "font-family": "Arial",
-            "font-size": "13",
-            "text-anchor": "middle",
-            "fill": "#33475b",
-        },
-    )
-    text.text = "Play"
-    return ET.tostring(result, encoding="utf-8") + b"\n"
+    return card(root, PACKING_WIDTH, PACKING_HEIGHT)
 
 
 def workflow_card(context: bytes, native: bytes, bounds: list[float]) -> bytes:

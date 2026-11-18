@@ -5,8 +5,9 @@
     "inputs/records.json": "d26b79403310bdb026d1c82740530191c4063993bff2bfd1daca7d7271bc660c",
     "inputs/origins.json": "135beadf607fe06541bcf14b2008fb9b849a62f82369a07587186f9110791165",
     "rendering.json": "0d28cb68244ffa7cc58054e95a04dff5d5504ae30b5a718d4d6ab71f3b015544",
-    "render.py": "d9ffb6e936507cc6e4c3d2bc3ae71236dee54d1228a9abd206d8b149ca743458",
-    "svg_assets.py": "a24eddf82425c5489275c7063b85c91883a940707c21c0e27a1d334c3592cc29",
+    "render.py": "93b206a28b7faf49e4b83e98e0136a1e4911a1adfeddec52b1d6c03608c0d036",
+    "svg_assets.py": "2673d78fc93da61fb5e3a23acb974b24820f14115d1dc976061b2a810b37b05f",
+    "media_assets.py": "8f3f416e5fab30b10562a0bba52025374b4ce48987d821c649c866b39d058230",
     "pyproject.toml": "40dd28c182faf3bcba3196a892a85a86db754bf45a546cf98d0006f54b4cd601",
     "uv.lock": "2bc275319e3f178c67b63344f33042b5042ae0831b2dd6a4295112466cff7fed"
   },
@@ -34,12 +35,13 @@
     "library_hold_seconds": 1.75
   },
   "outputs": {
-    "packing.svg": "1c8b4fb2c1d271117b2b9f711220e71137ef7010b9935f367249c0730a13afa4",
+    "packing.svg": "dd7057b15a1f38889a9d54819952cd13b79404301dff3e574493bf2f18a3dead",
     "library.svg": "6f39d51b5de1135022bb64f1d740e31441fcc03d0fb3ac8c7edb9a9d9efa6ed5",
     "packing.png": "c4bb44afb470e20136d9c64ab650eb278bd545dfbaa1172896e0bf591b78ec7d",
     "library.mp4": "356eb97751dcb5ec4ccbd86fc802878cd5f011c2896da864e43b004823e716a9",
     "packing.mp4": "d282252c233b51283c3d6b5a5fa2f2eec6468c53ed3925206b0c8d0d7a96273a",
-    "packing-card.png": "f38e98c087139c3ce109e9ea5487bcc145d779c77aefab13c0e7d5fb38c34f7e",
-    "player.css": "47d44f6bc47a979ce276754316ef5e060a91144aef9e29c9418708cc7402e0d1"
+    "packing-card.png": "464f9ea6346e03e4ca44fd94e4986478fa0cd4f1bd075cb52c7401dc3b2bcd2a",
+    "player.css": "47d44f6bc47a979ce276754316ef5e060a91144aef9e29c9418708cc7402e0d1",
+    "packing-loop.webp": "fbbe2c51b3188d99ea52c1d2ee0af8b4680d8faeac643b94f60d9ee4cadc85cf"
   }
 }
