@@ -7,7 +7,35 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
+
+
+def package_banner_url(readme: str, version: str) -> str:
+    """Admit the current release tag or an immutable source image.
+
+    Returns
+    -------
+    str
+        The absolute PNG URL selected by the package description.
+
+    Raises
+    ------
+    ValueError
+        If the banner uses a mutable reference or a different release version.
+    """
+    images = re.findall(r"!\[[^\]]*\]\(([^)]+)\)", readme)
+    match = re.fullmatch(
+        r"https://raw\.githubusercontent\.com/e-south/dense-arrays/([^/]+)/"
+        r"docs/assets/dense-arrays-banner\.png",
+        images[0] if images else "",
+    )
+    if not match or not (
+        match[1] == "v" + version or re.fullmatch(r"[a-f0-9]{40}", match[1])
+    ):
+        message = "Banner must select the release version or an immutable source commit"
+        raise ValueError(message)
+    return match[0]
 
 
 def require_successful_ci(payload: dict, revision: str) -> dict:

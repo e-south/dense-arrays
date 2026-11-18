@@ -50,12 +50,11 @@ jobs:
       - name: Verify immutable package-page banner
         run: |
           python - <<'PYBANNER'
-          import pathlib, re, tomllib, urllib.request
+          import pathlib, runpy, tomllib, urllib.request
           root = pathlib.Path('.')
           project = tomllib.loads((root / 'pyproject.toml').read_text())['project']
-          url = re.findall(r'!\[[^\]]*\]\(([^)]+)\)', (root / 'README.md').read_text())[0]
-          expected = f"https://raw.githubusercontent.com/e-south/dense-arrays/v{project['version']}/docs/assets/dense-arrays-banner.png"
-          assert url == expected, 'Banner must be bound to the released version'
+          banner_url = runpy.run_path('maintenance/release.py')['package_banner_url']
+          url = banner_url((root / 'README.md').read_text(), project['version'])
           with urllib.request.urlopen(url, timeout=30) as response:
               published = response.read(10_000_001)
           assert published == (root / 'docs/assets/dense-arrays-banner.png').read_bytes(), 'Published banner differs from source'

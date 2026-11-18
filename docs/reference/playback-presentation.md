@@ -88,8 +88,7 @@ and legend entries instead.
 
 ## Native type and canvas size
 
-These controls are available from the [source checkout](../installation.md#install-from-source).
-They are not in the 0.3.0 package release.
+These controls are included in the 0.4.0 package and later releases.
 
 Use `PlaybackTypography` to pin one nucleotide font size across graph sequences,
 strands and placement boxes. `nucleotide_font_size_pt=None` retains the automatic

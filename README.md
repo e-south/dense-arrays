@@ -1,4 +1,4 @@
-# ![Dense Arrays — overlapping motifs within a sequence-length limit](https://raw.githubusercontent.com/e-south/dense-arrays/v0.3.0/docs/assets/dense-arrays-banner.png)
+# ![Dense Arrays — overlapping motifs within a sequence-length limit](https://raw.githubusercontent.com/e-south/dense-arrays/e35cb166975b710d96f2a9b677d45885c21c405d/docs/assets/dense-arrays-banner.png)
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)](https://github.com/e-south/dense-arrays/blob/main/pyproject.toml)
 [![PyPI version](https://img.shields.io/pypi/v/dense-arrays)](https://pypi.org/project/dense-arrays/)

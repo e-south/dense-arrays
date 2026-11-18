@@ -10,6 +10,10 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
+# Immutable public commit containing the retained package banner.
+BANNER_SOURCE_REVISION = (
+    "e35cb166975b710d96f2a9b677d45885c21c405d"  # pragma: allowlist secret
+)
 
 
 def _run(**overrides: object) -> dict:
@@ -56,6 +60,27 @@ def test_other_run_cannot_qualify(changes: dict) -> None:
 def test_earlier_success_cannot_mask_latest_failure(changes: dict) -> None:
     with pytest.raises(ValueError, match="latest"):
         _check([_run(), _run(id=2, **changes)])
+
+
+@pytest.mark.parametrize("revision", ["v0.4.0", BANNER_SOURCE_REVISION])
+def test_banner_accepts_current_tag_or_immutable_source(revision: str) -> None:
+    module = runpy.run_path(str(ROOT / "maintenance/release.py"))
+    url = (
+        f"https://raw.githubusercontent.com/e-south/dense-arrays/{revision}/"
+        "docs/assets/dense-arrays-banner.png"
+    )
+    assert module["package_banner_url"](f"![Dense Arrays]({url})", "0.4.0") == url
+
+
+@pytest.mark.parametrize("revision", ["main", "paper", "v0.3.0", "abc123"])
+def test_banner_rejects_mutable_or_wrong_version_references(revision: str) -> None:
+    module = runpy.run_path(str(ROOT / "maintenance/release.py"))
+    url = (
+        f"https://raw.githubusercontent.com/e-south/dense-arrays/{revision}/"
+        "docs/assets/dense-arrays-banner.png"
+    )
+    with pytest.raises(ValueError, match=r"immutable|version"):
+        module["package_banner_url"](f"![Dense Arrays]({url})", "0.4.0")
 
 
 def test_package_readme_uses_durable_images_and_absolute_links() -> None:
