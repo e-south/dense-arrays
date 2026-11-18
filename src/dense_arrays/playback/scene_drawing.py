@@ -139,8 +139,7 @@ def draw_document(
             transition_index,
             progress,
             font_size=nucleotide_font_size
-            * PUBLICATION_LABEL_FONT_SIZE_PT
-            / KMER_FONT_SIZE_PT,
+            * document.presentation.typography.annotation_scale,
         )
     if duplex_frames is None or not duplex_frames.renders_distance_brackets:
         draw_distance_brackets(
@@ -149,9 +148,7 @@ def draw_document(
             transition_index,
             progress,
             native_font_size=(
-                nucleotide_font_size
-                * PUBLICATION_LABEL_FONT_SIZE_PT
-                / KMER_FONT_SIZE_PT
+                nucleotide_font_size * document.presentation.typography.annotation_scale
             )
             if duplex_frames is None
             else None,
@@ -233,7 +230,11 @@ def _distance_padding_points(axis: Axes, document: PlaybackDocument) -> float:
     else:
         top = 0.07 + (rows - 1) * 0.10
     height_pt = axis.get_window_extent().height * 72 / axis.figure.dpi
-    return top * height_pt + PUBLICATION_LABEL_FONT_SIZE_PT * 1.5
+    settings = document.presentation.typography
+    label_size = (
+        settings.nucleotide_font_size_pt or KMER_FONT_SIZE_PT
+    ) * settings.annotation_scale
+    return top * height_pt + label_size * 1.5
 
 
 def draw_distance_brackets(

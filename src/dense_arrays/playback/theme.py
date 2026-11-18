@@ -22,6 +22,7 @@ from .colors import (
     validate_color,
 )
 from .graph_style import GraphArrowStyle
+from .typography import PlaybackTypography
 
 if TYPE_CHECKING:
     from .models import PlaybackStep
@@ -80,12 +81,12 @@ class PlaybackPresentation:
     show_authority_notice: bool = False
     show_distance_bracket: str = "when_declared"
     graph_arrows: GraphArrowStyle = field(default_factory=GraphArrowStyle)
+    typography: PlaybackTypography = field(default_factory=PlaybackTypography)
+    canvas_height_inches: float | None = None
 
     def __post_init__(self) -> None:
         """Validate portable presentation values without coercion."""
-        if not isinstance(self.graph_arrows, GraphArrowStyle):
-            msg = "graph_arrows must be GraphArrowStyle"
-            raise TypeError(msg)
+        _validate_rendering_controls(self)
         if self.color_profile not in _PROFILES:
             msg = (
                 "color_profile must be categorical, uniform, or constraints; "
@@ -129,6 +130,8 @@ class PlaybackPresentation:
             msg = f"unknown presentation fields: {sorted(unknown)}"
             raise ValueError(msg)
         values = dict(raw)
+        if "typography" in values:
+            values["typography"] = PlaybackTypography.from_mapping(values["typography"])
         if "graph_arrows" in values:
             values["graph_arrows"] = GraphArrowStyle.from_mapping(
                 values["graph_arrows"]
@@ -179,3 +182,24 @@ def constraint_relation_color(profile: str) -> str:
         msg = "unknown color profile"
         raise ValueError(msg)
     return "#63558D" if profile == "constraints" else "#687876"
+
+
+def _validate_canvas_height(value: float | None) -> None:
+    if value is None:
+        return
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        msg = "canvas_height_inches must be numeric"
+        raise TypeError(msg)
+    if not math.isfinite(value) or value <= 0:
+        msg = "canvas_height_inches must be finite and positive"
+        raise ValueError(msg)
+
+
+def _validate_rendering_controls(settings: PlaybackPresentation) -> None:
+    if not isinstance(settings.typography, PlaybackTypography):
+        msg = "typography must be PlaybackTypography"
+        raise TypeError(msg)
+    if not isinstance(settings.graph_arrows, GraphArrowStyle):
+        msg = "graph_arrows must be GraphArrowStyle"
+        raise TypeError(msg)
+    _validate_canvas_height(settings.canvas_height_inches)

@@ -17,8 +17,8 @@ from typing import TYPE_CHECKING
 
 from .timeline import complement_sequence
 from .typography import (
-    PUBLICATION_LABEL_FONT_SIZE_PT,
     PUBLICATION_NUCLEOTIDE_TYPOGRAPHY,
+    PlaybackTypography,
 )
 
 if TYPE_CHECKING:
@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from matplotlib.text import Text
 
 FEATURE_HEIGHT = 0.56
+_DEFAULT_TYPOGRAPHY = PlaybackTypography()
 
 
 @dataclass(frozen=True)
@@ -44,16 +45,19 @@ def fit_duplex_grid(
     vertical_bounds: tuple[float, float],
     *,
     bottom_padding_pt: float = 0,
+    settings: PlaybackTypography = _DEFAULT_TYPOGRAPHY,
 ) -> DuplexGeometry:
     """Center measured cells; shrink uniformly only when the viewport requires it."""
     from matplotlib.font_manager import FontProperties
     from matplotlib.textpath import TextPath
 
     typography = PUBLICATION_NUCLEOTIDE_TYPOGRAPHY
+    requested_size = settings.nucleotide_font_size_pt
+    base_size = requested_size or typography.graph_font_size_pt
     font = FontProperties(
         family=typography.family,
         weight=typography.weight,
-        size=typography.graph_font_size_pt,
+        size=base_size,
     )
     outlines = [TextPath((0, 0), base, prop=font).get_extents() for base in "ACGT"]
     cap_height = max(bounds.height for bounds in outlines)
@@ -77,7 +81,14 @@ def fit_duplex_grid(
         width_pt / ((length + 7) * cell_width),
         (height_pt - bottom_padding_pt) / ((top - bottom) * vertical_unit),
     )
-    font.set_size(typography.graph_font_size_pt * scale)
+    if scale <= 0 or (requested_size is not None and scale < 1 - 1e-9):
+        msg = (
+            f"nucleotide_font_size_pt={requested_size or base_size:g} cannot fit "
+            "the native duplex viewport; increase canvas_height_inches, reduce "
+            "graph_fraction, or choose a smaller explicit type size"
+        )
+        raise ValueError(msg)
+    font.set_size(base_size * scale)
     horizontal_span = width_pt / (cell_width * scale)
     vertical_span = height_pt / (vertical_unit * scale)
     axis.set_xlim(length / 2 - horizontal_span / 2, length / 2 + horizontal_span / 2)
@@ -86,7 +97,7 @@ def fit_duplex_grid(
     return DuplexGeometry(
         font,
         cap_height * scale * pixels_per_point,
-        PUBLICATION_LABEL_FONT_SIZE_PT * scale,
+        base_size * scale * settings.annotation_scale,
     )
 
 

@@ -35,6 +35,7 @@ from .serialization import (
     realized_array_to_dict,
 )
 from .theme import PlaybackPresentation
+from .typography import PlaybackTypography
 
 __all__ = [
     "PLAYBACK_PLAN_SCHEMA_VERSION",
@@ -49,6 +50,7 @@ __all__ = [
     "PlaybackPlan",
     "PlaybackPresentation",
     "PlaybackStep",
+    "PlaybackTypography",
     "dumps_playback_plan",
     "dumps_realized_array",
     "loads_playback_plan",

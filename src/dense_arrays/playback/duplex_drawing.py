@@ -32,11 +32,15 @@ _CAPTION_TRACK_PITCH = 1.35
 
 
 def _placement_tracks(
-    steps: Sequence[PlaybackStep], *, with_labels: bool
+    steps: Sequence[PlaybackStep], *, with_labels: bool, annotation_scale: float = 1
 ) -> tuple[float, ...]:
     """Allocate non-overlapping lanes once from the complete placement plan."""
     lane_ends: dict[bool, list[int]] = {False: [], True: []}
-    pitch = _CAPTION_TRACK_PITCH if with_labels else _TRACK_PITCH
+    pitch = (
+        _CAPTION_TRACK_PITCH + 0.7 * max(0, annotation_scale - 1)
+        if with_labels
+        else _TRACK_PITCH
+    )
     positions = []
     for step in steps:
         reverse = step.orientation == "rev"
@@ -67,12 +71,22 @@ def draw_duplex(
     sequence = plan.realized_sequence
     complement = complement_sequence(sequence)
     length = len(sequence)
-    tracks = _placement_tracks(plan.steps, with_labels=bool(document.label_overrides))
+    has_labels = bool(document.label_overrides)
+    annotation_scale = document.presentation.typography.annotation_scale
+    tracks = _placement_tracks(
+        plan.steps, with_labels=has_labels, annotation_scale=annotation_scale
+    )
+    label_extent = 0.7 * max(0, annotation_scale - 1) if has_labels else 0
+
     geometry = fit_duplex_grid(
         axis,
         sequence,
-        (min(-2.2, min(tracks) - 0.75), max(2.2, max(tracks) + 1.25)),
+        (
+            min(-2.2, min(tracks) - 0.75 - label_extent),
+            max(2.2, max(tracks) + 1.25 + label_extent),
+        ),
         bottom_padding_pt=bottom_padding_pt,
+        settings=document.presentation.typography,
     )
     axis.axis("off")
     for index, step in enumerate(plan.steps):
@@ -135,10 +149,22 @@ def draw_duplex(
         RESTING_TEXT_COLOR, _INK, placement_progress(0, step_index, progress)
     )
     axis.text(
-        -2.0, 0.30, "5'", ha="center", va="center", color=terminal_color, fontsize=11
+        -2.0,
+        0.30,
+        "5'",
+        ha="center",
+        va="center",
+        color=terminal_color,
+        fontsize=geometry.label_font_size_pt,
     )
     axis.text(
-        -2.0, -0.30, "3'", ha="center", va="center", color=terminal_color, fontsize=11
+        -2.0,
+        -0.30,
+        "3'",
+        ha="center",
+        va="center",
+        color=terminal_color,
+        fontsize=geometry.label_font_size_pt,
     )
     axis.text(
         length + 0.7,
@@ -147,7 +173,7 @@ def draw_duplex(
         ha="left",
         va="center",
         color=terminal_color,
-        fontsize=11,
+        fontsize=geometry.label_font_size_pt,
     )
     axis.text(
         length + 0.7,
@@ -156,6 +182,6 @@ def draw_duplex(
         ha="left",
         va="center",
         color=terminal_color,
-        fontsize=11,
+        fontsize=geometry.label_font_size_pt,
     )
     return geometry.cap_height_px
