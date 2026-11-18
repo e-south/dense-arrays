@@ -16,6 +16,7 @@ import copy
 import hashlib
 import json
 import shutil
+import subprocess
 from dataclasses import dataclass, field
 from importlib.metadata import distribution
 from pathlib import Path
@@ -225,6 +226,10 @@ def render(output: Path) -> None:
     if output.exists():
         msg = "Use a fresh output directory"
         raise ValueError(msg)
+    inkscape = shutil.which("inkscape")
+    if inkscape is None:
+        msg = "Install Inkscape to export the README PNG"
+        raise ValueError(msg)
     config, arrays, drawings = load_inputs()
     inputs = {
         str(p.relative_to(ROOT)): digest(p)
@@ -295,6 +300,17 @@ def render(output: Path) -> None:
         )
         (output / "packing.svg").write_bytes(
             poster_card((output / "packing.png").read_bytes())
+        )
+        subprocess.run(  # noqa: S603 - fixed executable and locally generated input
+            [
+                inkscape,
+                str(output / "packing.svg"),
+                "--export-width=2880",
+                "--export-filename=" + str(output / "packing-card.png"),
+            ],
+            check=True,
+            capture_output=True,
+            timeout=60,
         )
         context = (ROOT / "inputs/workflow-context.svg").read_bytes()
         native = (

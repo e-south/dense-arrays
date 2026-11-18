@@ -34,6 +34,13 @@ resources. The sequence in that workflow is rendered from the selected record
 rather than copied from the illustration. Its video uses the same geometry.
 Only empty video margins are clipped, with eight pixels of additional clearance.
 
+The README uses the generated `packing-card.png` at an immutable Git commit
+URL. PNG renders on both GitHub and PyPI, including when the source README is
+viewed from another branch. The documentation keeps SVGs and native video.
+Commit new delivery assets first, then update the README URL to that commit.
+Verify its public response and the built package's long description before
+merging. Do not point a new asset at `main` before it exists there.
+
 Review the candidate in the built documentation before copying its files into
 `docs/assets/showcase/`. Keep the player JavaScript there. The generated CSS
 owns media placement. `receipt.json` records input and code hashes, producer
