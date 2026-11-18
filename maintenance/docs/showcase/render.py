@@ -16,7 +16,6 @@ import copy
 import hashlib
 import json
 import shutil
-import subprocess
 from dataclasses import dataclass, field
 from importlib.metadata import distribution
 from pathlib import Path
@@ -25,6 +24,7 @@ from typing import Any
 
 import numpy as np
 from dnadesign import baserender
+from media_assets import readme_media
 from PIL import Image, ImageChops
 from svg_assets import player_css, poster_card, workflow_card
 
@@ -227,8 +227,9 @@ def render(output: Path) -> None:
         msg = "Use a fresh output directory"
         raise ValueError(msg)
     inkscape = shutil.which("inkscape")
-    if inkscape is None:
-        msg = "Install Inkscape to export the README PNG"
+    ffmpeg = shutil.which("ffmpeg")
+    if inkscape is None or ffmpeg is None:
+        msg = "Install Inkscape and FFmpeg to export the README media"
         raise ValueError(msg)
     config, arrays, drawings = load_inputs()
     inputs = {
@@ -240,7 +241,13 @@ def render(output: Path) -> None:
     inputs.update(
         {
             name: digest(ROOT / name)
-            for name in ("render.py", "svg_assets.py", "pyproject.toml", "uv.lock")
+            for name in (
+                "render.py",
+                "svg_assets.py",
+                "media_assets.py",
+                "pyproject.toml",
+                "uv.lock",
+            )
         }
     )
     runtime = {
@@ -301,16 +308,8 @@ def render(output: Path) -> None:
         (output / "packing.svg").write_bytes(
             poster_card((output / "packing.png").read_bytes())
         )
-        subprocess.run(  # noqa: S603 - fixed executable and locally generated input
-            [
-                inkscape,
-                str(output / "packing.svg"),
-                "--export-width=2880",
-                "--export-filename=" + str(output / "packing-card.png"),
-            ],
-            check=True,
-            capture_output=True,
-            timeout=60,
+        readme_media(
+            output, inkscape=inkscape, ffmpeg=ffmpeg, fps=config["timing"]["fps"]
         )
         context = (ROOT / "inputs/workflow-context.svg").read_bytes()
         native = (

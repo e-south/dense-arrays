@@ -165,8 +165,8 @@ labels count newly covered bases.
 The selected 100-bp and 60-bp demonstrations have a separate
 [locked recipe](https://github.com/e-south/dense-arrays/tree/main/maintenance/docs/showcase).
 Use that recipe to regenerate the assets in `docs/assets/showcase/`. Its receipt
-binds the selected inputs and generated files. The README links to the packing
-player, the index displays the 60-bp workflow, and the constraints guide places
+binds the selected inputs and generated files. The README displays the packing
+loop inline, the index displays the 60-bp workflow, and the constraints guide places
 that workflow beside its upstream/downstream spacing explanation.
 
 The reader/task separation follows [Diátaxis](https://diataxis.fr/start-here/).
