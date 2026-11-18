@@ -21,17 +21,35 @@ RECIPE = ROOT / "maintenance/docs/showcase"
 SVG = "http://www.w3.org/2000/svg"
 
 
-def test_readme_uses_a_pinned_png_for_branch_and_package_rendering():
+def test_readme_uses_pinned_motion_with_a_static_package_fallback():
     readme = (ROOT / "README.md").read_text()
-    assert re.search(
+    urls = re.findall(
         r"https://raw\.githubusercontent\.com/e-south/dense-arrays/"
-        r"[a-f0-9]{40}/docs/assets/showcase/packing-card\.png",
+        r"([a-f0-9]{40})/docs/assets/showcase/(packing-(?:card\.png|loop\.webp))",
         readme,
     )
+    assert {name for _, name in urls} == {"packing-card.png", "packing-loop.webp"}
+    assert len({revision for revision, _ in urls}) == 1
+    assert '<source media="(prefers-reduced-motion: no-preference)"' in readme
+    assert "[![Recorded array packing" not in readme
     with Image.open(ASSETS / "packing-card.png") as image:
         assert image.format == "PNG"
         assert image.width == 2880
         image.verify()
+
+
+def test_readme_animation_loops_and_changes_without_a_navigation_button():
+    path = ASSETS / "packing-loop.webp"
+    assert path.stat().st_size <= 1024 * 1024
+    with Image.open(path) as image:
+        assert image.format == "WEBP"
+        assert image.info["loop"] == 0
+        assert image.n_frames > 1
+        first = image.convert("RGB").tobytes()
+        image.seek(image.n_frames // 2)
+        assert image.convert("RGB").tobytes() != first
+    root = ET.fromstring((ASSETS / "packing.svg").read_bytes())  # noqa: S314
+    assert "Play" not in set(root.itertext())
 
 
 def test_published_media_match_reproduction_receipt():
