@@ -50,6 +50,10 @@ Put long workflows in task-specific guides. Each page declares its inputs or
 links to the setup it continues. The documentation index routes by user task;
 the agent router points contributors to the same owners and verification tools.
 
+Keep explanatory prose direct. Use periods instead of colons or semicolons.
+Preserve punctuation required by code, URLs and structured data. End the README
+with the method citation and its BibTeX block.
+
 Use concrete verbs and the package's actual names. Replace phrases such as
 “the public seam” with “the data flow” or name the inputs and outputs.
 Explain a limitation where it affects a decision. Avoid repeated claims that

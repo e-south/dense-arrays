@@ -7,19 +7,19 @@ description: Set positional requirements, regulator coverage, and side preferenc
 
 Require motifs at particular positions, require coverage of motif groups, or
 favor one side of the array. Positional and group constraints are hard
-requirements; side biases are preferences.
+requirements. Side biases are preferences.
 
 Run each independent example with `python` in your [installed environment](installation.md),
 or `uv run python` in a uv project. Configure a fresh
-`Optimizer` before solving: adding constraints after the model is built raises
-`RuntimeError`. Use `optimal()`, `solutions()`, or `solutions_diverse()`;
+`Optimizer` before solving. Adding constraints after the model is built raises
+`RuntimeError`. Use `optimal()`, `solutions()`, or `solutions_diverse()`.
 `approximate()` rejects configured constraints and side biases.
 
 ## Position two motifs
 
 Use `add_promoter_constraints()` to require one motif upstream of another.
 With the four motifs from the first-array tutorial, require the first motif
-at start 0, 1, or 2 and the fourth motif seven to nine bases after its end:
+at start 0, 1, or 2 and the fourth motif seven to nine bases after its end.
 
 ```python
 # Use the typed requests and operations needed by this example.
@@ -51,12 +51,12 @@ assert 7 <= downstream_start - (upstream_start + len(motifs[0])) <= 9
 ```
 
 Positions are zero-based start coordinates. A two-element range includes its
-endpoints; a single integer fixes the value. `spacer_length` measures bases
+endpoints. A single integer fixes the value. `spacer_length` measures bases
 between the end of the upstream motif and the start of the downstream motif.
 `downstream_pos` can constrain the downstream start separately.
 Use an integer, `None`, or an ordered two-item tuple whose bounds are integers
 or `None`. An omitted bound is unrestricted. Position bounds must be
-non-negative; negative spacers are allowed to request overlap. Booleans,
+non-negative. Negative spacers are allowed to request overlap. Booleans,
 fractional bounds, lists, and reversed ranges are rejected before model allocation.
 
 Both motifs must occur in the supplied library. Reusing a motif in another
@@ -68,7 +68,7 @@ requirements are enforced by the solver and can make a request infeasible.
 Map each motif entry to a regulator label to specify which groups must appear.
 This example requires both entries labeled `R1` and at least one entry from
 another group. Reducing the length limit to 35 bases leaves room for three of
-the four motifs:
+the four motifs.
 
 ```python
 # Use the typed requests and operations needed by this example.
@@ -101,18 +101,18 @@ Use `required` for named labels, `min_required_regulators` for a minimum number
 of different labels, and `min_count_by_regulator` for minimum counts of entries
 assigned to a label. Declare the regulator requirements together in one call.
 Supply positive integers for minimum counts and nonempty regulator labels
-without surrounding whitespace. Fractional and boolean counts are rejected;
-the library must contain enough entries to meet every declared minimum.
+without surrounding whitespace. Fractional and boolean counts are rejected.
+The library must contain enough entries to meet every declared minimum.
 
 The example selects the first three entries, representing `R1` and `R2`.
-Minimum counts refer to entries in the supplied mapping; the minimum number
+Minimum counts refer to entries in the supplied mapping. The minimum number
 of regulators refers to distinct labels. The length limit determines how many
 additional entries can fit.
 
 ## Prefer a side
 
 Side biases favor left or right positions when other scoring terms are equal.
-Use them for preferences; use positional constraints when a coordinate or span
+Use them for preferences. Use positional constraints when a coordinate or span
 is required.
 
 ```python
