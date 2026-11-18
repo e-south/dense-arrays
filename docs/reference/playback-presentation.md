@@ -51,6 +51,13 @@ share a smaller, proportional scale. Reverse tracks display the coordinate-align
 sequence to match the lower strand, without reversing coordinate order. The
 stored placement sequence and graph labels remain unchanged.
 
+Start and End captions remain horizontally centered on their terminal nodes.
+Their measured bounds choose an edge-free position above or below the node,
+checking the complete visible routing rather than only currently emphasized
+edges. This keeps the choice stable during playback. Captions are never hidden
+or shrunk to escape a collision; if neither side has room, enlarge the graph
+viewport and render again.
+
 ## Scene settings
 
 The scene preserves resolved labels and concise failed-requirement or

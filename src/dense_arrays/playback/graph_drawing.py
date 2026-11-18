@@ -22,7 +22,7 @@ from .graph.geometry import (
     matplotlib_layout_spec,
 )
 from .graph.layout import build_graph_scene
-from .graph.model import END_NODE_ID, START_NODE_ID
+from .graph.model import START_NODE_ID
 from .graph.projection import project_explanation_graph
 from .graph.routing import (
     EDGE_LABEL_FONT_SIZE_PT,
@@ -31,6 +31,7 @@ from .graph.routing import (
     quadratic_segment,
     route_graph_scene,
 )
+from .graph.terminal_labels import TerminalLabel, plan_terminal_labels
 from .theme import (
     RESTING_COLOR,
     RESTING_TEXT_COLOR,
@@ -92,6 +93,13 @@ def draw_graph(
     )
     scene = build_graph_scene(document.plan, layout_spec=layout_spec)
     routes = route_graph_scene(scene)
+    terminal_labels = plan_terminal_labels(
+        scene,
+        routes,
+        _terminal_label_extents(axis),
+        include_context=document.presentation.graph_detail == "full",
+        include_edge_labels=document.presentation.show_edge_costs,
+    )
     axis.set_xlim(0, layout_spec.viewport.width_pt)
     axis.set_ylim(0, layout_spec.viewport.height_pt)
     axis.set_aspect("equal", adjustable="box")
@@ -108,7 +116,7 @@ def draw_graph(
         PlaybackFrame(transition_index, progress),
         kmer_font_size_pt=kmer_font_size_pt,
     )
-    _draw_terminals(axis, scene, transition_index, progress)
+    _draw_terminals(axis, scene, terminal_labels, transition_index, progress)
     _draw_active_marker(axis, active_geometry)
 
 
@@ -287,17 +295,32 @@ def _draw_nodes(
         )
 
 
+def _terminal_label_extents(axis: Axes) -> dict[str, tuple[float, float]]:
+    from matplotlib.font_manager import FontProperties
+
+    prop = FontProperties(family=KMER_FONT_FAMILY, size=_TERMINAL_FONT_SIZE_PT)
+    renderer = axis.figure.canvas.get_renderer()
+    scale = 72.0 / axis.figure.dpi
+    return {
+        text: (
+            renderer.get_text_width_height_descent(text, prop, ismath=False)[0] * scale,
+            _TERMINAL_FONT_SIZE_PT * 1.25,
+        )
+        for text in ("Start", "End")
+    }
+
+
 def _draw_terminals(
-    axis: Axes, scene: GraphScene, transition_index: int, progress: float
+    axis: Axes,
+    scene: GraphScene,
+    labels: tuple[TerminalLabel, ...],
+    transition_index: int,
+    progress: float,
 ) -> None:
     from matplotlib.patches import Circle
 
-    terminals = (
-        (("Start", START_NODE_ID), ("End", END_NODE_ID))
-        if scene.graph.traversal_edges
-        else ()
-    )
-    for label, node_id in terminals:
+    for label in labels:
+        node_id = label.node_id
         index = 0 if node_id == START_NODE_ID else len(scene.graph.traversal_edges) - 1
         emphasis = placement_progress(index, transition_index, progress)
         x, y = scene.position(node_id)
@@ -314,11 +337,11 @@ def _draw_terminals(
             )
         )
         axis.text(
-            x,
-            y + radius + 3.5,
-            label,
+            label.x,
+            label.y,
+            label.text,
             ha="center",
-            va="bottom",
+            va="center",
             color=blend_color(RESTING_TEXT_COLOR, _GRAPH_TEXT, emphasis),
             fontsize=_TERMINAL_FONT_SIZE_PT,
             family=KMER_FONT_FAMILY,
