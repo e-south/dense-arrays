@@ -452,7 +452,7 @@ def transition_frame_counts(
     if graph_axis is None or not resolve_evidence(document).animate_chain:
         count = max(1, round(fps * seconds_per_step))
         figure.clear()
-        return (count,) * (len(document.plan.steps) + 1)
+        return (count,) * len(document.plan.steps)
     semantic_graph = project_explanation_graph(document.plan)
     _frame, cap_height = _prepare_duplex_panel(
         duplex_axis, document, 0, 0.0, duplex_frames
@@ -471,6 +471,9 @@ def transition_frame_counts(
     if len(lengths) != expected:
         msg = f"playback requires {expected} traversal edges, found {len(lengths)}"
         raise ValueError(msg)
+    # End adds no sequence. Its edge completes with the final arrival, without
+    # another moving-marker transition or an additional clock interval.
+    lengths = lengths[:-1]
     mean_length = sum(lengths) / len(lengths)
     counts = tuple(
         max(1, round(fps * seconds_per_step * length / mean_length))

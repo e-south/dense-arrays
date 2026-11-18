@@ -47,8 +47,12 @@ input choices, parameter units, saved outputs and checks beside the relevant
 statement. Keep CSV and JSON examples valid; explain their fields in prose.
 
 Put long workflows in task-specific guides. Each page declares its inputs or
-links to the setup it continues. The documentation index routes by user task;
-the agent router points contributors to the same owners and verification tools.
+links to the setup it continues. The documentation index routes by user task.
+The agent router points contributors to the same owners and verification tools.
+
+Keep explanatory prose direct. Use periods instead of colons or semicolons.
+Preserve punctuation required by code, URLs and structured data. End the README
+with the method citation and its BibTeX block.
 
 Use concrete verbs and the package's actual names. Replace phrases such as
 “the public seam” with “the data flow” or name the inputs and outputs.

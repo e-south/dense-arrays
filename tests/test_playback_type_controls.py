@@ -69,7 +69,7 @@ def test_explicit_type_is_shared_by_graph_strands_features_and_annotations():
         assert states[0] == states[1]
         assert (
             len(transition_frame_counts(document, figure, fps=24, seconds_per_step=0.5))
-            == 5
+            == 4
         )
     finally:
         plt.close(figure)

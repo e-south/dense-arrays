@@ -11,7 +11,7 @@ A `PlaybackDocument` combines the validated plan with artifact metadata,
 placement labels, colors, and presentation choices. Install the `playback`
 extra before rendering.
 
-Use the `plan` and output directory from the [PNG example](../playback.md):
+Use the `plan` and output directory from the [PNG example](../playback.md).
 
 ```python
 from dense_arrays.playback import PlaybackDocument
@@ -36,14 +36,14 @@ poster = render_collection_poster_png((document,), output / "labeled-poster.png"
 assert poster.is_file()
 ```
 
-Labels and colors are keyed by **placement ID**. Unknown IDs are rejected;
-colors use opaque `#RRGGBB` notation. Mappings are immutable snapshots, so
+Labels and colors are keyed by **placement ID**. Unknown IDs are rejected.
+Colors use opaque `#RRGGBB` notation. Mappings are immutable snapshots, so
 later changes to caller dictionaries cannot change the document.
 
 The native duplex shows placement captions only for explicit `label_overrides`
 entries. Omitting the map leaves motif tracks free of identifier captions.
 Every motif nucleotide uses the duplex's font size and per-base coordinate
-grid. Measured glyph widths set compact cells; extra panel width becomes margins,
+grid. Measured glyph widths set compact cells. Extra panel width becomes margins,
 and the complete grid shrinks uniformly only when it cannot fit. Actual glyph
 outlines are centered in their cells and placement boxes. Native nucleotide cap
 height also sets the graph's font scale. Explicit captions and legend labels
@@ -51,11 +51,16 @@ share a proportional scale configured through `PlaybackTypography`. Reverse trac
 sequence to match the lower strand, without reversing coordinate order. The
 stored placement sequence and graph labels remain unchanged.
 
+The edge into End adds no sequence and has no separate animated interval. It
+switches to its completed state when the final part arrives. The marker stops
+there. End's node and caption complete at the same time. Holds therefore show
+the complete result without an extra traversal after sequence completion.
+
 Start and End captions remain horizontally centered on their terminal nodes.
 Their measured bounds choose an edge-free position above or below the node,
 checking the complete visible routing rather than only currently emphasized
 edges. This keeps the choice stable during playback. Captions are never hidden
-or shrunk to escape a collision; if neither side has room, enlarge the graph
+or shrunk to escape a collision. If neither side has room, enlarge the graph
 viewport and render again.
 
 ## Scene settings
@@ -67,14 +72,14 @@ artifact metadata.
 
 | Setting | Accepted values and effect |
 | --- | --- |
-| `color_profile` | `categorical` cycles generic colors; `uniform` uses one color; `constraints` distinguishes declared fixed elements |
+| `color_profile` | `categorical` cycles generic colors. `uniform` uses one color. `constraints` distinguishes declared fixed elements |
 | `color_overrides` | Explicit placement colors on the document, taking precedence over the profile |
 | `legend_entries` | Caller-authored `LegendEntry(key, label, color)` records with unique keys |
-| `graph_detail` | `full` includes context and traversal relations; `reduced` includes traversal relations at the chosen graph fraction; `none` hides the graph |
-| `graph_fraction` | Finite number from 0 to 0.5; it must be zero exactly when `graph_detail="none"` |
+| `graph_detail` | `full` includes context and traversal relations. `reduced` includes traversal relations at the chosen graph fraction. `none` hides the graph |
+| `graph_fraction` | Finite number from 0 to 0.5. It must be zero exactly when `graph_detail="none"` |
 | `show_edge_costs` | Boolean controlling edge-cost labels |
 | `show_authority_notice` | Boolean including plan notices in full evidence metadata and the visible summary, except the routine reconstruction notice, which is metadata only |
-| `show_distance_bracket` | `never`, `when_declared`, or `always`; brackets describe declared constraints, and `always` reports when none exist |
+| `show_distance_bracket` | `never`, `when_declared`, or `always`. Brackets describe declared constraints, and `always` reports when none exist |
 
 A `layout_only` document never animates a complete placement chain, regardless
 of graph detail. No profile infers biological identity from a label or ID.
@@ -83,18 +88,18 @@ and legend entries instead.
 
 ## Native type and canvas size
 
-These controls are available from the [source checkout](../installation.md#install-from-source);
-they are not in the 0.3.0 package release.
+These controls are available from the [source checkout](../installation.md#install-from-source).
+They are not in the 0.3.0 package release.
 
 Use `PlaybackTypography` to pin one nucleotide font size across graph sequences,
 strands and placement boxes. `nucleotide_font_size_pt=None` retains the automatic
-fit, capped at the publication default. A positive explicit size is exact: if the
+fit, capped at the publication default. A positive explicit size is exact. If the
 complete native grid cannot fit, rendering fails before publishing media. Increase
 `canvas_height_inches`, reduce `graph_fraction`, or choose a smaller type size.
-Extra space becomes margins; letters and placement boxes keep their shared grid.
+Extra space becomes margins. Letters and placement boxes keep their shared grid.
 
 `annotation_scale` links native placement captions, strand-end labels, distance
-labels and legends to the nucleotide size. Its default is `11.5 / 13.2`; `1.0`
+labels and legends to the nucleotide size. Its default is `11.5 / 13.2`. `1.0`
 matches the nucleotide size. Graph Start/End and routed edge-cost labels retain
 their collision-managed presentation. Larger native annotation ratios reserve
 extra track spacing before the grid is fitted. These controls do not reflow long captions.
@@ -112,21 +117,21 @@ settings = PlaybackPresentation(
 assert PlaybackPresentation.from_mapping(settings.to_mapping()) == settings
 ```
 
-The same CLI settings use `--presentation`:
+The same CLI settings use `--presentation`.
 
 ```json
 {"canvas_height_inches": 4.0, "typography": {"nucleotide_font_size_pt": 18.0, "annotation_scale": 1.0}}
 ```
 
 `canvas_height_inches=None` retains the producer's declared height or the native
-2.4-inch default; the canvas remains 16 inches wide. Every scene in a collection
+2.4-inch default. The canvas remains 16 inches wide. Every scene in a collection
 must resolve to the same height. Explicit sizes, ratios and heights must be
 finite, positive numbers, with no string or boolean coercion. Unknown settings
 fail at admission. PNG metadata reports the resulting physical type size.
 
 A producer-supplied duplex callback owns its font sizes and image geometry.
 Its measured cap height continues to set graph sequence size. Combining that
-callback with an explicit native `nucleotide_font_size_pt` fails; tune the producer
+callback with an explicit native `nucleotide_font_size_pt` fails. Tune the producer
 instead. `annotation_scale` can still control the separate legend.
 
 ## Graph arrow dimensions
@@ -137,8 +142,8 @@ Filled heads have no outline stroke. `opacity` defaults to 1 and accepts a finit
 `head_shape` defaults to `triangle`, a flat-backed filled triangle. Select
 `notched` explicitly for the earlier curved-notch head.
 `resting_color`, `completed_color` and `active_color` default to
-`#9A9A9A`, `#505050` and `#202020`; each accepts opaque `#RRGGBB`. Resting, active and completed relations
-retain the same dimensions; color provides emphasis. Routing and terminal
+`#9A9A9A`, `#505050` and `#202020`. Each accepts opaque `#RRGGBB`. Resting, active and completed relations
+retain the same dimensions. Color provides emphasis. Routing and terminal
 caption placement remain independent of these drawing controls.
 
 ```python
@@ -152,13 +157,13 @@ settings = PlaybackPresentation(
 assert PlaybackPresentation.from_mapping(settings.to_mapping()) == settings
 ```
 
-The CLI accepts the same strict mapping, with no separate size interpretation:
+The CLI accepts the same strict mapping, with no separate size interpretation.
 
 ```json
 {"graph_detail": "reduced", "graph_arrows": {"shaft_width_em": 0.05, "head_length_em": 0.43, "head_width_em": 0.5}}
 ```
 
-Save it as `presentation.json`, then run:
+Save the settings as `presentation.json` and run the playback command.
 
 ```bash
 dense-arrays-playback realized.json --presentation presentation.json --poster poster.png
@@ -181,8 +186,8 @@ placements or infer a solver order.
 The visible summary uses at most three lines and reserves no more than 25% of
 the figure height when evidence needs disclosure. Routine authority and unique
 coordinate order do not add a canvas caption. Ambiguous or gapped order remains
-visible. A short failed requirement shows its actual and required distance;
-longer failure text becomes a `FAILED` count directing readers to metadata.
+visible. A short failed requirement shows its actual and required distance.
+Longer failure text becomes a `FAILED` count directing readers to metadata.
 Long optional notices are excerpted. This keeps the figure compact while
 native metadata retains every declared distance result, including passed results,
 and the full text of enabled notices. The native sequence panel summarizes more
@@ -191,11 +196,11 @@ callbacks retain ownership of their own annotations.
 
 | Format | Native metadata |
 | --- | --- |
-| PNG | `Title` and `Description` hold the first scene's title and subtitle; `PlaybackEvidence` holds its full evidence |
-| MP4 | `title` joins scene titles; `comment` contains one title, subtitle, and full evidence block per scene |
+| PNG | `Title` and `Description` hold the first scene's title and subtitle. `PlaybackEvidence` holds its full evidence |
+| MP4 | `title` joins scene titles. `comment` contains one title, subtitle, and full evidence block per scene |
 | GIF | The native `comment` contains the same scene blocks, encoded as UTF-8 |
 
-Read the PNG evidence from the example above with Pillow:
+Read the PNG evidence from the example above with Pillow.
 
 ```python
 from PIL import Image
@@ -212,7 +217,7 @@ Titles and subtitles do not add visual headings to the scenes in any format.
 
 ## Export and timing
 
-Public media functions live in `dense_arrays.playback.matplotlib_renderer`:
+Public media functions live in `dense_arrays.playback.matplotlib_renderer`.
 
 ```text
 render_collection_poster_png(documents, output_path, ...)
@@ -222,16 +227,16 @@ render_collection_gif(documents, output_path, ...)
 
 The PNG poster shows the completed first scene. MP4 and GIF start every scene
 with the complete gray graph, duplex, placement tracks, and annotations.
-Color and active emphasis advance while coordinates and text sizes stay fixed;
-uncovered sequence remains visible in gray. A resting frame shows the known
+Color and active emphasis advance while coordinates and text sizes stay fixed.
+Uncovered sequence remains visible in gray. A resting frame shows the known
 realized arrangement before any placement receives active emphasis.
 
 MP4 and GIF render the
-collection in order. All formats require the `playback` extra; MP4 also
+collection in order. All formats require the `playback` extra. MP4 also
 requires FFmpeg on `PATH`.
 
 Traversal timing and frame drawing use the same measured sequence typography
-and graph layout. Producer frames are admitted before timing their scene; a
+and graph layout. Producer frames are admitted before timing their scene. A
 separate default-font layout is not used for videos.
 
 Media timing requires a positive integer `fps` and finite positive
@@ -239,26 +244,26 @@ Media timing requires a positive integer `fps` and finite positive
 non-negative. Every scene has at least one resting frame, including when lead
 time is zero. A positive lead requests `round(fps * lead_seconds)` resting
 frames, with the same one-frame minimum. `scene_transition_seconds` adds a
-stationary gray orientation interval at the beginning of each subsequent scene;
-scene boundaries do not fade through white. Zero hold means zero completed hold
+stationary gray orientation interval at the beginning of each subsequent scene.
+Scene boundaries do not fade through white. Zero hold means zero completed hold
 frames. MP4 and GIF use the same frame schedule. Writers stage their output and close figures on
-failure. The CLI adds destination preflight and stages every requested format;
-see [publication behavior](cli.md#render-saved-placements).
+failure. The CLI adds destination preflight and stages every requested format.
+See [publication behavior](cli.md#render-saved-placements).
 
 ## Producer-owned duplex frames
 
 A caller can supply `duplex_frame_renderer(document, step_index)` to the media
-functions. `step_index` is `int | None`: **`None` requests the complete gray
+functions. `step_index` is `int | None`. **`None` requests the complete gray
 pre-placement state**, and integers `0..len(plan.steps)-1` request the state
 after that placement. Negative indices are rejected. The callback must draw
 the full sequence, placement tracks, and relevant annotations in every state,
 leaving future or uncovered context neutral. It returns a nonempty NumPy
 `uint8` RGB or RGBA image with constant shape, crop, geometry, and text size
-within each scene. Dense Arrays crossfades adjacent frames in place; it does
+within each scene. Dense Arrays crossfades adjacent frames in place. It does
 not slide nucleotide glyphs. Frames are validated as they
 are requested during rendering, with at most two images cached for transitions.
-The callback must support the explicit resting state and every requested step;
-a poster requests the completed first scene. A late invalid frame fails the
+The callback must support the explicit resting state and every requested step.
+A poster requests the completed first scene. A late invalid frame fails the
 staged export and leaves any existing destination file untouched.
 The graph geometry, routing, and playback timing remain Dense Arrays-owned.
 Existing callbacks that accept only integer indices must add `None` handling
@@ -274,10 +279,10 @@ natively.
 If the producer draws its own distance brackets, its callback owner declares
 `renders_distance_brackets=True`. Otherwise the scene renderer draws them
 according to `show_distance_bracket`. This capability defaults to `False` and
-must be boolean; explicit ownership prevents duplicate span annotations.
+must be boolean. Explicit ownership prevents duplicate span annotations.
 
 The caller supplies frame styling, biological labels and output destinations.
-Review exported media at its intended size; the
+Review exported media at its intended size. The
 [product brief](../architecture/animation-product-spec.md) records visual goals.
 
 ## Signatures
