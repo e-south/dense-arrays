@@ -23,7 +23,7 @@ State that outcome before explaining the implementation.
 
 Keep one home for each contract. Link to it instead of copying its full text.
 Split a page when its reader task or owner changes, not when it reaches an
-arbitrary number of lines. Check the rendered page too: a short mkdocstrings
+arbitrary number of lines. Check the rendered page too. A short mkdocstrings
 directive can expand into a large reference.
 
 ## Write the page
@@ -35,16 +35,16 @@ expected output, and relevant failure behavior. Put optional detail after the
 successful path and link to the next task.
 
 Lead user installation with pip in an explicit virtual environment. Offer uv
-projects through `uv init`, `uv add` and `uv run`; keep contributor `uv sync`
+projects through `uv init`, `uv add` and `uv run`. Keep contributor `uv sync`
 commands in the development guide. Use Pixi when a project needs Python and
 external executables together. State which released version provides a feature.
 
 Use binding-site-sized sequences for workflow examples and identify synthetic
 inputs where they are introduced. Explain scientific limits where readers
 interpret scores or choose a method. Keep tiny sequences only when they expose a specific
-mathematical boundary. Comment each meaningful step in teaching code: explain
+mathematical boundary. Comment each meaningful step in teaching code. Explain
 input choices, parameter units, saved outputs and checks beside the relevant
-statement. Keep CSV and JSON examples valid; explain their fields in prose.
+statement. Keep CSV and JSON examples valid. Explain their fields in prose.
 
 Put long workflows in task-specific guides. Each page declares its inputs or
 links to the setup it continues. The documentation index routes by user task.
@@ -57,7 +57,7 @@ with the method citation and its BibTeX block.
 Use concrete verbs and the package's actual names. Replace phrases such as
 “the public seam” with “the data flow” or name the inputs and outputs.
 Explain a limitation where it affects a decision. Avoid repeated claims that
-the documentation is canonical, modern, robust, or easy to use; demonstrate
+the documentation is canonical, modern, robust, or easy to use. Demonstrate
 those properties through a clear route and a working example.
 
 Describe the product through its inputs, operations, outputs and failure states.
@@ -76,7 +76,7 @@ what the implementation and tests establish.
 
 Begin package modules with a docstring containing the project name, the path
 relative to the repository, a concise purpose, authors and current maintainers.
-Use the same separator and labels so a reader can find ownership consistently:
+Use the same separator and labels so a reader can find ownership consistently.
 
 ```python
 """
@@ -94,7 +94,7 @@ Dunlop Lab
 ```
 
 Authorship follows contributed code when a module is decomposed or moved.
-Preserve existing names and affiliations; maintenance responsibility does not
+Preserve existing names and affiliations. Maintenance responsibility does not
 replace authorship. Credit new work to Eric J. South and retain joint credits
 on shared implementations. The path identifies the current file, not its history.
 Keep the purpose about current behavior and keep detailed contracts next to
@@ -112,7 +112,7 @@ without changing the source parser or member templates.
 
 ## Dogfood the route
 
-Give a fresh reader or agent a task, not the answer's file path:
+Give a fresh reader or agent a task without supplying the answer's file path.
 
 1. “Create the tutorial's 40-base array from four 16-base motifs using CBC,
    explain an overlap and the returned offsets, and find the associated paper.”
@@ -122,7 +122,7 @@ Give a fresh reader or agent a task, not the answer's file path:
 4. “Prepare a pool of 20-base parts, inspect retained candidates, and plot
    candidate yield.”
 5. “Generate a saved library, explain a shortfall, and export its accepted designs.”
-6. From `src/dense_arrays/playback/`: “Find the owner and tests for rejecting a
+6. From `src/dense_arrays/playback/`, “Find the owner and tests for rejecting a
    malformed serialized placement before rendering.”
 
 Record the actual pages read, commands attempted, missing prerequisites, and
@@ -134,7 +134,7 @@ installation or an independently launched runtime.
 Run changed examples, build docs strictly, and inspect internal links and anchors.
 Review specifications for contract accuracy and readable Markdown. Check narrow
 and wide layouts when changing the site's theme, navigation or page layout.
-Keep the banner's accessible description; use text labels alongside color.
+Retain accessible descriptions for illustrations and use text labels alongside color.
 Complete the [development gate](../development.md).
 
 ## Maintain the teaching media
@@ -146,11 +146,11 @@ guide. Regenerate these stills from those examples and review their labels and
 coordinates before replacing the assets. Their adjacent tables describe the
 same example records.
 
-The playback guide maintains one MP4, its opening PNG, and its completed
+The four-motif tutorial maintains one MP4, its opening PNG, and its completed
 poster in `docs/assets/`. Regenerate them from the guide's Python example
 using `render_collection_mp4((document,), output / "playback.mp4")` with the
 default timing. Use the guide's `poster.png` for the completed still, and
-decode the first video frame for the opening image:
+decode the first video frame for the opening image.
 
 ```bash
 ffmpeg -i playback.mp4 -frames:v 1 playback-opening.png
@@ -158,9 +158,16 @@ ffmpeg -i playback.mp4 -frames:v 1 playback-opening.png
 
 Review the encoded opening, middle, and final frames before replacing the
 three assets. Keep transient producer runs outside tracked source. The
-editable process figure is `docs/assets/motif-packing-process.svg`; its
+editable process figure is `docs/assets/motif-packing-process.svg`. Its
 graph uses start-to-start shifts and a final-motif cost, while playback
 labels count newly covered bases.
+
+The selected 100-bp and 60-bp demonstrations have a separate
+[locked recipe](https://github.com/e-south/dense-arrays/tree/main/maintenance/docs/showcase).
+Use that recipe to regenerate the assets in `docs/assets/showcase/`. Its receipt
+binds the selected inputs and generated files. The README links to the packing
+player, the index displays the 60-bp workflow, and the constraints guide places
+that workflow beside its upstream/downstream spacing explanation.
 
 The reader/task separation follows [Diátaxis](https://diataxis.fr/start-here/).
 The focus on reader benefit is informed by McEnerney's

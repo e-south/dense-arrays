@@ -3,12 +3,15 @@
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)](https://github.com/e-south/dense-arrays/blob/main/pyproject.toml)
 [![PyPI version](https://img.shields.io/pypi/v/dense-arrays)](https://pypi.org/project/dense-arrays/)
 [![CI](https://github.com/e-south/dense-arrays/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/e-south/dense-arrays/actions/workflows/ci.yml)
+[![Codecov](https://codecov.io/gh/e-south/dense-arrays/branch/main/graph/badge.svg)](https://app.codecov.io/gh/e-south/dense-arrays)
 [![Documentation](https://img.shields.io/badge/docs-read-blue)](https://dunloplab.gitlab.io/dense-arrays)
 [![MIT license](https://img.shields.io/badge/license-MIT-green)](https://github.com/e-south/dense-arrays/blob/main/LICENSE)
 
 Dense Arrays designs nucleotide sequences with densely packed DNA-protein binding
 sites. It uses optimal string packing to arrange overlapping sites on both DNA
 strands, with controls for sequence length, site placement, and library diversity.
+
+[![Recorded array packing with synchronized graph and DNA placements](https://raw.githubusercontent.com/e-south/dense-arrays/493808b604a7a520e333a79c9923774f69e0cfac/docs/assets/showcase/packing-card.png)](https://dunloplab.gitlab.io/dense-arrays/playback/#packing)
 
 ## First array
 
@@ -52,7 +55,7 @@ It also links the API, method, and contributor guides.
 
 ## Citation
 
-Please cite the method paper.
+If you use Dense Arrays in your work, please cite the method paper.
 
 Andreani V, South EJ, Dunlop MJ (2024). Generating information-dense promoter
 sequences with optimal string packing. *PLOS Computational Biology* 20(7),

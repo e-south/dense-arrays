@@ -59,6 +59,12 @@ or `None`. An omitted bound is unrestricted. Position bounds must be
 non-negative. Negative spacers are allowed to request overlap. Booleans,
 fractional bounds, lists, and reversed ranges are rejected before model allocation.
 
+<div id="library" class="sequence-playback sequence-playback--library">
+  <a href="../assets/showcase/library.mp4"><img src="../assets/showcase/library.svg" alt="Recorded 60-bp promoter workflow"></a>
+  <button type="button" aria-pressed="false" aria-label="Play or pause the sequence video">Play</button>
+  <video muted loop playsinline preload="metadata" hidden src="../assets/showcase/library.mp4"></video>
+</div>
+
 Both motifs must occur in the supplied library. Reusing a motif in another
 pair requires another copy of that motif in the library. Positional
 requirements are enforced by the solver and can make a request infeasible.
