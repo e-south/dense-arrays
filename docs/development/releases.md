@@ -50,8 +50,20 @@ PNG banner at an immutable source commit or the matching `v<version>` tag.
 Never use a relative asset path or a mutable branch for a release image. Keep
 published tags and their assets; changing a new banner must not change older
 release pages. When incrementing the version, update a version-bound README
-image URL in the same change. The package tests enforce this relationship.
+image URL in the same change. An existing immutable source image can remain
+pinned across compatible releases. The release workflow and package test accept
+the same current-tag or full-commit contract. The package tests enforce this relationship.
 
 Before publishing, fetch the banner URL after the tag exists and compare its
 bytes with the source PNG. Check the rendered PyPI page after upload. The PNG is
 a package-page export; its editable SVG remains the artwork source.
+
+
+### Retiring superseded releases
+
+Retire release pages or registry versions only at the owner's explicit request.
+Keep immutable source tags. First verify the replacement package on PyPI and
+attach a checksum-verified archive of the prior packages and provenance records
+to its GitHub release. Fetch that archive and verify it before deleting any
+older release. Record the retired versions and archive link in the replacement
+release notes. PyPI deletion is permanent and deleted filenames cannot be reused.

@@ -41,9 +41,10 @@ with `.venv\Scripts\Activate.ps1` instead of the `source` command.
 Continue with [your first array](quickstart.md). That example uses the published
 optimizer and needs no FIMO installation.
 
-The published [0.3.0 package](https://pypi.org/project/dense-arrays/0.3.0/)
+The [0.4.0 package](https://pypi.org/project/dense-arrays/0.4.0/)
 includes direct packing, part preparation, library generation and supplied-array
-collections. All workflow guides below use that release or later.
+collections. It also includes native playback typography controls and immediate
+completion at the last placement. The workflow guides use this release or later.
 
 ## Optional features
 
@@ -67,7 +68,7 @@ if your task needs them, then check the command:
 
 ```bash
 # Add optional table formats and rendering to the activated environment.
-python -m pip install "dense-arrays[tables,playback]>=0.3.0"
+python -m pip install "dense-arrays[tables,playback]>=0.4.0"
 # Show planning inputs and options before generating a library.
 dense-arrays plan --help
 ```
@@ -185,7 +186,7 @@ cd array-project
 pixi add "python=3.12" meme
 
 # Add the published Python package through Pixi's PyPI dependency support.
-pixi add --pypi "dense-arrays>=0.3.0"
+pixi add --pypi "dense-arrays>=0.4.0"
 
 # Confirm both commands are available in the same project environment.
 pixi run fimo --version
