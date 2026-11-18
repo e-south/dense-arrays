@@ -13,11 +13,25 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 import pytest
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "docs/assets/showcase"
 RECIPE = ROOT / "maintenance/docs/showcase"
 SVG = "http://www.w3.org/2000/svg"
+
+
+def test_readme_uses_a_pinned_png_for_branch_and_package_rendering():
+    readme = (ROOT / "README.md").read_text()
+    assert re.search(
+        r"https://raw\.githubusercontent\.com/e-south/dense-arrays/"
+        r"[a-f0-9]{40}/docs/assets/showcase/packing-card\.png",
+        readme,
+    )
+    with Image.open(ASSETS / "packing-card.png") as image:
+        assert image.format == "PNG"
+        assert image.width == 2880
+        image.verify()
 
 
 def test_published_media_match_reproduction_receipt():

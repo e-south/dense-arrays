@@ -11,7 +11,7 @@ Dense Arrays designs nucleotide sequences with densely packed DNA-protein bindin
 sites. It uses optimal string packing to arrange overlapping sites on both DNA
 strands, with controls for sequence length, site placement, and library diversity.
 
-[![Recorded array packing with synchronized graph and DNA placements](https://raw.githubusercontent.com/e-south/dense-arrays/main/docs/assets/showcase/packing.svg)](https://dunloplab.gitlab.io/dense-arrays/playback/#packing)
+[![Recorded array packing with synchronized graph and DNA placements](https://raw.githubusercontent.com/e-south/dense-arrays/493808b604a7a520e333a79c9923774f69e0cfac/docs/assets/showcase/packing-card.png)](https://dunloplab.gitlab.io/dense-arrays/playback/#packing)
 
 ## First array
 
