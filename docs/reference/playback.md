@@ -56,6 +56,10 @@ exported from `dense_arrays.playback`.
     options:
       show_root_heading: false
       members:
+        - PlaybackDocument
+        - PlaybackPresentation
+        - PlaybackTypography
+        - GraphArrowStyle
         - PlaybackPlan
         - PlaybackStep
         - CoordinateSpan

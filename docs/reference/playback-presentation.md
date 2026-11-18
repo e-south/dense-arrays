@@ -46,8 +46,8 @@ Every motif nucleotide uses the duplex's font size and per-base coordinate
 grid. Measured glyph widths set compact cells; extra panel width becomes margins,
 and the complete grid shrinks uniformly only when it cannot fit. Actual glyph
 outlines are centered in their cells and placement boxes. Native nucleotide cap
-height also sets the graph's font scale; explicit captions and legend labels
-share a smaller, proportional scale. Reverse tracks display the coordinate-aligned complement of their stored
+height also sets the graph's font scale. Explicit captions and legend labels
+share a proportional scale configured through `PlaybackTypography`. Reverse tracks display the coordinate-aligned complement of their stored
 sequence to match the lower strand, without reversing coordinate order. The
 stored placement sequence and graph labels remain unchanged.
 
@@ -80,6 +80,54 @@ A `layout_only` document never animates a complete placement chain, regardless
 of graph detail. No profile infers biological identity from a label or ID.
 Use the supported profiles and supply caller colors
 and legend entries instead.
+
+## Native type and canvas size
+
+These controls are available from the [source checkout](../installation.md#install-from-source);
+they are not in the 0.3.0 package release.
+
+Use `PlaybackTypography` to pin one nucleotide font size across graph sequences,
+strands and placement boxes. `nucleotide_font_size_pt=None` retains the automatic
+fit, capped at the publication default. A positive explicit size is exact: if the
+complete native grid cannot fit, rendering fails before publishing media. Increase
+`canvas_height_inches`, reduce `graph_fraction`, or choose a smaller type size.
+Extra space becomes margins; letters and placement boxes keep their shared grid.
+
+`annotation_scale` links native placement captions, strand-end labels, distance
+labels and legends to the nucleotide size. Its default is `11.5 / 13.2`; `1.0`
+matches the nucleotide size. Graph Start/End and routed edge-cost labels retain
+their collision-managed presentation. Larger native annotation ratios reserve
+extra track spacing before the grid is fitted. These controls do not reflow long captions.
+
+```python
+from dense_arrays.playback import PlaybackPresentation, PlaybackTypography
+
+settings = PlaybackPresentation(
+    canvas_height_inches=4.0,
+    typography=PlaybackTypography(
+        nucleotide_font_size_pt=18.0,
+        annotation_scale=1.0,
+    ),
+)
+assert PlaybackPresentation.from_mapping(settings.to_mapping()) == settings
+```
+
+The same CLI settings use `--presentation`:
+
+```json
+{"canvas_height_inches": 4.0, "typography": {"nucleotide_font_size_pt": 18.0, "annotation_scale": 1.0}}
+```
+
+`canvas_height_inches=None` retains the producer's declared height or the native
+2.4-inch default; the canvas remains 16 inches wide. Every scene in a collection
+must resolve to the same height. Explicit sizes, ratios and heights must be
+finite, positive numbers, with no string or boolean coercion. Unknown settings
+fail at admission. PNG metadata reports the resulting physical type size.
+
+A producer-supplied duplex callback owns its font sizes and image geometry.
+Its measured cap height continues to set graph sequence size. Combining that
+callback with an explicit native `nucleotide_font_size_pt` fails; tune the producer
+instead. `annotation_scale` can still control the separate legend.
 
 ## Graph arrow dimensions
 

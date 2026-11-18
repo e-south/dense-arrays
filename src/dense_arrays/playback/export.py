@@ -45,6 +45,31 @@ def require_documents(documents: tuple[PlaybackDocument, ...]) -> None:
         raise ValueError(msg)
 
 
+def collection_height_inches(
+    documents: tuple[PlaybackDocument, ...], renderer: DuplexFrameRenderer | None
+) -> float:
+    """Resolve one canvas for the collection without resizing between scenes."""
+    if renderer is not None and any(
+        document.presentation.typography.nucleotide_font_size_pt is not None
+        for document in documents
+    ):
+        msg = (
+            "nucleotide_font_size_pt controls native duplexes; "
+            "producer callbacks own their typography"
+        )
+        raise ValueError(msg)
+    heights = {
+        document.presentation.canvas_height_inches
+        if document.presentation.canvas_height_inches is not None
+        else preferred_figure_height_inches(renderer)
+        for document in documents
+    }
+    if len(heights) != 1:
+        msg = "all collection scenes must resolve the same canvas_height_inches"
+        raise ValueError(msg)
+    return heights.pop()
+
+
 @contextlib.contextmanager
 def staged_output(output_path: Path) -> Iterator[Path]:
     """Publish a complete file while preserving any prior output on failure."""
@@ -80,7 +105,7 @@ def render_poster(
         if duplex_frame_renderer is not None
         else None
     )
-    height = preferred_figure_height_inches(duplex_frame_renderer)
+    height = collection_height_inches(documents, duplex_frame_renderer)
     figure = plt.figure(figsize=(16, height), facecolor=_PAPER)
     output_path = Path(output_path)
     try:
@@ -157,7 +182,7 @@ def render_animation(
     import matplotlib.pyplot as plt
 
     require_documents(documents)
-    height = preferred_figure_height_inches(duplex_frame_renderer)
+    height = collection_height_inches(documents, duplex_frame_renderer)
     figure = plt.figure(figsize=(16, height), facecolor=_PAPER)
     output_path = Path(output_path)
     try:

@@ -12,7 +12,9 @@ Maintainer(s): Eric J. South
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import math
+from collections.abc import Mapping
+from dataclasses import dataclass, fields
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,3 +54,39 @@ PUBLICATION_NUCLEOTIDE_TYPOGRAPHY = NucleotideTypography(
 )
 
 PUBLICATION_LABEL_FONT_SIZE_PT = 11.5
+
+
+@dataclass(frozen=True, slots=True)
+class PlaybackTypography:
+    """Linked native type sizes; explicit nucleotide sizes are never shrunk."""
+
+    nucleotide_font_size_pt: float | None = None
+    annotation_scale: float = (
+        PUBLICATION_LABEL_FONT_SIZE_PT
+        / PUBLICATION_NUCLEOTIDE_TYPOGRAPHY.graph_font_size_pt
+    )
+
+    def __post_init__(self) -> None:
+        """Reject invalid dimensions before measuring or allocating media."""
+        for name in ("nucleotide_font_size_pt", "annotation_scale"):
+            value = getattr(self, name)
+            if name == "nucleotide_font_size_pt" and value is None:
+                continue
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                msg = f"{name} must be numeric"
+                raise TypeError(msg)
+            if not math.isfinite(value) or value <= 0:
+                msg = f"{name} must be finite and positive"
+                raise ValueError(msg)
+
+    @classmethod
+    def from_mapping(cls, raw: Mapping[str, object]) -> PlaybackTypography:
+        """Read the same strict contract from API mappings and CLI JSON."""
+        if not isinstance(raw, Mapping):
+            msg = "typography must be a mapping"
+            raise TypeError(msg)
+        unknown = set(raw) - {item.name for item in fields(cls)}
+        if unknown:
+            msg = f"unknown typography fields: {sorted(unknown)}"
+            raise ValueError(msg)
+        return cls(**raw)
