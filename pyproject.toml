@@ -75,6 +75,8 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "maintenance/release.py" = ["T201"]
+# The optional documentation recipe is a standalone command, not a package.
+"maintenance/docs/showcase/*.py" = ["INP001"]
 # Optional visualization imports stay inside the functions that use them.
 # Relative imports follow the playback package boundary.
 "src/dense_arrays/playback/**/*.py" = [
