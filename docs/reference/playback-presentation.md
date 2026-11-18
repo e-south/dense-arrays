@@ -163,7 +163,7 @@ The CLI accepts the same strict mapping, with no separate size interpretation.
 {"graph_detail": "reduced", "graph_arrows": {"shaft_width_em": 0.05, "head_length_em": 0.43, "head_width_em": 0.5}}
 ```
 
-Save it as `presentation.json`, then run.
+Save the settings as `presentation.json` and run the playback command.
 
 ```bash
 dense-arrays-playback realized.json --presentation presentation.json --poster poster.png
