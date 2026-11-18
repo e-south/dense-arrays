@@ -3,10 +3,26 @@ message: Cite Dense Arrays and retain the exact release or source revision used.
 type: software
 title: Dense Arrays
 authors:
+- family-names: Andreani
+  given-names: Virgile
+- family-names: South
+  given-names: Eric J.
+repository-code: https://github.com/e-south/dense-arrays
+url: https://dunloplab.gitlab.io/dense-arrays
+license: MIT
+preferred-citation:
+  type: article
+  title: Generating information-dense promoter sequences with optimal string packing
+  authors:
   - family-names: Andreani
     given-names: Virgile
   - family-names: South
     given-names: Eric J.
-repository-code: https://github.com/e-south/dense-arrays
-url: https://dunloplab.gitlab.io/dense-arrays
-license: MIT
+  - family-names: Dunlop
+    given-names: Mary J.
+  journal: PLOS Computational Biology
+  year: 2024
+  volume: '20'
+  issue: '7'
+  start: e1012276
+  doi: 10.1371/journal.pcbi.1012276
