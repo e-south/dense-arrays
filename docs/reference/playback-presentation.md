@@ -51,6 +51,13 @@ share a smaller, proportional scale. Reverse tracks display the coordinate-align
 sequence to match the lower strand, without reversing coordinate order. The
 stored placement sequence and graph labels remain unchanged.
 
+Start and End captions remain horizontally centered on their terminal nodes.
+Their measured bounds choose an edge-free position above or below the node,
+checking the complete visible routing rather than only currently emphasized
+edges. This keeps the choice stable during playback. Captions are never hidden
+or shrunk to escape a collision; if neither side has room, enlarge the graph
+viewport and render again.
+
 ## Scene settings
 
 The scene preserves resolved labels and concise failed-requirement or
@@ -73,6 +80,53 @@ A `layout_only` document never animates a complete placement chain, regardless
 of graph detail. No profile infers biological identity from a label or ID.
 Use the supported profiles and supply caller colors
 and legend entries instead.
+
+## Graph arrow dimensions
+
+`GraphArrowStyle` defines shaft width, head length and head width in multiples
+of the graph nucleotide font size (em). Defaults are 0.07, 0.43 and 0.5.
+Filled heads have no outline stroke. `opacity` defaults to 1 and accepts a finite value from 0 to 1.
+`head_shape` defaults to `triangle`, a flat-backed filled triangle. Select
+`notched` explicitly for the earlier curved-notch head.
+`resting_color`, `completed_color` and `active_color` default to
+`#9A9A9A`, `#505050` and `#202020`; each accepts opaque `#RRGGBB`. Resting, active and completed relations
+retain the same dimensions; color provides emphasis. Routing and terminal
+caption placement remain independent of these drawing controls.
+
+```python
+from dense_arrays.playback import GraphArrowStyle, PlaybackPresentation
+
+settings = PlaybackPresentation(
+    graph_arrows=GraphArrowStyle(
+        shaft_width_em=0.05, head_length_em=0.43, head_width_em=0.5
+    ),
+)
+assert PlaybackPresentation.from_mapping(settings.to_mapping()) == settings
+```
+
+The CLI accepts the same strict mapping, with no separate size interpretation:
+
+```json
+{"graph_detail": "reduced", "graph_arrows": {"shaft_width_em": 0.05, "head_length_em": 0.43, "head_width_em": 0.5}}
+```
+
+Save it as `presentation.json`, then run:
+
+```bash
+dense-arrays-playback realized.json --presentation presentation.json --poster poster.png
+```
+
+PNG exports also include a `PlaybackTypography` JSON metadata entry with
+schema `dense-arrays.playback-typography/v1`, measured
+`nucleotide_cap_height_pt` and `graph_font_size_pt`. A caller that omits a
+producer cap-height metric may receive `null` for the nucleotide value.
+Consumers can read these units after export to check final placement, rather
+than reconstructing private renderer geometry.
+
+Duplicate JSON keys, unknown fields, nonfinite or nonpositive dimensions and output paths that would
+replace the presentation input fail before export. API callers can use the
+mapping constructor or typed dataclasses directly. Arrow settings do not alter
+placements or infer a solver order.
 
 ## Read the evidence
 
@@ -127,6 +181,10 @@ realized arrangement before any placement receives active emphasis.
 MP4 and GIF render the
 collection in order. All formats require the `playback` extra; MP4 also
 requires FFmpeg on `PATH`.
+
+Traversal timing and frame drawing use the same measured sequence typography
+and graph layout. Producer frames are admitted before timing their scene; a
+separate default-font layout is not used for videos.
 
 Media timing requires a positive integer `fps` and finite positive
 `seconds_per_step`. Lead, hold, and scene-transition durations are finite and

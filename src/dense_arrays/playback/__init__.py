@@ -10,6 +10,7 @@ Maintainer(s): Eric J. South
 --------------------------------------------------------------------------------
 """  # noqa: D205, D400 - structured module header
 
+from .graph_style import GraphArrowStyle
 from .models import (
     PLAYBACK_PLAN_SCHEMA_VERSION,
     ConstraintResult,
@@ -33,17 +34,20 @@ from .serialization import (
     realized_array_from_dict,
     realized_array_to_dict,
 )
+from .theme import PlaybackPresentation
 
 __all__ = [
     "PLAYBACK_PLAN_SCHEMA_VERSION",
     "ConstraintResult",
     "CoordinateSpan",
+    "GraphArrowStyle",
     "NoticeLevel",
     "OrderingStatus",
     "PlaybackAuthority",
     "PlaybackDocument",
     "PlaybackNotice",
     "PlaybackPlan",
+    "PlaybackPresentation",
     "PlaybackStep",
     "dumps_playback_plan",
     "dumps_realized_array",

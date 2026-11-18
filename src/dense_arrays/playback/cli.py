@@ -12,7 +12,6 @@ Maintainer(s): Eric J. South
 
 from __future__ import annotations
 
-import json
 import shutil
 import subprocess
 from collections.abc import Mapping
@@ -22,18 +21,20 @@ from typing import Annotated
 import typer
 
 from ..realized import REALIZED_ARRAY_SCHEMA_VERSION
+from .json_io import loads_json
 from .models import PLAYBACK_PLAN_SCHEMA_VERSION, PlaybackPlan
 from .output import publish_exports
 from .presentation import PlaybackDocument
 from .reconstruction import reconstruct_playback
 from .serialization import loads_playback_plan, loads_realized_array
+from .theme import PlaybackPresentation
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
 
 def _load_plan(input_path: Path) -> PlaybackPlan:
     payload = input_path.read_text(encoding="utf-8")
-    root = json.loads(payload)
+    root = loads_json(payload)
     if not isinstance(root, dict):
         msg = "playback input must be a JSON object"
         raise TypeError(msg)
@@ -71,6 +72,24 @@ def _render_exports(document: PlaybackDocument, paths: Mapping[str, Path]) -> No
         raise ValueError(msg) from exc
 
 
+def _presentation_settings(
+    path: Path | None, outputs: Mapping[str, Path]
+) -> PlaybackPresentation:
+    if path is None:
+        return PlaybackPresentation()
+    settings = PlaybackPresentation.from_mapping(
+        loads_json(path.read_text(encoding="utf-8"))
+    )
+    if any(
+        target.resolve() == path.resolve()
+        or (target.exists() and target.samefile(path))
+        for target in outputs.values()
+    ):
+        msg = "output path aliases the presentation input"
+        raise ValueError(msg)
+    return settings
+
+
 @app.command()
 def render(
     input_path: Annotated[
@@ -90,6 +109,13 @@ def render(
         Path | None, typer.Option("--gif", help="Optional animated GIF output")
     ] = None,
     *,
+    presentation: Annotated[
+        Path | None,
+        typer.Option(
+            "--presentation",
+            help="Strict presentation JSON; same fields as PlaybackPresentation",
+        ),
+    ] = None,
     replace: Annotated[
         bool, typer.Option("--replace", help="Replace existing output files")
     ] = False,
@@ -111,7 +137,10 @@ def render(
         raise typer.Exit(code=1)
     try:
         plan = _load_plan(input_path)
-        document = PlaybackDocument(plan=plan, title=title, subtitle=subtitle)
+        settings = _presentation_settings(presentation, outputs)
+        document = PlaybackDocument(
+            plan=plan, title=title, subtitle=subtitle, presentation=settings
+        )
         published = publish_exports(
             input_path,
             outputs,
