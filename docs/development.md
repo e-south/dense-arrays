@@ -19,14 +19,15 @@ and their constraint-parity checks before comparing end-to-end execution time.
 ## Local verification
 
 Run these checks from the repository root. `uv sync` manages the checkout’s
-`.venv` from `pyproject.toml` and `uv.lock`; `uv run` selects that environment:
+`.venv` from `pyproject.toml` and `uv.lock`. `uv run` selects that environment.
 
 ```bash
 uv sync --frozen --extra dev --extra playback --extra docs  # Reproduce the locked tool environment.
 uv run pre-commit run --all-files  # Check tracked source, secrets and formatting.
 uv run ruff check .  # Check Python correctness and style rules.
 uv run ruff format --check .  # Verify formatting without rewriting files.
-uv run pytest -q  # Exercise behavior, failure paths and guide examples.
+uv run coverage run -m pytest -q  # Measure the full package while running the tests.
+uv run coverage report  # Inspect measured statement and branch coverage.
 uv run mkdocs build --strict  # Reject broken documentation configuration.
 
 # Audit the exact locked versions and hashes across optional features.
@@ -55,12 +56,12 @@ must construct a fresh optimizer before solving.
 constraints, playback and saved-library guides, including their linked export,
 assembly and quality examples. Its page list names the additional workflow
 guides covered by the test. It also builds the site strictly and checks links,
-assets and anchors. Keep examples on each page runnable in order; test outputs
+assets and anchors. Keep examples on each page runnable in order. Test outputs
 use temporary directories. Run changed preparation examples separately, with
 FIMO when scoring is requested. The linked playback presentation example also
 needs a manual run when changed.
 
-Preview documentation with `uv run mkdocs serve`; `uv run mkdocs build --strict`
+Preview documentation with `uv run mkdocs serve`. `uv run mkdocs build --strict`
 writes the static site to `public/`. Shared documentation images live in
 `docs/assets/`, so both GitHub and the built site use one source asset. Inspect
 SVGs at their intended display size and retain accessible descriptions.
@@ -83,3 +84,9 @@ commit through the existing repository remote. Verify the test and Pages jobs,
 then open a changed guide on the hosted site and check its content and assets.
 Building documentation locally or passing GitHub checks does not publish that
 site.
+
+The [showcase recipe](https://github.com/e-south/dense-arrays/tree/main/maintenance/docs/showcase)
+rebuilds the selected sequence demonstrations. Its separate locked environment
+contains the optional rendering tools. Normal package tests and installation do
+not require BaseRender. GitHub CI uploads measured coverage with OIDC to Codecov.
+The README badge reports Codecov's main-branch percentage.

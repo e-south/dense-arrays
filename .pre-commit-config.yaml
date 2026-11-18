@@ -29,6 +29,7 @@ repos:
     rev: 5e141933554a0b74e7341841f318be21e895339c # pragma: allowlist secret
     hooks:
       - id: detect-secrets
+        args: [--baseline, .secrets.baseline]
   - repo: https://github.com/crate-ci/typos
     rev: 7f9d0819ca1c008ade73f4b41fa9d258d48f605b # pragma: allowlist secret
     hooks:

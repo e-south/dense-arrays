@@ -1,0 +1,12 @@
+[project]
+name = "dense-arrays-documentation-showcase"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = ["dense-arrays[playback]", "dnadesign-tools[baserender]", "pillow>=13.0.0"]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+dense-arrays = { git = "https://github.com/e-south/dense-arrays", rev = "01eaa98d6adedea7088341ce306861826221c4f4" }
+dnadesign-tools = { git = "https://github.com/e-south/dnadesign", rev = "debed10a391557d3b4720bb57b39676d1e0557fe" }

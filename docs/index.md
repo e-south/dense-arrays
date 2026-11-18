@@ -5,7 +5,7 @@ description: Prepare binding-site parts, generate constrained DNA libraries, and
 
 # Dense Arrays
 
-![Dense Arrays — overlapping motifs within a sequence-length limit](assets/dense-arrays-banner.svg)
+[![Supplied parts, packing paths and constrained 60-bp promoter arrays](assets/showcase/library.svg)](playback.md#library)
 
 Design nucleotide sequences with densely packed DNA-protein binding sites.
 Prepare input pools, generate libraries under your constraints, and inspect

@@ -1,0 +1,21 @@
+{
+  "schema": "dense-arrays.documentation-inputs/v1",
+  "packing": {
+    "source": "densegen_demo_sampling_baseline",
+    "records_sha256": "1982a01ffe547b5709566f4e36f956caed8f37a15f8f14051621531cc957d503",
+    "derived_placements_sha256": "02fd8abf329ee1b4881e8811a8eabb3b6609869f3d2e6357ee5346525e8ea6d2",
+    "qualification": "Existing 100-bp teaching records. TFBS offsets checked against oriented substrings. Fixed element offsets recovered by unique exact sequence match; recorded offsets retained below. No solver run."
+  },
+  "library": {
+    "source": "multistate-promoter-companion array-library",
+    "collection_id": "1276eba66d8caf256dd43fb161ce016acdaf77ae9a3e5be3104acd4f0100fac4",
+    "manifest_sha256": "bfd95e4bc06b66ad35f66eddc0946a219d8ca718d1e56d99fb6e4a4da954a0c5",
+    "arrays_sha256": "49061ad4e0aac0e671cee6fb9fd071f4433a531804590ac305eac8f8f75185b1",
+    "selection": "Two recorded 60-bp designs retained as rendering examples, without population or performance claims."
+  },
+  "workflow": {
+    "author": "Eric J. South",
+    "source_svg_sha256": "1e7e33937806da046bd37374de5c37b8cb01b7651838b66d0c0643fad809b468",
+    "scope": "Closed illustrative workflow subset with approved caption centering. Original artwork is unchanged."
+  }
+}

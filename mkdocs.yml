@@ -97,3 +97,8 @@ plugins:
 
 markdown_extensions:
   - pymdownx.superfences
+
+extra_css:
+  - assets/showcase/player.css
+extra_javascript:
+  - assets/showcase/player.js

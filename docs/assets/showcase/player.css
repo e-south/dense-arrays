@@ -1,0 +1,7 @@
+.sequence-playback{position:relative;line-height:0;margin:1rem 0}
+.sequence-playback img{display:block;width:100%;height:auto}
+.sequence-playback video{position:absolute;object-fit:fill}
+.sequence-playback video[hidden]{display:none}
+.sequence-playback button{position:absolute;right:6px;top:4px;z-index:2;font:11px Arial;padding:5px 10px;background:white;color:#33475b;border:1px solid #b6c5d0;border-radius:6px;cursor:pointer}
+.sequence-playback--packing video{left:2.2222222222%;top:11.8343195266%;width:95.5555555556%;height:76.3313609467%;}
+.sequence-playback--library video{left:47.8242314752%;top:17.7563924337%;width:49.0702698774%;height:55.5967561329%;clip-path:inset(14.6938775510% 1.0119047619% 22.2448979592% 1.0119047619%);}

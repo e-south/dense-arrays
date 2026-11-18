@@ -1,0 +1,1120 @@
+{
+  "arrays": [
+    {
+      "schema_version": "dense_arrays.realized_array.v1",
+      "source_id": "5c78c970efb14329334c13b8903c67462776a9f3",
+      "source_digest": null,
+      "coordinate_space": "realized_sequence",
+      "sequence": "CACCTTGATTGACAAGAATTATTCTGCATCAGTATAATTGGTGCAGGGAATTTGTAAGTAACCGTCTGCATATACCAGGTGGCACACTGCTGTACTTTTC",
+      "placements": [
+        {
+          "placement_id": "placement-1",
+          "feature_id": "8dc334bf6165b8125eced08b60b7e5062ecb4f1d96f39974194de05e29e11597",
+          "kind": "other",
+          "sequence": "AAGAATTATTCTGCATCAG",
+          "start": 13,
+          "end": 32,
+          "orientation": "fwd",
+          "label": "BaeR",
+          "metadata": {
+            "recorded_start": 13,
+            "source_part_index": 1
+          }
+        },
+        {
+          "placement_id": "placement-2",
+          "feature_id": "b9e26d73c080bbef19132471c75ceacf97b826819ca0b34e049ed8f60a0a42df",
+          "kind": "other",
+          "sequence": "AATTGGTGCAGGGAATTT",
+          "start": 35,
+          "end": 53,
+          "orientation": "rev",
+          "label": "BaeR",
+          "metadata": {
+            "recorded_start": 35,
+            "source_part_index": 7
+          }
+        },
+        {
+          "placement_id": "placement-3",
+          "feature_id": "227dd1c904767dde89e2e3f4dbf5c7d571482b5ee0500658f5c452db4b3de1c7",
+          "kind": "other",
+          "sequence": "TTGTAAGTAACCGTCTG",
+          "start": 51,
+          "end": 68,
+          "orientation": "rev",
+          "label": "CpxR",
+          "metadata": {
+            "recorded_start": 51,
+            "source_part_index": 9
+          }
+        },
+        {
+          "placement_id": "placement-4",
+          "feature_id": "ba1c557f7c0bd853baca017382ccc7a84e10bb8f2017e2bac756fa7ee424b156",
+          "kind": "other",
+          "sequence": "CATATACCAGGTGGCAC",
+          "start": 68,
+          "end": 85,
+          "orientation": "fwd",
+          "label": "background",
+          "metadata": {
+            "recorded_start": 68,
+            "source_part_index": 8
+          }
+        },
+        {
+          "placement_id": "placement-5",
+          "feature_id": "a81162feb55707a2587e747641212d41823687d102ce2c8140c33dac8fecf32b",
+          "kind": "other",
+          "sequence": "ACACTGCTGTACTTTTC",
+          "start": 83,
+          "end": 100,
+          "orientation": "fwd",
+          "label": "CpxR",
+          "metadata": {
+            "recorded_start": 83,
+            "source_part_index": 0
+          }
+        },
+        {
+          "placement_id": "placement-6",
+          "feature_id": "upstream",
+          "kind": "fixed_element",
+          "sequence": "TTGACA",
+          "start": 8,
+          "end": 14,
+          "orientation": "fwd",
+          "label": "\u221235",
+          "metadata": {
+            "recorded_start": 16,
+            "source_part_index": null
+          }
+        },
+        {
+          "placement_id": "placement-7",
+          "feature_id": "downstream",
+          "kind": "fixed_element",
+          "sequence": "TATAAT",
+          "start": 32,
+          "end": 38,
+          "orientation": "fwd",
+          "label": "\u221210",
+          "metadata": {
+            "recorded_start": 40,
+            "source_part_index": null
+          }
+        }
+      ],
+      "constraints": [],
+      "provenance": {
+        "coordinate_recovery": [
+          {
+            "role": "upstream",
+            "recorded_start": 16,
+            "resolved_start": 8,
+            "method": "unique_exact_match"
+          },
+          {
+            "role": "downstream",
+            "recorded_start": 40,
+            "resolved_start": 32,
+            "method": "unique_exact_match"
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "dense_arrays.realized_array.v1",
+      "source_id": "f4d42ae4783a821450b3bf64dcc4bf9fc89acfc6",
+      "source_digest": null,
+      "coordinate_space": "realized_sequence",
+      "sequence": "ACTGATGCAGAATAATTCTTGACATCTCGGTGAAAAAACTGTTATAATCATATACCAGGTGGCACGCTGCGGTACTTCTAACAAATTCCCTGCACCAATT",
+      "placements": [
+        {
+          "placement_id": "placement-1",
+          "feature_id": "8dc334bf6165b8125eced08b60b7e5062ecb4f1d96f39974194de05e29e11597",
+          "kind": "other",
+          "sequence": "CTGATGCAGAATAATTCTT",
+          "start": 1,
+          "end": 20,
+          "orientation": "rev",
+          "label": "BaeR",
+          "metadata": {
+            "recorded_start": 1,
+            "source_part_index": 1
+          }
+        },
+        {
+          "placement_id": "placement-2",
+          "feature_id": "a2fd074ac7a3ee6709308bf674715c3ff1374e9ca403fc196fb974da5434abcd",
+          "kind": "other",
+          "sequence": "TCTCGGTGAAAAAACTGTT",
+          "start": 24,
+          "end": 43,
+          "orientation": "rev",
+          "label": "BaeR",
+          "metadata": {
+            "recorded_start": 24,
+            "source_part_index": 4
+          }
+        },
+        {
+          "placement_id": "placement-3",
+          "feature_id": "ba1c557f7c0bd853baca017382ccc7a84e10bb8f2017e2bac756fa7ee424b156",
+          "kind": "other",
+          "sequence": "CATATACCAGGTGGCAC",
+          "start": 48,
+          "end": 65,
+          "orientation": "fwd",
+          "label": "background",
+          "metadata": {
+            "recorded_start": 48,
+            "source_part_index": 8
+          }
+        },
+        {
+          "placement_id": "placement-4",
+          "feature_id": "474716b43f4ee5856aa013ba5d6075fa44e0d8be4fe87f95c68105b8326ae225",
+          "kind": "other",
+          "sequence": "CACGCTGCGGTACTTCTAAC",
+          "start": 62,
+          "end": 82,
+          "orientation": "fwd",
+          "label": "CpxR",
+          "metadata": {
+            "recorded_start": 62,
+            "source_part_index": 3
+          }
+        },
+        {
+          "placement_id": "placement-5",
+          "feature_id": "b9e26d73c080bbef19132471c75ceacf97b826819ca0b34e049ed8f60a0a42df",
+          "kind": "other",
+          "sequence": "AAATTCCCTGCACCAATT",
+          "start": 82,
+          "end": 100,
+          "orientation": "fwd",
+          "label": "BaeR",
+          "metadata": {
+            "recorded_start": 82,
+            "source_part_index": 7
+          }
+        },
+        {
+          "placement_id": "placement-6",
+          "feature_id": "upstream",
+          "kind": "fixed_element",
+          "sequence": "TTGACA",
+          "start": 18,
+          "end": 24,
+          "orientation": "fwd",
+          "label": "\u221235",
+          "metadata": {
+            "recorded_start": 19,
+            "source_part_index": null
+          }
+        },
+        {
+          "placement_id": "placement-7",
+          "feature_id": "downstream",
+          "kind": "fixed_element",
+          "sequence": "TATAAT",
+          "start": 42,
+          "end": 48,
+          "orientation": "fwd",
+          "label": "\u221210",
+          "metadata": {
+            "recorded_start": 43,
+            "source_part_index": null
+          }
+        }
+      ],
+      "constraints": [],
+      "provenance": {
+        "coordinate_recovery": [
+          {
+            "role": "upstream",
+            "recorded_start": 19,
+            "resolved_start": 18,
+            "method": "unique_exact_match"
+          },
+          {
+            "role": "downstream",
+            "recorded_start": 43,
+            "resolved_start": 42,
+            "method": "unique_exact_match"
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": "dense_arrays.realized_array.v1",
+      "source_id": "d74fb7d33565954da98f9f3f9f3fa7016e03799d",
+      "source_digest": null,
+      "coordinate_space": "realized_sequence",
+      "sequence": "GCTGACATGCCACCAATTCACTGTATAATACCTGGCATCCGGATGCATCTGGCTGGCTAT",
+      "placements": [
+        {
+          "placement_id": "placement-1",
+          "feature_id": "e66d80c59473ba35e4dfb127a6725543befe5d07ea89bdbf50030e4cc66d9a03",
+          "kind": "other",
+          "sequence": "ATGCCACCAATTCACTG",
+          "start": 6,
+          "end": 23,
+          "orientation": "rev",
+          "label": "background",
+          "metadata": {
+            "category": "background",
+            "core_start": 6,
+            "core_stop": 23,
+            "offset_raw": 5,
+            "orientation": "rev",
+            "pad_left": 1,
+            "part_kind": "tfbs",
+            "start": 6,
+            "stop": 23,
+            "stored_offset": 6,
+            "stored_offset_matches": true
+          }
+        },
+        {
+          "placement_id": "placement-2",
+          "feature_id": "35b50c0ccc6e4cd12a4507769b5dc685024ca89904829b41cf2dbd2f9e443622",
+          "kind": "other",
+          "sequence": "TACCTGGCATCCGGAT",
+          "start": 28,
+          "end": 44,
+          "orientation": "rev",
+          "label": "background",
+          "metadata": {
+            "category": "background",
+            "core_start": 28,
+            "core_stop": 44,
+            "offset_raw": 27,
+            "orientation": "rev",
+            "pad_left": 1,
+            "part_kind": "tfbs",
+            "start": 28,
+            "stop": 44,
+            "stored_offset": 28,
+            "stored_offset_matches": true
+          }
+        },
+        {
+          "placement_id": "placement-3",
+          "feature_id": "a32ac7ee7f8581ab2e66791d4f8b58467e3515892dea88ec4f1181a9abf2b8f1",
+          "kind": "other",
+          "sequence": "GCATCTGGCTGGCTAT",
+          "start": 44,
+          "end": 60,
+          "orientation": "fwd",
+          "label": "background",
+          "metadata": {
+            "category": "background",
+            "core_start": 44,
+            "core_stop": 60,
+            "offset_raw": 43,
+            "orientation": "fwd",
+            "pad_left": 1,
+            "part_kind": "tfbs",
+            "start": 44,
+            "stop": 60,
+            "stored_offset": 44,
+            "stored_offset_matches": true
+          }
+        },
+        {
+          "placement_id": "placement-4",
+          "feature_id": "sigma35:b",
+          "kind": "fixed_element",
+          "sequence": "CTGACA",
+          "start": 1,
+          "end": 7,
+          "orientation": "fwd",
+          "label": "\u221235",
+          "metadata": {
+            "category": "\u221235",
+            "core_start": 1,
+            "core_stop": 7,
+            "offset_raw": 1,
+            "orientation": "fwd",
+            "pad_left": 1,
+            "part_kind": "fixed_element",
+            "start": 1,
+            "stop": 7,
+            "stored_offset": 2,
+            "stored_offset_matches": false
+          }
+        },
+        {
+          "placement_id": "placement-5",
+          "feature_id": "sigma10",
+          "kind": "fixed_element",
+          "sequence": "TATAAT",
+          "start": 23,
+          "end": 29,
+          "orientation": "fwd",
+          "label": "\u221210",
+          "metadata": {
+            "category": "\u221210",
+            "core_start": 23,
+            "core_stop": 29,
+            "offset_raw": 23,
+            "orientation": "fwd",
+            "pad_left": 1,
+            "part_kind": "fixed_element",
+            "start": 23,
+            "stop": 29,
+            "stored_offset": 24,
+            "stored_offset_matches": false
+          }
+        }
+      ],
+      "constraints": [],
+      "provenance": {
+        "annotation_end": 60,
+        "annotation_pad_left": 1,
+        "core_variant": "b",
+        "family": "background_only",
+        "minus10_end": 29,
+        "overlapping_bases": 2,
+        "reported_pad_bases": 1.0,
+        "reported_pad_end": "5prime",
+        "reported_pad_used": true,
+        "variable_end": 60
+      }
+    },
+    {
+      "schema_version": "dense_arrays.realized_array.v1",
+      "source_id": "1e391760d2d0d552ab76380477ae3a20da45dba1",
+      "source_digest": null,
+      "coordinate_space": "realized_sequence",
+      "sequence": "GAGGTGTGACAAGGCACGTCAAGGTCCCGTTACTGACATGTGAAAAAATACAGTTATAAT",
+      "placements": [
+        {
+          "placement_id": "placement-1",
+          "feature_id": "f7e45b6e281dd76d5103fc0ef91863334311337e3ce2140f517392922665fa81",
+          "kind": "other",
+          "sequence": "AGGTGTGACAAGGCAC",
+          "start": 1,
+          "end": 17,
+          "orientation": "rev",
+          "label": "background",
+          "metadata": {
+            "category": "background",
+            "core_start": 1,
+            "core_stop": 17,
+            "offset_raw": 0,
+            "orientation": "rev",
+            "pad_left": 1,
+            "part_kind": "tfbs",
+            "start": 1,
+            "stop": 17,
+            "stored_offset": 1,
+            "stored_offset_matches": true
+          }
+        },
+        {
+          "placement_id": "placement-2",
+          "feature_id": "e8be2d3058ec419ac4c74e537c1085b10274a246e14d1547c0735d62b148bb4b",
+          "kind": "other",
+          "sequence": "CGTCAAGGTCCCGTTA",
+          "start": 16,
+          "end": 32,
+          "orientation": "fwd",
+          "label": "background",
+          "metadata": {
+            "category": "background",
+            "core_start": 16,
+            "core_stop": 32,
+            "offset_raw": 15,
+            "orientation": "fwd",
+            "pad_left": 1,
+            "part_kind": "tfbs",
+            "start": 16,
+            "stop": 32,
+            "stored_offset": 16,
+            "stored_offset_matches": true
+          }
+        },
+        {
+          "placement_id": "placement-3",
+          "feature_id": "f5d51f46acae2cfadb3b72dab63477ece96090a316ec324625dc78babd086a4b",
+          "kind": "tfbs",
+          "sequence": "TGTGAAAAAATACAGTT",
+          "start": 38,
+          "end": 55,
+          "orientation": "rev",
+          "label": "LexA",
+          "metadata": {
+            "category": "LexA",
+            "core_start": 38,
+            "core_stop": 53,
+            "offset_raw": 37,
+            "orientation": "rev",
+            "pad_left": 1,
+            "part_kind": "tfbs",
+            "start": 38,
+            "stop": 55,
+            "stored_offset": 38,
+            "stored_offset_matches": true
+          }
+        },
+        {
+          "placement_id": "placement-4",
+          "feature_id": "sigma35:b",
+          "kind": "fixed_element",
+          "sequence": "CTGACA",
+          "start": 32,
+          "end": 38,
+          "orientation": "fwd",
+          "label": "\u221235",
+          "metadata": {
+            "category": "\u221235",
+            "core_start": 32,
+            "core_stop": 38,
+            "offset_raw": 32,
+            "orientation": "fwd",
+            "pad_left": 1,
+            "part_kind": "fixed_element",
+            "start": 32,
+            "stop": 38,
+            "stored_offset": 33,
+            "stored_offset_matches": false
+          }
+        },
+        {
+          "placement_id": "placement-5",
+          "feature_id": "sigma10",
+          "kind": "fixed_element",
+          "sequence": "TATAAT",
+          "start": 54,
+          "end": 60,
+          "orientation": "fwd",
+          "label": "\u221210",
+          "metadata": {
+            "category": "\u221210",
+            "core_start": 54,
+            "core_stop": 60,
+            "offset_raw": 54,
+            "orientation": "fwd",
+            "pad_left": 1,
+            "part_kind": "fixed_element",
+            "start": 54,
+            "stop": 60,
+            "stored_offset": 55,
+            "stored_offset_matches": false
+          }
+        }
+      ],
+      "constraints": [],
+      "provenance": {
+        "annotation_end": 60,
+        "annotation_pad_left": 1,
+        "core_variant": "b",
+        "family": "ciprofloxacin",
+        "minus10_end": 60,
+        "overlapping_bases": 2,
+        "reported_pad_bases": 1.0,
+        "reported_pad_end": "5prime",
+        "reported_pad_used": true,
+        "variable_end": 55
+      }
+    }
+  ],
+  "drawing_records": [
+    {
+      "id": "5c78c970efb14329334c13b8903c67462776a9f3",
+      "alphabet": "DNA",
+      "sequence": "CACCTTGATTGACAAGAATTATTCTGCATCAGTATAATTGGTGCAGGGAATTTGTAAGTAACCGTCTGCATATACCAGGTGGCACACTGCTGTACTTTTC",
+      "features": [
+        {
+          "id": "placement-1",
+          "kind": "kmer",
+          "span": {
+            "start": 13,
+            "end": 32,
+            "strand": "fwd"
+          },
+          "label": "AAGAATTATTCTGCATCAG",
+          "tags": [
+            "BaeR"
+          ]
+        },
+        {
+          "id": "placement-2",
+          "kind": "kmer",
+          "span": {
+            "start": 35,
+            "end": 53,
+            "strand": "rev"
+          },
+          "label": "AAATTCCCTGCACCAATT",
+          "tags": [
+            "BaeR"
+          ]
+        },
+        {
+          "id": "placement-3",
+          "kind": "kmer",
+          "span": {
+            "start": 51,
+            "end": 68,
+            "strand": "rev"
+          },
+          "label": "CAGACGGTTACTTACAA",
+          "tags": [
+            "CpxR"
+          ]
+        },
+        {
+          "id": "placement-4",
+          "kind": "kmer",
+          "span": {
+            "start": 68,
+            "end": 85,
+            "strand": "fwd"
+          },
+          "label": "CATATACCAGGTGGCAC",
+          "tags": [
+            "background"
+          ]
+        },
+        {
+          "id": "placement-5",
+          "kind": "kmer",
+          "span": {
+            "start": 83,
+            "end": 100,
+            "strand": "fwd"
+          },
+          "label": "ACACTGCTGTACTTTTC",
+          "tags": [
+            "CpxR"
+          ]
+        },
+        {
+          "id": "placement-6",
+          "kind": "kmer",
+          "span": {
+            "start": 8,
+            "end": 14,
+            "strand": "fwd"
+          },
+          "label": "TTGACA",
+          "tags": [
+            "\u221235"
+          ],
+          "attrs": {
+            "annotation_color": "#18201e"
+          },
+          "render": {
+            "track": 0,
+            "priority": 0,
+            "annotation_label": {
+              "text": "\u221235 site",
+              "placement": "near_feature"
+            }
+          }
+        },
+        {
+          "id": "placement-7",
+          "kind": "kmer",
+          "span": {
+            "start": 32,
+            "end": 38,
+            "strand": "fwd"
+          },
+          "label": "TATAAT",
+          "tags": [
+            "\u221210"
+          ],
+          "attrs": {
+            "annotation_color": "#18201e"
+          },
+          "render": {
+            "track": 0,
+            "priority": 0,
+            "annotation_label": {
+              "text": "\u221210 site",
+              "placement": "near_feature"
+            }
+          }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "span_link",
+          "target": {
+            "from_feature_id": "placement-6",
+            "to_feature_id": "placement-7"
+          },
+          "params": {
+            "label": "18 bp",
+            "lane": "top",
+            "shrink_label_to_fit": false,
+            "color": "#8E9498",
+            "label_color": "#18201e"
+          }
+        },
+        {
+          "kind": "anchored_illustration",
+          "target": {
+            "bindings": [
+              {
+                "anchor_id": "upstream",
+                "feature_id": "placement-6",
+                "start": 8,
+                "end": 14
+              },
+              {
+                "anchor_id": "downstream",
+                "feature_id": "placement-7",
+                "start": 32,
+                "end": 38
+              }
+            ]
+          },
+          "params": {
+            "asset_id": "rnap_sigma70",
+            "width_px": 280.0,
+            "top_gap_px": 8.0,
+            "fill_color": "#DDE2E7"
+          }
+        }
+      ]
+    },
+    {
+      "id": "f4d42ae4783a821450b3bf64dcc4bf9fc89acfc6",
+      "alphabet": "DNA",
+      "sequence": "ACTGATGCAGAATAATTCTTGACATCTCGGTGAAAAAACTGTTATAATCATATACCAGGTGGCACGCTGCGGTACTTCTAACAAATTCCCTGCACCAATT",
+      "features": [
+        {
+          "id": "placement-1",
+          "kind": "kmer",
+          "span": {
+            "start": 1,
+            "end": 20,
+            "strand": "rev"
+          },
+          "label": "AAGAATTATTCTGCATCAG",
+          "tags": [
+            "BaeR"
+          ]
+        },
+        {
+          "id": "placement-2",
+          "kind": "kmer",
+          "span": {
+            "start": 24,
+            "end": 43,
+            "strand": "rev"
+          },
+          "label": "AACAGTTTTTTCACCGAGA",
+          "tags": [
+            "BaeR"
+          ]
+        },
+        {
+          "id": "placement-3",
+          "kind": "kmer",
+          "span": {
+            "start": 48,
+            "end": 65,
+            "strand": "fwd"
+          },
+          "label": "CATATACCAGGTGGCAC",
+          "tags": [
+            "background"
+          ]
+        },
+        {
+          "id": "placement-4",
+          "kind": "kmer",
+          "span": {
+            "start": 62,
+            "end": 82,
+            "strand": "fwd"
+          },
+          "label": "CACGCTGCGGTACTTCTAAC",
+          "tags": [
+            "CpxR"
+          ]
+        },
+        {
+          "id": "placement-5",
+          "kind": "kmer",
+          "span": {
+            "start": 82,
+            "end": 100,
+            "strand": "fwd"
+          },
+          "label": "AAATTCCCTGCACCAATT",
+          "tags": [
+            "BaeR"
+          ]
+        },
+        {
+          "id": "placement-6",
+          "kind": "kmer",
+          "span": {
+            "start": 18,
+            "end": 24,
+            "strand": "fwd"
+          },
+          "label": "TTGACA",
+          "tags": [
+            "\u221235"
+          ],
+          "attrs": {
+            "annotation_color": "#18201e"
+          },
+          "render": {
+            "track": 0,
+            "priority": 0,
+            "annotation_label": {
+              "text": "\u221235 site",
+              "placement": "near_feature"
+            }
+          }
+        },
+        {
+          "id": "placement-7",
+          "kind": "kmer",
+          "span": {
+            "start": 42,
+            "end": 48,
+            "strand": "fwd"
+          },
+          "label": "TATAAT",
+          "tags": [
+            "\u221210"
+          ],
+          "attrs": {
+            "annotation_color": "#18201e"
+          },
+          "render": {
+            "track": 0,
+            "priority": 0,
+            "annotation_label": {
+              "text": "\u221210 site",
+              "placement": "near_feature"
+            }
+          }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "span_link",
+          "target": {
+            "from_feature_id": "placement-6",
+            "to_feature_id": "placement-7"
+          },
+          "params": {
+            "label": "18 bp",
+            "lane": "top",
+            "shrink_label_to_fit": false,
+            "color": "#8E9498",
+            "label_color": "#18201e"
+          }
+        },
+        {
+          "kind": "anchored_illustration",
+          "target": {
+            "bindings": [
+              {
+                "anchor_id": "upstream",
+                "feature_id": "placement-6",
+                "start": 18,
+                "end": 24
+              },
+              {
+                "anchor_id": "downstream",
+                "feature_id": "placement-7",
+                "start": 42,
+                "end": 48
+              }
+            ]
+          },
+          "params": {
+            "asset_id": "rnap_sigma70",
+            "width_px": 280.0,
+            "top_gap_px": 8.0,
+            "fill_color": "#DDE2E7"
+          }
+        }
+      ]
+    },
+    {
+      "id": "d74fb7d33565954da98f9f3f9f3fa7016e03799d",
+      "alphabet": "DNA",
+      "sequence": "GCTGACATGCCACCAATTCACTGTATAATACCTGGCATCCGGATGCATCTGGCTGGCTAT",
+      "features": [
+        {
+          "id": "placement-1",
+          "kind": "kmer",
+          "span": {
+            "start": 6,
+            "end": 23,
+            "strand": "rev"
+          },
+          "label": "CAGTGAATTGGTGGCAT",
+          "tags": [
+            "background"
+          ]
+        },
+        {
+          "id": "placement-2",
+          "kind": "kmer",
+          "span": {
+            "start": 28,
+            "end": 44,
+            "strand": "rev"
+          },
+          "label": "ATCCGGATGCCAGGTA",
+          "tags": [
+            "background"
+          ]
+        },
+        {
+          "id": "placement-3",
+          "kind": "kmer",
+          "span": {
+            "start": 44,
+            "end": 60,
+            "strand": "fwd"
+          },
+          "label": "GCATCTGGCTGGCTAT",
+          "tags": [
+            "background"
+          ]
+        },
+        {
+          "id": "placement-4",
+          "kind": "kmer",
+          "span": {
+            "start": 1,
+            "end": 7,
+            "strand": "fwd"
+          },
+          "label": "CTGACA",
+          "tags": [
+            "\u221235"
+          ],
+          "attrs": {
+            "annotation_color": "#18201e"
+          },
+          "render": {
+            "track": 0,
+            "priority": 0,
+            "annotation_label": {
+              "text": "\u221235 site",
+              "placement": "near_feature"
+            }
+          }
+        },
+        {
+          "id": "placement-5",
+          "kind": "kmer",
+          "span": {
+            "start": 23,
+            "end": 29,
+            "strand": "fwd"
+          },
+          "label": "TATAAT",
+          "tags": [
+            "\u221210"
+          ],
+          "attrs": {
+            "annotation_color": "#18201e"
+          },
+          "render": {
+            "track": 0,
+            "priority": 0,
+            "annotation_label": {
+              "text": "\u221210 site",
+              "placement": "near_feature"
+            }
+          }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "span_link",
+          "target": {
+            "from_feature_id": "placement-4",
+            "to_feature_id": "placement-5"
+          },
+          "params": {
+            "label": "16 bp",
+            "lane": "top",
+            "shrink_label_to_fit": false,
+            "color": "#8E9498",
+            "label_color": "#18201e"
+          }
+        },
+        {
+          "kind": "anchored_illustration",
+          "target": {
+            "bindings": [
+              {
+                "anchor_id": "upstream",
+                "feature_id": "placement-4",
+                "start": 1,
+                "end": 7
+              },
+              {
+                "anchor_id": "downstream",
+                "feature_id": "placement-5",
+                "start": 23,
+                "end": 29
+              }
+            ]
+          },
+          "params": {
+            "asset_id": "rnap_sigma70",
+            "width_px": 280.0,
+            "top_gap_px": 8.0,
+            "fill_color": "#DDE2E7"
+          }
+        }
+      ]
+    },
+    {
+      "id": "1e391760d2d0d552ab76380477ae3a20da45dba1",
+      "alphabet": "DNA",
+      "sequence": "GAGGTGTGACAAGGCACGTCAAGGTCCCGTTACTGACATGTGAAAAAATACAGTTATAAT",
+      "features": [
+        {
+          "id": "placement-1",
+          "kind": "kmer",
+          "span": {
+            "start": 1,
+            "end": 17,
+            "strand": "rev"
+          },
+          "label": "GTGCCTTGTCACACCT",
+          "tags": [
+            "background"
+          ]
+        },
+        {
+          "id": "placement-2",
+          "kind": "kmer",
+          "span": {
+            "start": 16,
+            "end": 32,
+            "strand": "fwd"
+          },
+          "label": "CGTCAAGGTCCCGTTA",
+          "tags": [
+            "background"
+          ]
+        },
+        {
+          "id": "placement-3",
+          "kind": "kmer",
+          "span": {
+            "start": 38,
+            "end": 55,
+            "strand": "rev"
+          },
+          "label": "AACTGTATTTTTTCACA",
+          "tags": [
+            "LexA"
+          ]
+        },
+        {
+          "id": "placement-4",
+          "kind": "kmer",
+          "span": {
+            "start": 32,
+            "end": 38,
+            "strand": "fwd"
+          },
+          "label": "CTGACA",
+          "tags": [
+            "\u221235"
+          ],
+          "attrs": {
+            "annotation_color": "#18201e"
+          },
+          "render": {
+            "track": 0,
+            "priority": 0,
+            "annotation_label": {
+              "text": "\u221235 site",
+              "placement": "near_feature"
+            }
+          }
+        },
+        {
+          "id": "placement-5",
+          "kind": "kmer",
+          "span": {
+            "start": 54,
+            "end": 60,
+            "strand": "fwd"
+          },
+          "label": "TATAAT",
+          "tags": [
+            "\u221210"
+          ],
+          "attrs": {
+            "annotation_color": "#18201e"
+          },
+          "render": {
+            "track": 0,
+            "priority": 0,
+            "annotation_label": {
+              "text": "\u221210 site",
+              "placement": "near_feature"
+            }
+          }
+        }
+      ],
+      "effects": [
+        {
+          "kind": "span_link",
+          "target": {
+            "from_feature_id": "placement-4",
+            "to_feature_id": "placement-5"
+          },
+          "params": {
+            "label": "16 bp",
+            "lane": "top",
+            "shrink_label_to_fit": false,
+            "color": "#8E9498",
+            "label_color": "#18201e"
+          }
+        },
+        {
+          "kind": "anchored_illustration",
+          "target": {
+            "bindings": [
+              {
+                "anchor_id": "upstream",
+                "feature_id": "placement-4",
+                "start": 32,
+                "end": 38
+              },
+              {
+                "anchor_id": "downstream",
+                "feature_id": "placement-5",
+                "start": 54,
+                "end": 60
+              }
+            ]
+          },
+          "params": {
+            "asset_id": "rnap_sigma70",
+            "width_px": 280.0,
+            "top_gap_px": 8.0,
+            "fill_color": "#DDE2E7"
+          }
+        }
+      ]
+    }
+  ]
+}

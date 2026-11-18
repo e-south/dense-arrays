@@ -1,0 +1,44 @@
+{
+  "schema": "dense-arrays.documentation-showcase/v1",
+  "inputs": {
+    "inputs/workflow-context.svg": "bd71f3bc6d167035a1c1e191f2e3e5b8680480a5af2cf939013d819242698521",
+    "inputs/records.json": "d26b79403310bdb026d1c82740530191c4063993bff2bfd1daca7d7271bc660c",
+    "inputs/origins.json": "135beadf607fe06541bcf14b2008fb9b849a62f82369a07587186f9110791165",
+    "rendering.json": "0d28cb68244ffa7cc58054e95a04dff5d5504ae30b5a718d4d6ab71f3b015544",
+    "render.py": "cf02cac18f48d181264ae408795b44c7382afddf6c67274da103fd1be199216b",
+    "svg_assets.py": "a24eddf82425c5489275c7063b85c91883a940707c21c0e27a1d334c3592cc29",
+    "pyproject.toml": "40dd28c182faf3bcba3196a892a85a86db754bf45a546cf98d0006f54b4cd601",
+    "uv.lock": "2bc275319e3f178c67b63344f33042b5042ae0831b2dd6a4295112466cff7fed"
+  },
+  "producers": {
+    "dense-arrays": "01eaa98d6adedea7088341ce306861826221c4f4",
+    "dnadesign-tools": "debed10a391557d3b4720bb57b39676d1e0557fe"
+  },
+  "record_ids": {
+    "packing": [
+      "5c78c970efb14329334c13b8903c67462776a9f3",
+      "f4d42ae4783a821450b3bf64dcc4bf9fc89acfc6"
+    ],
+    "library": [
+      "d74fb7d33565954da98f9f3f9f3fa7016e03799d",
+      "1e391760d2d0d552ab76380477ae3a20da45dba1"
+    ]
+  },
+  "authority": "placement_reconstructed",
+  "timing": {
+    "fps": 24,
+    "seconds_per_step": 0.36111111111111116,
+    "lead_seconds": 0.625,
+    "hold_seconds": 1.0,
+    "scene_transition_seconds": 0.4166666666666667,
+    "library_hold_seconds": 1.75
+  },
+  "outputs": {
+    "packing.svg": "1c8b4fb2c1d271117b2b9f711220e71137ef7010b9935f367249c0730a13afa4",
+    "library.svg": "6f39d51b5de1135022bb64f1d740e31441fcc03d0fb3ac8c7edb9a9d9efa6ed5",
+    "packing.png": "c4bb44afb470e20136d9c64ab650eb278bd545dfbaa1172896e0bf591b78ec7d",
+    "library.mp4": "356eb97751dcb5ec4ccbd86fc802878cd5f011c2896da864e43b004823e716a9",
+    "packing.mp4": "d282252c233b51283c3d6b5a5fa2f2eec6468c53ed3925206b0c8d0d7a96273a",
+    "player.css": "47d44f6bc47a979ce276754316ef5e060a91144aef9e29c9418708cc7402e0d1"
+  }
+}

@@ -18,6 +18,9 @@ jobs:
     name: Quality
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -41,7 +44,16 @@ jobs:
       - name: Format
         run: uv run ruff format --check .
       - name: Test code, guide examples, and built documentation links
-        run: uv run pytest -q
+        run: uv run coverage run -m pytest -q
+      - name: Export measured coverage
+        run: uv run coverage xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          use_oidc: true
+          files: coverage.xml
+          disable_search: true
+          fail_ci_if_error: true
       - name: Build docs
         run: uv run mkdocs build --strict
       - name: Audit dependencies
