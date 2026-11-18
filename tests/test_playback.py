@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, ClassVar, Self
 import matplotlib.animation as mpl_animation
 import matplotlib.pyplot as plt
 import pytest
+from matplotlib.colors import to_rgba
 from matplotlib.patches import FancyArrowPatch
 
 from dense_arrays.playback import (
@@ -206,10 +207,13 @@ def test_full_graph_draws_declared_constraint_relation() -> None:
     )
     figure, axis = plt.subplots()
 
-    draw_graph(axis, document, transition_index=0, progress=0.0)
+    draw_graph(
+        axis, document, transition_index=len(document.plan.steps) - 1, progress=1.0
+    )
 
     assert any(
-        isinstance(patch, FancyArrowPatch) and patch.get_linewidth() == 1.7
+        isinstance(patch, FancyArrowPatch)
+        and patch.get_edgecolor() == to_rgba("#63558D", 0.55)
         for patch in axis.patches
     )
     plt.close(figure)

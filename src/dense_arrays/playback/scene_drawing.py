@@ -72,7 +72,7 @@ def draw_document(
     progress: float,
     figure: Figure,
     duplex_frames: DuplexFrames | None = None,
-) -> None:
+) -> dict[str, float | None]:
     """Compose a single scene state with its visible evidence and caller labels."""
     if not document.plan.steps:
         msg = "playback document requires at least one step"
@@ -142,9 +142,15 @@ def draw_document(
             if duplex_frames is None
             else None,
         )
+    metrics = {
+        "nucleotide_cap_height_pt": displayed_duplex_cap_height * 72 / figure.dpi
+        if displayed_duplex_cap_height is not None
+        else None,
+        "graph_font_size_pt": nucleotide_font_size,
+    }
     lines = evidence_lines(document)
     if not lines:
-        return
+        return metrics
     line_height = min(
         11 / (72 * figure.get_figheight()),
         (_MAX_EVIDENCE_FRACTION - 0.05) / len(lines),
@@ -159,6 +165,7 @@ def draw_document(
             va="bottom",
             fontsize=min(8, line_height * figure.get_figheight() * 72 * 8 / 11),
         )
+    return metrics
 
 
 def evidence_lines(document: PlaybackDocument) -> tuple[tuple[str, str], ...]:

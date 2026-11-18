@@ -14,8 +14,11 @@ from __future__ import annotations
 
 import math
 import re
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import asdict, dataclass, field, fields
 from typing import TYPE_CHECKING
+
+from .graph_style import GraphArrowStyle
 
 if TYPE_CHECKING:
     from .models import PlaybackStep
@@ -92,9 +95,13 @@ class PlaybackPresentation:
     show_edge_costs: bool = True
     show_authority_notice: bool = False
     show_distance_bracket: str = "when_declared"
+    graph_arrows: GraphArrowStyle = field(default_factory=GraphArrowStyle)
 
     def __post_init__(self) -> None:
         """Validate portable presentation values without coercion."""
+        if not isinstance(self.graph_arrows, GraphArrowStyle):
+            msg = "graph_arrows must be GraphArrowStyle"
+            raise TypeError(msg)
         if self.color_profile not in _PROFILES:
             msg = (
                 "color_profile must be categorical, uniform, or constraints; "
@@ -126,6 +133,37 @@ class PlaybackPresentation:
             msg = "show_distance_bracket must be never, when_declared, or always"
             raise ValueError(msg)
         object.__setattr__(self, "legend_entries", _legend_entries(self.legend_entries))
+
+    @classmethod
+    def from_mapping(cls, raw: Mapping[str, object]) -> PlaybackPresentation:
+        """Load strict JSON-shaped presentation settings through the API contract."""
+        if not isinstance(raw, Mapping):
+            msg = "presentation must be a mapping"
+            raise TypeError(msg)
+        unknown = set(raw) - {item.name for item in fields(cls)}
+        if unknown:
+            msg = f"unknown presentation fields: {sorted(unknown)}"
+            raise ValueError(msg)
+        values = dict(raw)
+        if "graph_arrows" in values:
+            values["graph_arrows"] = GraphArrowStyle.from_mapping(
+                values["graph_arrows"]
+            )
+        if "legend_entries" in values:
+            entries = values["legend_entries"]
+            if not isinstance(entries, (tuple, list)) or any(
+                not isinstance(item, Mapping) for item in entries
+            ):
+                msg = "legend_entries must contain entry mappings"
+                raise TypeError(msg)
+            values["legend_entries"] = tuple(LegendEntry(**entry) for entry in entries)
+        return cls(**values)
+
+    def to_mapping(self) -> dict[str, object]:
+        """Return one portable configuration for API and CLI callers."""
+        result = asdict(self)
+        result["legend_entries"] = list(result["legend_entries"])
+        return result
 
 
 def _legend_entries(values: tuple[LegendEntry, ...]) -> tuple[LegendEntry, ...]:

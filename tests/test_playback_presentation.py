@@ -10,6 +10,7 @@ from dataclasses import replace
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from matplotlib.colors import to_rgba
 from matplotlib.patches import FancyArrowPatch
 
 from dense_arrays.playback import reconstruct_playback
@@ -67,7 +68,8 @@ def test_raster_displays_order_failure_and_labels() -> None:
         assert "3 bp" in text
         assert "Anchor A" in text
         assert not any(
-            isinstance(patch, FancyArrowPatch) and patch.get_linewidth() == 2.4
+            patch.get_gid() == "graph-arrow-shaft"
+            and patch.get_edgecolor() == to_rgba("#167a70", 0.55)
             for axis in figure.axes
             for patch in axis.patches
         )

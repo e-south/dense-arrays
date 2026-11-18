@@ -15,7 +15,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .frame_schedule import PlaybackFrame
-from .graph.arrowheads import tapered_arrow
+from .graph.arrowheads import draw_arrow
 from .graph.geometry import (
     KMER_FONT_FAMILY,
     KMER_FONT_SIZE_PT,
@@ -46,12 +46,13 @@ if TYPE_CHECKING:
     from matplotlib.path import Path
 
     from .graph.model import GraphRoutes, GraphScene, QuadraticCurve
+    from .graph_style import GraphArrowDimensions
     from .presentation import PlaybackDocument
 
 _PAPER = "#ffffff"
 _INK = "#4b5563"
 _LINE = RESTING_COLOR
-_TRAVERSED = "#50635f"
+_TRAVERSED = "#41A696"
 _ACTIVE = "#167a70"
 _GRAPH_TEXT = "#1F2423"
 _TERMINAL_FONT_SIZE_PT = 12.4
@@ -106,9 +107,11 @@ def draw_graph(
     axis.set_aspect("equal", adjustable="box")
     axis.axis("off")
 
-    _draw_context_edges(axis, document, routes, transition_index, progress)
+    frame = PlaybackFrame(transition_index, progress)
+    arrow_dimensions = document.presentation.graph_arrows.resolve(kmer_font_size_pt)
+    _draw_context_edges(axis, document, routes, frame, arrow_dimensions)
     active_geometry = _draw_traversal_edges(
-        axis, document, routes, transition_index, progress
+        axis, document, routes, frame, arrow_dimensions
     )
     _draw_nodes(
         axis,
@@ -125,11 +128,11 @@ def _draw_context_edges(
     axis: Axes,
     document: PlaybackDocument,
     routes: GraphRoutes,
-    transition_index: int,
-    progress: float,
+    frame: PlaybackFrame,
+    arrow_dimensions: GraphArrowDimensions,
 ) -> None:
-    from matplotlib.patches import FancyArrowPatch
 
+    transition_index, progress = frame.transition_index, frame.progress
     visible_context = tuple(
         routed
         for routed in routes.context
@@ -143,24 +146,21 @@ def _draw_context_edges(
             for index, step in enumerate(document.plan.steps)
             if step.placement_id in (routed.edge.source_id, routed.edge.target_id)
         )
-        axis.add_patch(
-            FancyArrowPatch(
-                path=_matplotlib_path(curve),
-                arrowstyle=tapered_arrow,
-                mutation_scale=5.4,
-                linewidth=1.7 if declared_constraint else 0.85,
-                color=(
-                    blend_color(
-                        RESTING_COLOR,
-                        constraint_relation_color(document.presentation.color_profile),
-                        emphasis,
-                    )
-                    if declared_constraint
-                    else _LINE
-                ),
-                alpha=1.0,
-                zorder=0,
+        color = (
+            blend_color(
+                RESTING_COLOR,
+                constraint_relation_color(document.presentation.color_profile),
+                emphasis,
             )
+            if declared_constraint
+            else _LINE
+        )
+        draw_arrow(
+            axis,
+            _matplotlib_path(curve),
+            arrow_dimensions,
+            color=color,
+            zorder=0,
         )
 
 
@@ -168,11 +168,12 @@ def _draw_traversal_edges(
     axis: Axes,
     document: PlaybackDocument,
     routes: GraphRoutes,
-    transition_index: int,
-    progress: float,
+    frame: PlaybackFrame,
+    arrow_dimensions: GraphArrowDimensions,
 ) -> tuple[QuadraticCurve, float] | None:
     from matplotlib.patches import FancyArrowPatch
 
+    transition_index, progress = frame.transition_index, frame.progress
     active_geometry = None
     for routed in routes.traversal:
         edge = routed.edge
@@ -185,18 +186,13 @@ def _draw_traversal_edges(
         )
         active = edge_index == transition_index and 0 < progress < _SETTLED_PROGRESS
         color = _TRAVERSED if completed else _LINE
-        width = 2.4 if completed else 1.45
         curve = routed.curve
-        axis.add_patch(
-            FancyArrowPatch(
-                path=_matplotlib_path(curve),
-                arrowstyle=tapered_arrow,
-                mutation_scale=7.8,
-                linewidth=width,
-                color=color,
-                alpha=1.0,
-                zorder=1,
-            )
+        draw_arrow(
+            axis,
+            _matplotlib_path(curve),
+            arrow_dimensions,
+            color=color,
+            zorder=1,
         )
         active_t = None
         if active:
@@ -214,9 +210,11 @@ def _draw_traversal_edges(
                                 )
                             ),
                             arrowstyle="-",
-                            linewidth=2.4,
+                            linewidth=arrow_dimensions.shaft_width_pt,
+                            capstyle="butt",
+                            gid="graph-arrow-shaft",
                             color=_ACTIVE,
-                            alpha=1.0,
+                            alpha=document.presentation.graph_arrows.opacity,
                             zorder=1.2,
                         )
                     )

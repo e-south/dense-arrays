@@ -13,6 +13,7 @@ Maintainer(s): Eric J. South
 from __future__ import annotations
 
 import contextlib
+import json
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -83,7 +84,7 @@ def render_poster(
     figure = plt.figure(figsize=(16, height), facecolor=_PAPER)
     output_path = Path(output_path)
     try:
-        draw_document(
+        typography = draw_document(
             document,
             transition_index=len(document.plan.steps),
             progress=1.0,
@@ -99,6 +100,9 @@ def render_poster(
                     "Title": document.title,
                     "Description": document.subtitle,
                     "PlaybackEvidence": evidence_metadata(document),
+                    "PlaybackTypography": json.dumps(
+                        {"schema": "dense-arrays.playback-typography/v1", **typography}
+                    ),
                 },
             )
     finally:
