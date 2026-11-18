@@ -186,8 +186,67 @@ def test_public_poster_reports_measured_type_for_downstream_placement(tmp_path: 
 
 
 def test_arrow_opacity_is_explicit_and_consistent_with_the_style():
-    assert GraphArrowStyle().opacity == 0.55
+    assert GraphArrowStyle().opacity == 1
     assert GraphArrowStyle.from_mapping({"opacity": 0.8}).opacity == 0.8
-    for value in (0, -1, 1.1, True, "0.5"):
+    assert GraphArrowStyle(opacity=0).opacity == 0
+    for value in (-1, 1.1, True, "0.5"):
         with pytest.raises((TypeError, ValueError), match="opacity"):
             GraphArrowStyle(opacity=value)
+
+
+def test_default_heads_match_a_flat_backed_triangle_and_dark_edges():
+    style = GraphArrowStyle()
+    assert style.head_shape == "triangle"
+    assert style.completed_color == "#505050"
+    assert style.opacity == 1
+    presentation = PlaybackPresentation.from_mapping(
+        {"graph_arrows": {"head_shape": "triangle", "completed_color": "#333333"}}
+    )
+    assert presentation.graph_arrows.completed_color == "#333333"
+    figure, axis = plt.subplots(figsize=(12, 5))
+    try:
+        draw_graph(
+            axis,
+            replace(_document(), presentation=presentation),
+            0,
+            1,
+            kmer_font_size_pt=20,
+        )
+        heads = [p for p in axis.patches if p.get_gid() == "graph-arrow-head"]
+        assert heads
+        assert all(list(p.get_path().codes).count(4) == 0 for p in heads)
+    finally:
+        plt.close(figure)
+
+
+@pytest.mark.parametrize(
+    "settings",
+    [
+        {"head_shape": "arrow2-ish"},
+        {"completed_color": "gray-ish"},
+        {"active_color": True},
+    ],
+)
+def test_bad_arrow_shape_or_color_fails_at_admission(settings: dict[str, object]):
+    with pytest.raises((ValueError, TypeError), match=r"head_shape|color"):
+        GraphArrowStyle.from_mapping(settings)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        '{"graph_fraction":0.25,"graph_fraction":0.3}',
+        '{"graph_arrows":{"opacity":0.2,"opacity":1}}',
+    ],
+)
+def test_duplicate_cli_settings_fail_before_output(tmp_path: Path, payload: str):
+    config = tmp_path / "presentation.json"
+    config.write_text(payload)
+    output = tmp_path / "new" / "poster.png"
+    result = CliRunner().invoke(
+        app,
+        [str(_input(tmp_path)), "--presentation", str(config), "--poster", str(output)],
+    )
+    assert result.exit_code != 0
+    assert "duplicate JSON object key" in result.output
+    assert not output.parent.exists()

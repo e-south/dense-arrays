@@ -12,7 +12,6 @@ Maintainer(s): Eric J. South
 
 from __future__ import annotations
 
-import json
 import shutil
 import subprocess
 from collections.abc import Mapping
@@ -22,6 +21,7 @@ from typing import Annotated
 import typer
 
 from ..realized import REALIZED_ARRAY_SCHEMA_VERSION
+from .json_io import loads_json
 from .models import PLAYBACK_PLAN_SCHEMA_VERSION, PlaybackPlan
 from .output import publish_exports
 from .presentation import PlaybackDocument
@@ -34,7 +34,7 @@ app = typer.Typer(add_completion=False, no_args_is_help=True)
 
 def _load_plan(input_path: Path) -> PlaybackPlan:
     payload = input_path.read_text(encoding="utf-8")
-    root = json.loads(payload)
+    root = loads_json(payload)
     if not isinstance(root, dict):
         msg = "playback input must be a JSON object"
         raise TypeError(msg)
@@ -78,7 +78,7 @@ def _presentation_settings(
     if path is None:
         return PlaybackPresentation()
     settings = PlaybackPresentation.from_mapping(
-        json.loads(path.read_text(encoding="utf-8"))
+        loads_json(path.read_text(encoding="utf-8"))
     )
     if any(
         target.resolve() == path.resolve()

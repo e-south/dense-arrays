@@ -23,6 +23,7 @@ from dense_arrays.realized import (
     RealizedArray,
 )
 
+from .json_io import loads_json
 from .models import (
     PLAYBACK_PLAN_SCHEMA_VERSION,
     ConstraintResult,
@@ -31,16 +32,6 @@ from .models import (
     PlaybackPlan,
     PlaybackStep,
 )
-
-
-def _unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
-    result = {}
-    for key, value in pairs:
-        if key in result:
-            msg = f"duplicate JSON object key: {key!r}"
-            raise ValueError(msg)
-        result[key] = value
-    return result
 
 
 def _object(value: object, *, context: str) -> Mapping[str, object]:
@@ -374,7 +365,7 @@ def loads_realized_array(payload: str) -> RealizedArray:
     """Deserialize a strict realized-array JSON document."""
     return realized_array_from_dict(
         _object(
-            json.loads(payload, object_pairs_hook=_unique_object),
+            loads_json(payload),
             context="realized_array",
         )
     )
@@ -395,7 +386,7 @@ def loads_playback_plan(payload: str) -> PlaybackPlan:
     """Deserialize a strict playback-plan JSON document."""
     return playback_plan_from_dict(
         _object(
-            json.loads(payload, object_pairs_hook=_unique_object),
+            loads_json(payload),
             context="playback_plan",
         )
     )

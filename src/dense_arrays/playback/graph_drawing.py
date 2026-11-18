@@ -52,7 +52,6 @@ if TYPE_CHECKING:
 _PAPER = "#ffffff"
 _INK = "#4b5563"
 _LINE = RESTING_COLOR
-_TRAVERSED = "#41A696"
 _ACTIVE = "#167a70"
 _GRAPH_TEXT = "#1F2423"
 _TERMINAL_FONT_SIZE_PT = 12.4
@@ -148,12 +147,14 @@ def _draw_context_edges(
         )
         color = (
             blend_color(
-                RESTING_COLOR,
-                constraint_relation_color(document.presentation.color_profile),
+                document.presentation.graph_arrows.resting_color,
+                constraint_relation_color(document.presentation.color_profile)
+                if document.presentation.color_profile == "constraints"
+                else document.presentation.graph_arrows.completed_color,
                 emphasis,
             )
             if declared_constraint
-            else _LINE
+            else document.presentation.graph_arrows.resting_color
         )
         draw_arrow(
             axis,
@@ -185,7 +186,11 @@ def _draw_traversal_edges(
             edge_index == transition_index and progress >= _SETTLED_PROGRESS
         )
         active = edge_index == transition_index and 0 < progress < _SETTLED_PROGRESS
-        color = _TRAVERSED if completed else _LINE
+        color = (
+            document.presentation.graph_arrows.completed_color
+            if completed
+            else document.presentation.graph_arrows.resting_color
+        )
         curve = routed.curve
         draw_arrow(
             axis,
@@ -213,7 +218,7 @@ def _draw_traversal_edges(
                             linewidth=arrow_dimensions.shaft_width_pt,
                             capstyle="butt",
                             gid="graph-arrow-shaft",
-                            color=_ACTIVE,
+                            color=document.presentation.graph_arrows.active_color,
                             alpha=document.presentation.graph_arrows.opacity,
                             zorder=1.2,
                         )

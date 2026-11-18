@@ -213,7 +213,7 @@ def test_full_graph_draws_declared_constraint_relation() -> None:
 
     assert any(
         isinstance(patch, FancyArrowPatch)
-        and patch.get_edgecolor() == to_rgba("#63558D", 0.55)
+        and patch.get_edgecolor() == to_rgba("#63558D", 1)
         for patch in axis.patches
     )
     plt.close(figure)

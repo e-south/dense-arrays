@@ -84,9 +84,12 @@ and legend entries instead.
 ## Graph arrow dimensions
 
 `GraphArrowStyle` defines shaft width, head length and head width in multiples
-of the graph nucleotide font size (em). Defaults are 0.07, 0.53 and 0.385.
-Filled heads have no outline stroke. `opacity` defaults to 0.55 and accepts
-a finite value greater than 0 and at most 1. Resting, active and completed relations
+of the graph nucleotide font size (em). Defaults are 0.07, 0.43 and 0.5.
+Filled heads have no outline stroke. `opacity` defaults to 1 and accepts a finite value from 0 to 1.
+`head_shape` defaults to `triangle`, a flat-backed filled triangle. Select
+`notched` explicitly for the earlier curved-notch head.
+`resting_color`, `completed_color` and `active_color` default to
+`#9A9A9A`, `#505050` and `#202020`; each accepts opaque `#RRGGBB`. Resting, active and completed relations
 retain the same dimensions; color provides emphasis. Routing and terminal
 caption placement remain independent of these drawing controls.
 
@@ -95,7 +98,7 @@ from dense_arrays.playback import GraphArrowStyle, PlaybackPresentation
 
 settings = PlaybackPresentation(
     graph_arrows=GraphArrowStyle(
-        shaft_width_em=0.05, head_length_em=0.53, head_width_em=0.385
+        shaft_width_em=0.05, head_length_em=0.43, head_width_em=0.5
     ),
 )
 assert PlaybackPresentation.from_mapping(settings.to_mapping()) == settings
@@ -104,7 +107,7 @@ assert PlaybackPresentation.from_mapping(settings.to_mapping()) == settings
 The CLI accepts the same strict mapping, with no separate size interpretation:
 
 ```json
-{"graph_detail": "reduced", "graph_arrows": {"shaft_width_em": 0.05, "head_length_em": 0.53, "head_width_em": 0.385}}
+{"graph_detail": "reduced", "graph_arrows": {"shaft_width_em": 0.05, "head_length_em": 0.43, "head_width_em": 0.5}}
 ```
 
 Save it as `presentation.json`, then run:
@@ -120,7 +123,7 @@ producer cap-height metric may receive `null` for the nucleotide value.
 Consumers can read these units after export to check final placement, rather
 than reconstructing private renderer geometry.
 
-Unknown fields, nonfinite or nonpositive dimensions and output paths that would
+Duplicate JSON keys, unknown fields, nonfinite or nonpositive dimensions and output paths that would
 replace the presentation input fail before export. API callers can use the
 mapping constructor or typed dataclasses directly. Arrow settings do not alter
 placements or infer a solver order.

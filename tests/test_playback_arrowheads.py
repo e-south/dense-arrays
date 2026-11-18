@@ -20,7 +20,7 @@ def test_tapered_head_follows_the_terminal_tangent_without_route_deformation(
         [(0, 0), (end[0] / 2, end[1] / 2), end], [Path.MOVETO, Path.CURVE3, Path.CURVE3]
     )
     before = route.vertices.copy()
-    head = arrow_head(route, length=7.8, width=5.6)
+    head = arrow_head(route, length=7.8, width=5.6, shape="notched")
     assert np.array_equal(route.vertices, before)
     assert np.array_equal(head.vertices[1], route.vertices[-1])
     assert list(head.codes).count(Path.CURVE4) == 3

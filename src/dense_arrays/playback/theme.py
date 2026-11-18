@@ -13,11 +13,14 @@ Maintainer(s): Eric J. South
 from __future__ import annotations
 
 import math
-import re
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field, fields
 from typing import TYPE_CHECKING
 
+from .colors import (
+    blend_color,  # noqa: F401 - preserve the existing public import
+    validate_color,
+)
 from .graph_style import GraphArrowStyle
 
 if TYPE_CHECKING:
@@ -37,25 +40,6 @@ RESTING_COLOR = "#D2D2D2"
 RESTING_TEXT_COLOR = "#969696"
 _MAX_GRAPH_FRACTION = 0.5
 _PROFILES = {"categorical", "uniform", "constraints"}
-
-
-def validate_color(color: str) -> None:
-    """Require a portable opaque RGB color for raster output."""
-    if not isinstance(color, str) or re.fullmatch(r"#[0-9a-fA-F]{6}", color) is None:
-        msg = "colors must use #RRGGBB notation"
-        raise ValueError(msg)
-
-
-def blend_color(start: str, end: str, progress: float) -> str:
-    """Interpolate opaque colors without changing artist geometry."""
-    channels = (
-        round(
-            int(start[index : index + 2], 16) * (1 - progress)
-            + int(end[index : index + 2], 16) * progress
-        )
-        for index in (1, 3, 5)
-    )
-    return "#" + "".join(f"{channel:02x}" for channel in channels)
 
 
 @dataclass(frozen=True, slots=True)

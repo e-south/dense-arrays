@@ -23,7 +23,9 @@ if TYPE_CHECKING:
     from ..graph_style import GraphArrowDimensions
 
 
-def arrow_head(path: Path, *, length: float, width: float) -> Path | None:
+def arrow_head(
+    path: Path, *, length: float, width: float, shape: str = "triangle"
+) -> Path | None:
     """Return a filled-head path with its tip at the existing route endpoint."""
     from matplotlib.path import Path
 
@@ -34,13 +36,14 @@ def arrow_head(path: Path, *, length: float, width: float) -> Path | None:
         return None
     along = tangent / norm
     across = np.array([-along[1], along[0]])
-    shape = np.array(
-        [(-11, 4), (0, 0), (-11, -4), (-9, -1.67), (-9, 1.66), (-11, 4), (-11, 4)]
-    ) * (length / 11, width / 8)
-    vertices = tip + shape[:, :1] * along + shape[:, 1:] * across
-    return Path(
-        vertices,
-        [
+    if shape == "triangle":
+        points = np.array([(-1, 0.5), (0, 0), (-1, -0.5), (-1, 0.5)]) * (length, width)
+        codes = [Path.MOVETO, Path.LINETO, Path.LINETO, Path.CLOSEPOLY]
+    elif shape == "notched":
+        points = np.array(
+            [(-11, 4), (0, 0), (-11, -4), (-9, -1.67), (-9, 1.66), (-11, 4), (-11, 4)]
+        ) * (length / 11, width / 8)
+        codes = [
             Path.MOVETO,
             Path.LINETO,
             Path.LINETO,
@@ -48,8 +51,12 @@ def arrow_head(path: Path, *, length: float, width: float) -> Path | None:
             Path.CURVE4,
             Path.CURVE4,
             Path.CLOSEPOLY,
-        ],
-    )
+        ]
+    else:
+        msg = "head shape must be triangle or notched"
+        raise ValueError(msg)
+    vertices = tip + points[:, :1] * along + points[:, 1:] * across
+    return Path(vertices, codes)
 
 
 def draw_arrow(
@@ -81,7 +88,7 @@ def draw_arrow(
             gid="graph-arrow-shaft",
         )
     )
-    head = arrow_head(path, length=length, width=width)
+    head = arrow_head(path, length=length, width=width, shape=dimensions.head_shape)
     if head is not None:
         axis.add_patch(
             PathPatch(

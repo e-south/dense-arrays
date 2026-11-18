@@ -69,7 +69,7 @@ def test_raster_displays_order_failure_and_labels() -> None:
         assert "Anchor A" in text
         assert not any(
             patch.get_gid() == "graph-arrow-shaft"
-            and patch.get_edgecolor() == to_rgba("#167a70", 0.55)
+            and patch.get_edgecolor() == to_rgba("#202020", 1)
             for axis in figure.axes
             for patch in axis.patches
         )
