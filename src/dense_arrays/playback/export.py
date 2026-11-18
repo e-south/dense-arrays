@@ -161,19 +161,26 @@ def render_animation(
     figure = plt.figure(figsize=(16, height), facecolor=_PAPER)
     output_path = Path(output_path)
     try:
+        first_frames = (
+            DuplexFrames(duplex_frame_renderer, documents[0])
+            if duplex_frame_renderer is not None
+            else None
+        )
         counts = tuple(
             transition_frame_counts(
                 document,
                 figure,
                 fps=timing.fps,
                 seconds_per_step=timing.seconds_per_step,
+                duplex_frames=(
+                    first_frames
+                    if index == 0
+                    else DuplexFrames(duplex_frame_renderer, document)
+                )
+                if duplex_frame_renderer is not None
+                else None,
             )
-            for document in documents
-        )
-        first_frames = (
-            DuplexFrames(duplex_frame_renderer, documents[0])
-            if duplex_frame_renderer is not None
-            else None
+            for index, document in enumerate(documents)
         )
         first_schedule = iter(scene_frame_schedule(counts[0], timing, first=True))
         _draw_frame(documents[0], next(first_schedule), figure, first_frames)

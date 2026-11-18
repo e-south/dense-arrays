@@ -15,7 +15,13 @@ import pytest
 from matplotlib.animation import PillowWriter
 from PIL import Image
 
-from dense_arrays.playback import export, matplotlib_renderer, reconstruct_playback
+from dense_arrays.playback import (
+    export,
+    graph_drawing,
+    matplotlib_renderer,
+    reconstruct_playback,
+    scene_drawing,
+)
 from dense_arrays.playback.duplex_frames import DuplexFrames
 from dense_arrays.playback.frame_schedule import PlaybackTiming, scene_frame_schedule
 from dense_arrays.playback.models import PlaybackNotice
@@ -362,3 +368,41 @@ def test_png_retains_passed_distances_when_brackets_are_summarized(
     with Image.open(path) as image:
         evidence = image.info["PlaybackEvidence"]
     assert all(f"PASSED c{i}: 0 bp (required 0..0 bp)" in evidence for i in range(15))
+
+
+def test_motion_schedule_uses_the_same_measured_graph_type_as_drawing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+
+    class Frames:
+        native_nucleotide_cap_height_px = 24.0
+
+        def frame(
+            self, _document: PlaybackDocument, _step_index: int | None
+        ) -> np.ndarray:
+            return np.full((490, 2680, 4), 255, dtype=np.uint8)
+
+    provider = Frames()
+    doc = replace(document(), presentation=PlaybackPresentation(graph_detail="reduced"))
+    frames = DuplexFrames(provider.frame, doc)
+    measured = []
+    original = scene_drawing.matplotlib_layout_spec
+
+    def capture(*args: object, **kwargs: object) -> object:
+        measured.append(kwargs.get("kmer_font_size_pt"))
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(scene_drawing, "matplotlib_layout_spec", capture)
+    monkeypatch.setattr(graph_drawing, "matplotlib_layout_spec", capture)
+    figure = plt.figure(figsize=(16, 2.4))
+    try:
+        draw_document(
+            doc, transition_index=0, progress=0, figure=figure, duplex_frames=frames
+        )
+        scene_drawing.transition_frame_counts(
+            doc, figure, fps=24, seconds_per_step=0.5, duplex_frames=frames
+        )
+        assert measured[0] is not None
+        assert measured[1] == pytest.approx(measured[0])
+    finally:
+        plt.close(figure)

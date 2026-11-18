@@ -182,6 +182,10 @@ MP4 and GIF render the
 collection in order. All formats require the `playback` extra; MP4 also
 requires FFmpeg on `PATH`.
 
+Traversal timing and frame drawing use the same measured sequence typography
+and graph layout. Producer frames are admitted before timing their scene; a
+separate default-font layout is not used for videos.
+
 Media timing requires a positive integer `fps` and finite positive
 `seconds_per_step`. Lead, hold, and scene-transition durations are finite and
 non-negative. Every scene has at least one resting frame, including when lead

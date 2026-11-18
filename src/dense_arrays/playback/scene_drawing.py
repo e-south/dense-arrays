@@ -65,6 +65,35 @@ def _graph_font_size_for_cap_height(
     return cap_height_px * 72.0 / (float(figure_dpi) * unit_cap_height_pt)
 
 
+def _prepare_duplex_panel(
+    axis: Axes,
+    document: PlaybackDocument,
+    transition_index: int,
+    progress: float,
+    frames: DuplexFrames | None,
+) -> tuple[object, float | None]:
+    """Resolve identical sequence geometry for drawing and motion scheduling."""
+    duplex_frame = None
+    displayed_duplex_cap_height = None
+    if frames is not None:
+        duplex_frame, displayed_duplex_cap_height = duplex_frame_for_axis(
+            frames,
+            document,
+            transition_index,
+            progress,
+            axis,
+        )
+    else:
+        displayed_duplex_cap_height = draw_duplex(
+            axis,
+            document,
+            transition_index,
+            progress,
+            bottom_padding_pt=_distance_padding_points(axis, document),
+        )
+    return duplex_frame, displayed_duplex_cap_height
+
+
 def draw_document(
     document: PlaybackDocument,
     *,
@@ -82,24 +111,9 @@ def draw_document(
     figure.clear()
     figure.set_facecolor(_PAPER)
     graph_axis, duplex_axis, legend_axis = document_axes(figure, document)
-    duplex_frame = None
-    displayed_duplex_cap_height = None
-    if duplex_frames is not None:
-        duplex_frame, displayed_duplex_cap_height = duplex_frame_for_axis(
-            duplex_frames,
-            document,
-            transition_index,
-            progress,
-            duplex_axis,
-        )
-    else:
-        displayed_duplex_cap_height = draw_duplex(
-            duplex_axis,
-            document,
-            transition_index,
-            progress,
-            bottom_padding_pt=_distance_padding_points(duplex_axis, document),
-        )
+    duplex_frame, displayed_duplex_cap_height = _prepare_duplex_panel(
+        duplex_axis, document, transition_index, progress, duplex_frames
+    )
     nucleotide_font_size = _graph_font_size_for_cap_height(
         displayed_duplex_cap_height, figure.dpi
     )
@@ -429,16 +443,24 @@ def transition_frame_counts(
     *,
     fps: int,
     seconds_per_step: float,
+    duplex_frames: DuplexFrames | None = None,
 ) -> tuple[int, ...]:
     """Allocate transition frames by visible traversal arc length."""
     figure.clear()
-    graph_axis, _duplex_axis, _legend_axis = document_axes(figure, document)
+    graph_axis, duplex_axis, _legend_axis = document_axes(figure, document)
     if graph_axis is None or not resolve_evidence(document).animate_chain:
         count = max(1, round(fps * seconds_per_step))
         figure.clear()
         return (count,) * (len(document.plan.steps) + 1)
     semantic_graph = project_explanation_graph(document.plan)
-    layout_spec = matplotlib_layout_spec(graph_axis, semantic_graph)
+    _frame, cap_height = _prepare_duplex_panel(
+        duplex_axis, document, 0, 0.0, duplex_frames
+    )
+    layout_spec = matplotlib_layout_spec(
+        graph_axis,
+        semantic_graph,
+        kmer_font_size_pt=_graph_font_size_for_cap_height(cap_height, figure.dpi),
+    )
     scene = build_graph_scene(document.plan, layout_spec=layout_spec)
     routes = route_graph_scene(scene)
     lengths = tuple(
