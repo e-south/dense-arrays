@@ -15,6 +15,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .frame_schedule import PlaybackFrame
+from .graph.arrowheads import tapered_arrow
 from .graph.geometry import (
     KMER_FONT_FAMILY,
     KMER_FONT_SIZE_PT,
@@ -145,7 +146,7 @@ def _draw_context_edges(
         axis.add_patch(
             FancyArrowPatch(
                 path=_matplotlib_path(curve),
-                arrowstyle="-|>",
+                arrowstyle=tapered_arrow,
                 mutation_scale=5.4,
                 linewidth=1.7 if declared_constraint else 0.85,
                 color=(
@@ -189,7 +190,7 @@ def _draw_traversal_edges(
         axis.add_patch(
             FancyArrowPatch(
                 path=_matplotlib_path(curve),
-                arrowstyle="-|>",
+                arrowstyle=tapered_arrow,
                 mutation_scale=7.8,
                 linewidth=width,
                 color=color,
