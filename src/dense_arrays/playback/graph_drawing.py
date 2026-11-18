@@ -23,7 +23,7 @@ from .graph.geometry import (
     matplotlib_layout_spec,
 )
 from .graph.layout import build_graph_scene
-from .graph.model import START_NODE_ID
+from .graph.model import END_NODE_ID, START_NODE_ID
 from .graph.projection import project_explanation_graph
 from .graph.routing import (
     EDGE_LABEL_FONT_SIZE_PT,
@@ -56,6 +56,12 @@ _ACTIVE = "#167a70"
 _GRAPH_TEXT = "#1F2423"
 _TERMINAL_FONT_SIZE_PT = 12.4
 _SETTLED_PROGRESS = 0.999
+
+
+def _transition_complete(index: int, frame: PlaybackFrame) -> bool:
+    return index < frame.transition_index or (
+        index == frame.transition_index and frame.progress >= _SETTLED_PROGRESS
+    )
 
 
 def _matplotlib_path(curve: QuadraticCurve) -> Path:
@@ -182,10 +188,14 @@ def _draw_traversal_edges(
         if edge_index is None:
             msg = "traversal edge is missing its timeline index"
             raise ValueError(msg)
-        completed = edge_index < transition_index or (
-            edge_index == transition_index and progress >= _SETTLED_PROGRESS
+        terminal = edge.target_id == END_NODE_ID
+        timeline_index = edge_index - 1 if terminal else edge_index
+        completed = _transition_complete(timeline_index, frame)
+        active = (
+            not terminal
+            and edge_index == transition_index
+            and 0 < progress < _SETTLED_PROGRESS
         )
-        active = edge_index == transition_index and 0 < progress < _SETTLED_PROGRESS
         color = (
             document.presentation.graph_arrows.completed_color
             if completed
@@ -325,8 +335,14 @@ def _draw_terminals(
 
     for label in labels:
         node_id = label.node_id
-        index = 0 if node_id == START_NODE_ID else len(scene.graph.traversal_edges) - 1
-        emphasis = placement_progress(index, transition_index, progress)
+        index = 0 if node_id == START_NODE_ID else len(scene.graph.traversal_edges) - 2
+        emphasis = (
+            placement_progress(index, transition_index, progress)
+            if node_id == START_NODE_ID
+            else float(
+                _transition_complete(index, PlaybackFrame(transition_index, progress))
+            )
+        )
         x, y = scene.position(node_id)
         geometry = scene.geometry(node_id)
         radius = geometry.width_pt / 2.0

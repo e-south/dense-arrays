@@ -51,6 +51,11 @@ share a proportional scale configured through `PlaybackTypography`. Reverse trac
 sequence to match the lower strand, without reversing coordinate order. The
 stored placement sequence and graph labels remain unchanged.
 
+The edge into End adds no sequence and has no separate animated interval. It
+switches to its completed state when the final part arrives; the marker stops
+there. End's node and caption complete at the same time. Holds therefore show
+the complete result without an extra traversal after sequence completion.
+
 Start and End captions remain horizontally centered on their terminal nodes.
 Their measured bounds choose an edge-free position above or below the node,
 checking the complete visible routing rather than only currently emphasized
