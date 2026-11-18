@@ -52,7 +52,7 @@ It also links the API, method, and contributor guides.
 
 ## Citation
 
-Please cite the method paper.
+If you use Dense Arrays in your work, please cite the method paper.
 
 Andreani V, South EJ, Dunlop MJ (2024). Generating information-dense promoter
 sequences with optimal string packing. *PLOS Computational Biology* 20(7),
