@@ -36,7 +36,7 @@ repos:
       - id: detect-secrets
         args: [--baseline, .secrets.baseline]
   - repo: https://github.com/crate-ci/typos
-    rev: 7f9d0819ca1c008ade73f4b41fa9d258d48f605b # pragma: allowlist secret
+    rev: ec1eb601fff9480611158c3eee8c278f614174b9 # pragma: allowlist secret
     hooks:
       - id: typos
         args:
